@@ -1,0 +1,1274 @@
+<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Vila Circuito</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Conceito: a placa-mãe é uma vila. O fundo verde tem pistas de cobre com eletrões a correr; cada temática é um bairro e o Bit, um chip com pernas, guia as crianças. */
+:root{
+  --board:#0fa37f; --board-deep:#0a7a60; --trace:#35c9a2; --gold:#ffd23f; --gold-deep:#e0a400;
+  --ink:#172447; --paper:#ffffff; --soft:#eef3ff;
+  --blue:#3f7bff; --blue-soft:#dbe6ff; --pink:#ff4f9a; --pink-soft:#ffe0ee; --violet:#7a4dff; --violet-soft:#e7dfff;
+  --right:#14b86a; --right-soft:#d8f8e7; --wrong:#f0503e; --wrong-soft:#ffe3df;
+  --f-display:"Baloo 2","Trebuchet MS",Verdana,sans-serif;
+  --f-body:"Nunito","Trebuchet MS",Verdana,sans-serif;
+}
+html,body{height:100%}
+body{background:var(--board);color:var(--ink);font-family:var(--f-body);font-weight:600;font-size:18px;line-height:1.4;overflow:hidden}
+*{box-sizing:border-box}
+#bg,#fx{position:fixed;inset:0;width:100%;height:100%;display:block}
+#fx{pointer-events:none;z-index:30}
+#app{position:relative;height:100%;display:flex;flex-direction:column}
+#top{display:flex;align-items:center;gap:10px;padding-block:9px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--ink);color:var(--paper)}
+#top .brand{font-family:var(--f-display);font-weight:800;font-size:23px;line-height:1;color:var(--gold);background:none;border:0;cursor:pointer;padding:0}
+#top .sp{flex:1}
+#top .brand,#top .ghost{white-space:nowrap}
+@media (max-width:480px){#top:has(#back) .brand{display:none}}
+.score{display:flex;align-items:center;gap:6px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.score svg{width:22px;height:22px}
+#view{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-block:20px 44px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:980px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{margin:0;font-family:var(--f-display);font-weight:800;line-height:1.05;text-wrap:balance}
+p{margin:0}
+.on-board{color:var(--paper)}
+
+.btn{font-family:var(--f-display);font-weight:800;font-size:20px;line-height:1.1;color:var(--ink);background:var(--gold);border:3px solid var(--ink);border-radius:14px;padding:11px 20px;cursor:pointer;box-shadow:0 5px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.btn.white{background:var(--paper)}
+.btn.small{font-size:16px;padding:6px 12px;box-shadow:0 3px 0 var(--ink);border-width:2px;border-radius:10px}
+.btn[disabled]{opacity:.5;cursor:not-allowed;box-shadow:0 2px 0 var(--ink)}
+:focus-visible{outline:4px solid var(--blue);outline-offset:2px}
+#top :focus-visible{outline-color:var(--gold)}
+.ghost{background:none;border:2px solid var(--paper);color:var(--paper);border-radius:10px;font:inherit;font-weight:800;font-size:15px;padding:5px 11px;cursor:pointer}
+
+/* Entrada */
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+.hero .bit{width:clamp(110px,18vw,170px)}
+.logo{font-size:clamp(50px,9.5vw,92px);color:var(--paper);text-shadow:0 5px 0 var(--board-deep)}
+.logo em{font-style:normal;color:var(--gold)}
+.hero p{color:var(--paper);font-size:clamp(18px,2.4vw,23px);max-width:40ch}
+.bairros{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.bairros>.bairro{grid-column:span 2}
+.bairros>.bairro:nth-child(n+4){grid-column:span 3}
+@media (max-width:760px){.bairros{grid-template-columns:minmax(0,1fr)}.bairros>.bairro,.bairros>.bairro:nth-child(n+4){grid-column:auto}}
+.bairro{--c:var(--blue);--s:var(--blue-soft);text-align:left;font:inherit;color:var(--ink);background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:0 7px 0 var(--ink);cursor:pointer;padding:0;overflow:hidden;display:flex;flex-direction:column;transition:transform .14s}
+.bairro:hover{transform:translateY(-5px) rotate(-.6deg)}
+.bairro .art{background:var(--s);padding:16px;display:flex;justify-content:center;gap:4px;border-bottom:3px solid var(--ink);min-height:136px;align-items:center}
+.bairro .art svg{width:33%;max-width:96px;height:auto}
+.bairro .txt{padding:14px 16px 16px;display:flex;flex-direction:column;gap:7px;flex:1}
+.bairro h2{font-size:28px;color:var(--c)}
+.bairro p{font-size:17px}
+.pips{display:flex;gap:6px;align-items:center;margin-top:auto;font-size:15px;font-weight:800}
+.pips i{width:18px;height:18px;border-radius:50%;background:var(--soft);border:2px solid var(--ink)}
+.pips i.on{background:var(--gold)}
+.t-pink{--c:var(--pink);--s:var(--pink-soft)}
+.t-violet{--c:var(--violet);--s:var(--violet-soft)}
+.t-orange{--c:#d9560a;--s:#ffe8d2}
+.t-teal{--c:#007f8c;--s:#d2f3f5}
+.t-blue{--c:var(--blue);--s:var(--blue-soft)}
+.foot{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;color:var(--paper);font-size:15px}
+
+/* Temática */
+.head{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.head h2{font-size:clamp(32px,5.4vw,50px);color:var(--paper);text-shadow:0 3px 0 var(--board-deep)}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:16px}
+.act{text-align:left;font:inherit;color:var(--ink);background:var(--paper);border:3px solid var(--ink);border-radius:18px;box-shadow:0 6px 0 var(--ink);padding:16px;cursor:pointer;display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;align-items:center;transition:transform .14s}
+.act:hover{transform:translateY(-4px)}
+.act .ic{width:72px;height:72px;border-radius:16px;background:var(--s);display:grid;place-items:center}
+.act .ic svg{width:54px;height:54px}
+.act b{font-family:var(--f-display);font-weight:800;font-size:23px;line-height:1.05;display:block}
+.act span{font-size:16px;display:block}
+.act .pts{font-weight:800;font-size:15px;color:var(--c);margin-top:3px}
+.help{background:var(--ink);color:var(--paper);border-radius:14px;padding:12px 16px;font-size:16px}
+.help b{color:var(--gold);font-weight:800;user-select:all}
+
+/* Bit a falar */
+.talk{display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;align-items:center}
+.talk .bit{width:82px}
+.bubble{position:relative;background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:11px 15px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.bubble::before{content:"";position:absolute;left:-13px;top:50%;margin-top:-9px;border:9px solid transparent;border-left:0;border-right:13px solid var(--ink)}
+.bubble p{font-size:clamp(18px,2.3vw,21px);font-weight:800;line-height:1.28}
+.bubble.right{background:var(--right-soft)}
+.bubble.wrong{background:var(--wrong-soft)}
+.bubrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.say{display:none}
+body.tts .say{display:inline-flex;align-items:center;gap:5px}
+.say svg{width:17px;height:17px}
+
+/* Área de jogo */
+.stage{background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.count{display:flex;gap:6px;flex-wrap:wrap}
+.count i{width:16px;height:16px;border-radius:50%;background:var(--soft);border:2px solid var(--ink)}
+.count i.ok{background:var(--right)}
+.count i.no{background:var(--wrong)}
+.count i.cur{background:var(--gold)}
+.q{font-family:var(--f-display);font-weight:800;font-size:clamp(23px,3.4vw,31px);line-height:1.15}
+.opts{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))}
+.opt{font:inherit;font-weight:800;font-size:19px;line-height:1.2;color:var(--ink);background:var(--soft);border:3px solid var(--ink);border-radius:15px;padding:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;min-height:66px;box-shadow:0 4px 0 var(--ink);transition:transform .08s}
+.opt:hover:not([disabled]){background:var(--blue-soft);transform:translateY(-2px)}
+.opt svg{width:68px;height:68px}
+.opt.text{text-align:left;align-items:flex-start}
+.opts.six{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:520px){.opts.six{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.opt.right{background:var(--right-soft);border-color:var(--right)}
+.opt.wrong{background:var(--wrong-soft);border-color:var(--wrong)}
+.opt.sel{background:var(--gold)}
+.opt[disabled]{cursor:default;box-shadow:none;transform:translateY(4px)}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+.belt{display:grid;grid-template-columns:1fr 112px 1fr;align-items:center;gap:6px;background:var(--pink-soft);border-radius:14px;padding:14px;overflow:hidden}
+.belt .side{font-family:var(--f-display);font-weight:800;font-size:clamp(15px,2.6vw,21px);text-align:center;color:var(--pink);min-width:0}
+.belt .pc svg{width:112px;height:112px;display:block}
+.item{display:flex;flex-direction:column;align-items:center;gap:2px;animation:drop .3s cubic-bezier(.3,1.5,.5,1)}
+.item svg{width:clamp(110px,20vw,150px);height:clamp(110px,20vw,150px)}
+.item b{font-family:var(--f-display);font-weight:800;font-size:28px;text-align:center;line-height:1.05}
+@keyframes drop{from{transform:translateY(-26px) scale(.7)}}
+.fly-in{animation:flyL .55s ease-in forwards}
+.fly-out{animation:flyR .55s ease-in forwards}
+.fly-both{animation:flyB .6s ease-in-out forwards}
+@keyframes flyL{to{transform:translateX(-46vw) scale(.3)}}
+@keyframes flyR{to{transform:translateX(46vw) scale(.3)}}
+@keyframes flyB{50%{transform:scale(1.25) rotate(8deg)}}
+
+/* Montar o computador */
+.casewrap{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}
+@media (max-width:700px){.casewrap{grid-template-columns:minmax(0,1fr)}.case{aspect-ratio:1/1.05}}
+.case{position:relative;aspect-ratio:1.42/1;width:100%;background:#26344f;border:5px solid var(--ink);border-radius:18px;overflow:hidden}
+.mobo{position:absolute;left:6%;top:5%;right:6%;height:64%;background:var(--board);border:3px solid var(--ink);border-radius:9px;background-image:repeating-linear-gradient(90deg,#ffffff1c 0 2px,transparent 2px 22px),repeating-linear-gradient(0deg,#ffffff1c 0 2px,transparent 2px 22px)}
+.mobo-l{position:absolute;left:8%;top:62.6%;font-size:12.5px;color:var(--paper);font-weight:800}
+.slot{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;font:inherit;font-weight:800;font-size:clamp(12px,1.75vw,15px);line-height:1.08;text-align:center;color:var(--paper);background:#0a2b3bcc;border:3px dashed var(--gold);border-radius:10px;padding:3px;cursor:pointer;min-width:0}
+.slot:hover{background:#17496a}
+.slot.drop{background:var(--blue)}
+.slot.full{background:var(--paper);color:var(--ink);border:3px solid var(--ink);cursor:default}
+.slot.full svg{width:min(70%,58px);height:auto;flex:0 1 auto;min-height:0}
+.slot.full span{font-size:clamp(10px,1.45vw,13px)}
+.tray{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start}
+.piece{font:inherit;font-weight:800;font-size:15.5px;line-height:1.05;color:var(--ink);background:var(--soft);border:3px solid var(--ink);border-radius:12px;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:grab;touch-action:none;user-select:none;box-shadow:0 3px 0 var(--ink)}
+.piece svg{width:52px;height:52px}
+.piece.sel{background:var(--gold)}
+.piece.used{visibility:hidden}
+.ghostp{position:fixed;z-index:40;pointer-events:none;background:var(--gold);transform:translate(-50%,-50%) rotate(-4deg);width:96px}
+.led{position:absolute;right:5%;bottom:3%;width:15px;height:15px;border-radius:50%;background:#55627f;border:2px solid var(--ink)}
+.case.power{box-shadow:0 0 34px 8px var(--gold)}
+.case.power .led{background:#4bff9e;box-shadow:0 0 12px #4bff9e}
+.case.power .blades{animation:spin .55s linear infinite;transform-origin:32px 32px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Pares */
+.pairs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.pairs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.flip{aspect-ratio:1/1;border:0;padding:0;background:none;cursor:pointer;perspective:700px;font:inherit}
+.flip .in{display:block;position:relative;width:100%;height:100%;transition:transform .32s;transform-style:preserve-3d}
+.flip.up .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border:3px solid var(--ink);border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;font-weight:800;line-height:1.08;font-size:clamp(13px,1.9vw,17px);text-align:center;color:var(--ink)}
+.face.front{background:var(--blue);background-image:repeating-linear-gradient(45deg,#ffffff22 0 6px,transparent 6px 14px)}
+.face.front svg{width:48%;height:48%}
+.face.back{background:var(--blue-soft);transform:rotateY(180deg)}
+.face.back svg{width:58%;height:58%;min-height:0}
+.flip.done .face.back{background:var(--right-soft);border-color:var(--right)}
+
+/* Histórias */
+.track{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.track{grid-template-columns:minmax(0,1fr)}}
+.spot{border:3px dashed var(--pink);border-radius:14px;padding:9px;min-height:112px;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;text-align:center;font-weight:800;background:var(--pink-soft)}
+.spot small{font-family:var(--f-display);font-weight:800;color:var(--pink);font-size:18px}
+.spot.full{border-style:solid;border-color:var(--right);background:var(--right-soft)}
+.spot svg{width:46px;height:46px}
+
+/* Forte */
+.forge{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px}
+@media (max-width:700px){.forge{grid-template-columns:minmax(0,1fr)}}
+.pw{min-height:60px;background:var(--ink);color:var(--gold);border-radius:12px;padding:10px 14px;font-weight:800;font-size:clamp(20px,3vw,26px);overflow-wrap:anywhere;display:flex;align-items:center}
+.pw.empty{color:#93a2c9;font-size:17px}
+.tiles{display:flex;gap:8px;flex-wrap:wrap}
+.tile{font:inherit;font-weight:800;font-size:18px;color:var(--ink);background:var(--violet-soft);border:3px solid var(--ink);border-radius:10px;padding:6px 12px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.tile.trap{background:var(--soft);font-size:16px}
+.tile[disabled]{opacity:.4;cursor:default}
+ul.rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:17px}
+ul.rules li{display:flex;gap:8px;align-items:center}
+ul.rules i{flex:none;width:22px;height:22px;border-radius:50%;background:var(--soft);border:2px solid var(--ink);display:grid;place-items:center;font-style:normal;font-size:13px;color:var(--paper);font-weight:800}
+ul.rules li.ok i{background:var(--right)}
+.fort svg{width:100%;height:auto;display:block}
+.fort rect,.fort path{transition:opacity .3s}
+
+/* Mensagens */
+.phone{align-self:center;width:100%;max-width:440px;background:var(--ink);border-radius:26px;padding:14px 12px 18px;display:flex;flex-direction:column;gap:9px}
+.phone header{color:var(--paper);font-weight:800;font-size:16px;text-align:center}
+.msg{background:var(--paper);border-radius:14px;padding:13px;font-size:20px;line-height:1.5;font-weight:600}
+.seg{font:inherit;line-height:inherit;color:inherit;background:var(--soft);border:0;border-radius:6px;padding:1px 5px;cursor:pointer;margin:1px 0}
+.seg:hover{background:var(--gold)}
+.seg.found{background:var(--wrong);color:var(--paper);cursor:default}
+.seg.fine{background:var(--right-soft);cursor:default}
+
+
+/* Ergonomia */
+.ergo{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.ergo{grid-template-columns:minmax(0,1fr)}}
+.ergo svg,.spot-e svg{width:100%;height:auto;display:block;background:#eaf2ff;border-radius:12px}
+.ctl{display:flex;flex-direction:column;gap:2px}
+.ctl label{display:flex;justify-content:space-between;font-weight:800;font-size:16px}
+.ctl input{width:100%;accent-color:var(--blue);height:26px}
+.ctl output{font-variant-numeric:tabular-nums}
+.tgl{font:inherit;font-weight:800;font-size:16px;border:3px solid var(--ink);border-radius:12px;background:var(--soft);padding:8px 10px;cursor:pointer;color:var(--ink);text-align:left}
+.tgl[aria-pressed=true]{background:var(--right-soft);border-color:var(--right)}
+.ruleg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:16px}
+.ruleg li{display:flex;gap:8px;align-items:center}
+.ruleg i{flex:none;width:22px;height:22px;border-radius:50%;background:var(--wrong);color:#fff;display:grid;place-items:center;font-style:normal;font-size:13px;font-weight:800}
+.ruleg li.ok i{background:var(--right)}
+.ehit{cursor:pointer;fill:transparent}
+.ehit.found{fill:#14b86a55;stroke:#14b86a;stroke-width:4}
+.stretch{display:grid;place-items:center}
+.stretch svg{width:min(100%,230px);height:auto}
+.a1 .ar{animation:shr 1.4s ease-in-out infinite}
+@keyframes shr{50%{transform:translateY(-10px)}}
+.a2 .ar{animation:upa 2s ease-in-out infinite}
+@keyframes upa{50%{transform:translateY(-34px)}}
+.a3 .ey{animation:lookf 2.4s ease-in-out infinite}
+@keyframes lookf{50%{transform:translateX(5px)}}
+.a4 .hd{animation:hnd 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes hnd{50%{transform:scale(1.6)}}
+.bar-t{height:14px;background:var(--soft);border:2px solid var(--ink);border-radius:8px;overflow:hidden}
+.bar-t i{display:block;height:100%;width:0;background:var(--gold)}
+/* Teclado português */
+.kb{display:flex;flex-direction:column;gap:3px;background:var(--ink);padding:6px;border-radius:12px;width:100%}
+.kr{display:flex;gap:3px}
+.k{flex:var(--w,1) 1 0;min-width:0;height:clamp(32px,4.7vw,48px);border:0;border-radius:6px;background:var(--fc,#e8edf8);color:var(--ink);font-family:var(--f-body);font-weight:800;font-size:clamp(11px,1.75vw,18px);position:relative;display:grid;place-items:center;padding:0;cursor:pointer;line-height:1;touch-action:manipulation}
+.k.mod{background:#c5cfe4;font-size:clamp(8px,1.15vw,12px);cursor:default}
+.k.mod.tap{cursor:pointer}
+.k.on{background:#fff;outline:2px solid var(--gold)}
+.k .sh,.k .ag{position:absolute;font-size:.68em;font-weight:800}
+.k .sh{left:3px;top:2px}.k .bs{position:absolute;left:3px;bottom:2px}.k .ag{right:3px;bottom:2px;color:#a01060}
+.k.bump::after{content:"";position:absolute;bottom:4px;left:50%;width:30%;height:3px;margin-left:-15%;background:var(--ink);border-radius:2px}
+.k.next{background:var(--gold);box-shadow:0 0 0 3px #fff;z-index:2;animation:kpulse .8s infinite}
+@keyframes kpulse{50%{box-shadow:0 0 0 5px #ffffff88}}
+.k.hit{background:var(--right)}.k.bad{background:var(--wrong)}
+.tx{font-family:ui-monospace,Consolas,"Courier New",monospace;font-weight:700;font-size:clamp(26px,4.6vw,42px);line-height:1.2;text-align:center;overflow-wrap:anywhere;min-height:1.3em;white-space:pre-wrap}
+.tx .d{color:var(--right)}.tx .c{background:var(--gold);border-radius:5px;padding-inline:3px}.tx .t{color:#9aa7c7}
+.tx .c.sp{outline:3px solid var(--ink);outline-offset:-3px}
+.thint{text-align:center;font-weight:800;font-size:17px;min-height:1.4em}
+.hands{display:flex;justify-content:center}
+.hands svg{width:min(100%,380px);height:auto}
+.tmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:800;font-size:16px}
+.vis{position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0}
+.rain{position:relative;height:clamp(240px,42vh,340px);background:linear-gradient(#1a2a5e,#3f7bff);border-radius:14px;overflow:hidden}
+.rain .ground{position:absolute;left:0;right:0;bottom:0;height:12px;background:var(--gold)}
+.drop{position:absolute;top:0;width:clamp(42px,6vw,54px);height:clamp(42px,6vw,54px);margin-left:-24px;border-radius:50%;background:var(--paper);border:3px solid var(--ink);display:grid;place-items:center;font-family:ui-monospace,Consolas,monospace;font-weight:800;font-size:clamp(22px,3vw,30px);color:var(--ink)}
+.drop.pop{background:var(--right);color:#fff;transition:transform .16s,opacity .16s;transform:scale(1.5);opacity:0}
+.rainbar{display:flex;justify-content:space-between;gap:10px;font-weight:800;flex-wrap:wrap}
+
+
+/* Equipas e professor */
+.narrow2{max-width:720px}.wide{max-width:1180px}
+.tb{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;border:3px solid var(--ink);flex:none}
+.tb svg{width:70%;height:70%}.tb.s{width:30px;height:30px;border-width:2px}
+.tmb{display:flex;align-items:center;gap:6px;background:none;border:2px solid #ffffff55;border-radius:30px;color:var(--paper);font:inherit;font-weight:800;font-size:15px;padding:2px 10px 2px 2px;cursor:pointer;min-width:0;max-width:200px}
+.tmb span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){.tmb span:last-child{display:none}.tmb{padding:2px}}
+.trow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:2px dashed #dbe3f5;padding-bottom:10px}
+.trow .grow{flex:1;min-width:0;display:flex;flex-direction:column}.trow b{font-family:var(--f-display);font-size:22px;line-height:1.1;overflow-wrap:anywhere}.trow span{font-size:15.5px}
+.ttl2{font-size:clamp(28px,4.5vw,38px);color:var(--blue)}.ttl3{font-size:24px;color:var(--blue)}
+.fl{font-weight:800;font-size:17px}
+.fld{font:inherit;font-weight:600;font-size:18px;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:12px;padding:9px 12px;width:100%;min-width:0}
+textarea.fld{font-family:ui-monospace,Consolas,monospace;font-size:13.5px;resize:vertical}
+.picks{display:flex;gap:8px;flex-wrap:wrap}
+.pk{background:none;border:4px solid transparent;border-radius:50%;padding:2px;cursor:pointer}.pk[aria-pressed=true]{border-color:var(--blue)}
+.sw{display:block;width:46px;height:46px;border-radius:50%;border:3px solid var(--ink)}
+.codebox{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all;background:var(--soft);border:3px dashed var(--ink);border-radius:12px;padding:10px 12px;user-select:all;max-height:160px;overflow:auto}
+.prog{display:grid;gap:8px}.prog>div{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr) 60px;gap:10px;align-items:center;font-size:16px}
+.prog b{color:var(--c);font-weight:800}
+.pbar{display:block;height:14px;background:var(--soft);border:2px solid var(--ink);border-radius:8px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--c,var(--blue))}
+.pgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.pgrid{grid-template-columns:minmax(0,1fr)}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-weight:800;font-size:15.5px;border:3px solid var(--ink);border-radius:30px;background:#fff;color:var(--ink);padding:5px 13px;cursor:pointer}.tab[aria-pressed=true]{background:var(--ink);color:#fff}
+.tw{overflow-x:auto;border:3px solid var(--ink);border-radius:12px}
+table.pt{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+table.pt th{background:var(--board-deep);color:#fff;text-align:left;padding:7px 9px;font-weight:800;white-space:nowrap}
+table.pt td{padding:7px 9px;border-top:1px solid #dbe3f5;white-space:nowrap}
+table.pt td.n{text-align:center}table.pt small{color:#5b6a8f;font-size:12.5px}
+table.pt tr.pick{cursor:pointer}table.pt tr.pick:hover td{background:#f0f5ff}table.pt tr.sel td{background:#fff3c4}
+.tn{display:inline-flex;align-items:center;gap:7px;font-weight:800}
+.path{border:3px solid var(--ink);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;background:#fffdf3}
+ol.tl2{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ol.tl2 li{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(60px,180px) 36px;gap:10px;align-items:center;font-size:15.5px}
+@media (max-width:620px){ol.tl2 li{grid-template-columns:minmax(0,1fr) 70px 32px}ol.tl2 .when{grid-column:1/-1;font-size:13.5px}}
+.when{color:#5b6a8f;font-variant-numeric:tabular-nums}
+.mlist{flex-basis:100%;font-size:15px!important;color:#4a5780}
+.mlist2{display:flex;flex-direction:column;gap:8px}
+.mrow{display:grid;grid-template-columns:30px minmax(0,2fr) minmax(0,1fr) auto;gap:8px;align-items:center}
+.mi{width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800}
+@media (max-width:520px){.mrow{grid-template-columns:30px minmax(0,1fr) 84px}.mrow .btn{grid-column:2/-1;justify-self:start}}
+.who{background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:11px 14px;display:flex;flex-direction:column;gap:8px;color:var(--ink)}
+.who b{font-family:var(--f-display);font-size:20px}.who .btn{align-self:flex-start}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{font:inherit;font-weight:800;font-size:16px;border:3px solid var(--ink);border-radius:30px;padding:5px 13px;background:#fff;color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--c,var(--blue));color:#fff}
+.chip[aria-pressed=true]::before{content:"✓ "}
+table.pt td.wr{white-space:normal;min-width:150px;font-size:14px}
+.mem3{display:flex;flex-wrap:wrap;gap:6px}.mem3 span{background:var(--soft);border-radius:10px;padding:4px 9px;font-size:14.5px}.mem3 span.off{opacity:.55}
+ol.tl2 li{grid-template-columns:140px minmax(0,1fr) minmax(0,1.3fr) minmax(60px,150px) 36px!important}
+.whom{font-size:14px;color:#4a5780}
+@media (max-width:620px){ol.tl2 li{grid-template-columns:minmax(0,1fr) 70px 32px!important}ol.tl2 .whom{grid-column:1/-1;order:5}}
+.net{font-size:13.5px;font-weight:800;color:#fff;background:#ffffff2e;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.net.on::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:#7dffb6;margin-right:6px}
+.net.off{background:var(--wrong)}
+@media (max-width:560px){.net{font-size:0;padding:5px}.net.on::before{margin:0}.net.off::after{content:"!";font-size:13px}}
+.rk{display:flex;flex-direction:column;gap:12px}
+table.pt.rank td{font-size:16px}table.pt.rank td.pos{width:44px;text-align:center}
+.med{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;border:2px solid var(--ink);font-weight:800;font-size:15px;background:#fff}
+.med.m1{background:#ffd23f}.med.m2{background:#dfe6f2}.med.m3{background:#f2b27a}
+table.pt.rank tr.me td{background:#fff3c4}
+table.pt.rank td.n b{font-size:17px}
+.tk{background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;color:var(--ink)}
+.tk h3{font-family:var(--f-display);font-size:22px;color:var(--c,var(--blue));margin:0}
+.tk .tw{border-width:2px}
+.small2{font-size:15px}
+.exam{background:#fff3c4;color:#3a2a00;border:3px solid #d99a00;border-radius:14px;padding:10px 14px;font-weight:800;font-size:16.5px}
+.exb{display:inline-block;background:#d99a00;color:#1a1200;font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 9px;white-space:nowrap}
+.exb.s{font-size:11px;padding:1px 6px;vertical-align:middle}
+.keyb{display:flex;flex-direction:column;gap:4px;align-items:flex-start;background:#fff3c4;color:#3a2a00;border:3px dashed #d99a00;border-radius:12px;padding:12px 16px}
+.keyb span{font-weight:700;font-size:15px}
+.keyb b{font-family:ui-monospace,Consolas,monospace;font-size:clamp(34px,6vw,52px);letter-spacing:.12em;line-height:1.1}
+/* Fim */
+.end{align-items:center;text-align:center}
+.end .bit{width:150px}
+.end h2{font-size:clamp(36px,6vw,54px);color:var(--blue)}
+.big{font-family:var(--f-display);font-weight:800;font-size:64px;line-height:1;font-variant-numeric:tabular-nums}
+.bstars{display:flex;gap:6px}
+.bstars svg{width:56px;height:56px;animation:pop .4s cubic-bezier(.3,1.7,.5,1) backwards}
+.bstars svg:nth-child(2){animation-delay:.15s}
+.bstars svg:nth-child(3){animation-delay:.3s}
+@keyframes pop{from{transform:scale(0)}}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.idle{animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="app">
+  <header id="top"></header>
+  <main id="view"></main>
+</div>
+
+<script>
+"use strict";
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const take=(a,n)=>shuffle(a).slice(0,n);
+const view=$("#view"),topbar=$("#top");
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let timers=[];
+const later=(f,ms)=>{const id=setTimeout(f,ms);timers.push(id);return id};
+let leaveFn=null,scr=0;
+const clearAll=()=>{scr++;if(leaveFn){leaveFn();leaveFn=null}timers.forEach(clearTimeout);timers.forEach(clearInterval);timers=[];if(window.speechSynthesis)speechSynthesis.cancel()};
+
+/* --- guardar progresso neste browser --- */
+const KEY="vila-circuito-v1",mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){mem[k]=v;try{localStorage.setItem(k,v)}catch(e){}}};
+const S0=(()=>{try{return JSON.parse(store.get(KEY))||{}}catch(e){return{}}})();
+const S=Object.assign({teams:[],current:null,sound:true,prof:{pin:null,teams:[]},exam:{on:false,max:1}},S0);delete S.exam;if(!S.keyMax)S.keyMax=1;
+if(S0.best&&Object.keys(S0.best).length&&!S.teams.length)S.legacy=S0.best;
+delete S.best;if(!S.prof||!Array.isArray(S.prof.teams))S.prof={pin:null,teams:[]};
+const team=()=>S.teams.find(t=>t.id===S.current)||null;
+Object.defineProperty(S,"best",{get(){const t=team();return t?t.best:{}},enumerable:false});
+const save=()=>store.set(KEY,JSON.stringify(S));
+const totalPts=()=>Object.values(S.best).reduce((a,b)=>a+b,0);
+
+/* --- modo em linha: o jogo publicado com Google Apps Script guarda tudo na Folha de cálculo do professor --- */
+const ONLINE=(()=>{try{return typeof google!=="undefined"&&!!(google.script&&google.script.run)}catch(e){return false}})();
+const NET={ok:null};
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function rpc(fn,...args){return new Promise((res,rej)=>{if(!ONLINE){rej(new Error("sem servidor"));return}
+ const tm=setTimeout(()=>rej(new Error("tempo")),30000);
+ google.script.run.withSuccessHandler(v=>{clearTimeout(tm);try{res(typeof v==="string"?JSON.parse(v):v)}catch(e){rej(e)}}).withFailureHandler(e=>{clearTimeout(tm);rej(e)})[fn](...args)})}
+function setNet(v){NET.ok=v;const d=$("#net");if(!d)return;d.className="net "+(v===false?"off":v?"on":"");d.textContent=v===false?"Sem ligação":v?"Em linha":"A ligar";d.title=v===false?"Os resultados ficam guardados neste computador e são enviados quando a ligação voltar.":"Os resultados vão diretamente para o professor."}
+const sig=()=>JSON.stringify(S.teams.map(t=>[t.id,t.name,t.turma,t.ic,t.col,t.best,(t.members||[]).map(m=>m.n+m.t+(m.out?1:0))]));
+function mergeList(list){const ids=new Set(list.map(t=>t.id));
+ S.teams=S.teams.filter(t=>ids.has(t.id)||(t.dirty&&!t.sv));
+ list.forEach(st=>{const o=S.teams.find(t=>t.id===st.id);if(!o){S.teams.push({...st,best:st.best||{},att:st.att||{},members:st.members||[],play:st.play||{},log:[],sv:1});return}
+  const best={...(st.best||{})};for(const k in o.best)best[k]=Math.max(best[k]??0,o.best[k]);
+  if(o.dirty){o.best=best;o.sv=1;return}
+  Object.assign(o,st,{best,att:st.att||{},members:st.members||[],play:st.play||{},log:o.log||[],sv:1})});
+ if(S.current&&!team())S.current=null}
+async function pull(){if(!ONLINE)return false;const before=sig();try{const r=await rpc("vcList");mergeList(r.teams||[]);setNet(true);save();return sig()!==before}catch(e){setNet(false);return false}}
+let flushing=false;
+function pushTeam(t){if(!ONLINE||!t)return;t.dirty=1;t.ver=(t.ver||0)+1;save();flush()}
+async function flush(){if(!ONLINE||flushing)return;flushing=true;let fail=false;
+ try{for(let pass=0;pass<3;pass++){const todo=S.teams.filter(t=>t.dirty);if(!todo.length)break;
+  for(const t of todo){const v=t.ver,sent=new Set(t.log.filter(l=>!l.s).map(l=>l.i));
+   let r;try{r=await rpc("vcSync",JSON.stringify({id:t.id,name:t.name,turma:t.turma,ic:t.ic,col:t.col,members:t.members,play:t.play,best:t.best,made:t.made,log:t.log.filter(l=>sent.has(l.i))}))}catch(e){fail=true;break}
+   if(r.deleted){S.teams=S.teams.filter(x=>x!==t);if(S.current===t.id)S.current=null;continue}
+   if(!r.team)continue;
+   t.log=t.log.filter(l=>!sent.has(l.i));t.sv=1;
+   const best={...r.team.best};for(const k in t.best)best[k]=Math.max(best[k]??0,t.best[k]);t.best=best;t.att=r.team.att||t.att;
+   if(t.ver===v&&!t.log.length)delete t.dirty}
+  if(fail)break}}
+ finally{flushing=false;save();setNet(!fail)}}
+
+/* --- som --- */
+let ac=null;
+function tone(f,d,at=0,type="triangle",v=.13){if(!S.sound)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+at;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d)}catch(e){}}
+const sfx={ok(){tone(660,.13);tone(880,.2,.1)},no(){tone(260,.16,0,"sine");tone(200,.24,.13,"sine")},tap(){tone(520,.05,0,"square",.04)},win(){[523,659,784,1047,1319].forEach((f,i)=>tone(f,.3,i*.11))}};
+
+/* --- leitura em voz alta, só se houver voz portuguesa --- */
+let ptVoice=null;
+function findVoice(){if(!window.speechSynthesis)return;const v=speechSynthesis.getVoices();ptVoice=v.find(x=>x.lang==="pt-PT")||v.find(x=>x.lang&&x.lang.toLowerCase().startsWith("pt"))||null;document.body.classList.toggle("tts",!!ptVoice)}
+if(window.speechSynthesis){findVoice();speechSynthesis.onvoiceschanged=findVoice}
+function speak(t){if(!ptVoice)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.voice=ptVoice;u.lang=ptVoice.lang;u.rate=.92;speechSynthesis.speak(u)}
+const earIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9zM15 8a5 5 0 0 1 0 8v-2a3 3 0 0 0 0-4z"/></svg>';
+
+/* --- fundo: pistas de cobre da placa --- */
+(()=>{
+  const c=$("#bg"),g=c.getContext("2d");let W,H,paths=[],last=0;
+  function build(){
+    const D=Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;g.setTransform(D,0,0,D,0,0);
+    paths=[];const step=38,n=Math.round(W*H/26000);
+    for(let i=0;i<n;i++){
+      let x=Math.round(Math.random()*W/step)*step,y=Math.round(Math.random()*H/step)*step;const p=[[x,y]];let d=Math.random()<.5?0:1;
+      for(let s=0;s<3+Math.floor(Math.random()*4);s++){const len=step*(2+Math.floor(Math.random()*5))*(Math.random()<.5?-1:1);if(d===0)x+=len;else y+=len;p.push([x,y]);d=1-d}
+      let L=0;for(let k=1;k<p.length;k++)L+=Math.abs(p[k][0]-p[k-1][0])+Math.abs(p[k][1]-p[k-1][1]);
+      paths.push({p,L,o:Math.random(),v:.05+Math.random()*.1});
+    }
+    draw(performance.now());
+  }
+  function at(q,d){for(let k=1;k<q.p.length;k++){const a=q.p[k-1],b=q.p[k],s=Math.abs(b[0]-a[0])+Math.abs(b[1]-a[1]);if(d<=s){const t=d/s;return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]}d-=s}return q.p[q.p.length-1]}
+  function draw(now){
+    g.fillStyle="#0fa37f";g.fillRect(0,0,W,H);g.lineWidth=4;g.lineJoin="round";g.strokeStyle="#35c9a2";g.fillStyle="#35c9a2";
+    paths.forEach(q=>{g.beginPath();q.p.forEach((a,k)=>k?g.lineTo(a[0],a[1]):g.moveTo(a[0],a[1]));g.stroke();[q.p[0],q.p[q.p.length-1]].forEach(a=>{g.beginPath();g.arc(a[0],a[1],7,0,6.3);g.fill()})});
+    g.fillStyle="#ffd23f";paths.forEach(q=>{const[x,y]=at(q,((q.o+now/1000*q.v)%1)*q.L);g.beginPath();g.arc(x,y,4.5,0,6.3);g.fill()});
+  }
+  function loop(n){requestAnimationFrame(loop);if(reduced||n-last<40)return;last=n;draw(n)}
+  addEventListener("resize",build);build();requestAnimationFrame(loop);
+})();
+/* --- confetes --- */
+const confetti=(()=>{
+  const c=$("#fx"),g=c.getContext("2d");let P=[],run=false;
+  const COL=["#ffd23f","#ff4f9a","#3f7bff","#7a4dff","#ffffff"];
+  function step(){g.clearRect(0,0,c.width,c.height);P=P.filter(p=>p.y<innerHeight+20);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.13;p.a+=.2;g.save();g.translate(p.x,p.y);g.rotate(p.a);g.fillStyle=p.c;g.fillRect(-5,-4,10,8);g.restore()});if(P.length)requestAnimationFrame(step);else{run=false;g.clearRect(0,0,c.width,c.height)}}
+  return()=>{if(reduced)return;c.width=innerWidth;c.height=innerHeight;for(let i=0;i<130;i++)P.push({x:innerWidth/2,y:innerHeight*.35,vx:(Math.random()-.5)*16,vy:-Math.random()*12-2,a:Math.random()*6,c:COL[i%5]});if(!run){run=true;step()}};
+})();
+
+/* --- desenhos --- */
+const K='stroke="#172447" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
+const svg=(b,cl="")=>`<svg viewBox="0 0 64 64" class="${cl}" aria-hidden="true">${b}</svg>`;
+const ART={
+ cpu:`<path ${K} fill="none" d="M22 6v8M32 6v8M42 6v8M22 50v8M32 50v8M42 50v8M6 22h8M6 32h8M6 42h8M50 22h8M50 32h8M50 42h8"/><rect x="14" y="14" width="36" height="36" rx="5" fill="#3f7bff" ${K}/><rect x="23" y="23" width="18" height="18" rx="3" fill="#ffd23f" ${K}/>`,
+ ram:`<rect x="4" y="20" width="56" height="22" rx="3" fill="#14b86a" ${K}/><rect x="10" y="25" width="9" height="12" fill="#172447"/><rect x="23" y="25" width="9" height="12" fill="#172447"/><rect x="36" y="25" width="9" height="12" fill="#172447"/><rect x="49" y="25" width="6" height="12" fill="#172447"/><path ${K} fill="none" d="M10 42v7M18 42v7M26 42v7M38 42v7M46 42v7M54 42v7"/>`,
+ ssd:`<rect x="8" y="14" width="48" height="36" rx="6" fill="#c7d3ee" ${K}/><rect x="14" y="21" width="36" height="13" rx="2" fill="#ff4f9a" ${K}/><circle cx="50" cy="43" r="3" fill="#14b86a"/><path ${K} d="M14 43h16" fill="none"/>`,
+ gpu:`<rect x="4" y="16" width="56" height="30" rx="5" fill="#ff4f9a" ${K}/><circle cx="20" cy="31" r="10" fill="#172447"/><circle cx="20" cy="31" r="4" fill="#ffd23f"/><circle cx="44" cy="31" r="10" fill="#172447"/><circle cx="44" cy="31" r="4" fill="#ffd23f"/><path ${K} d="M12 46v7h28v-7" fill="#ffd23f"/>`,
+ psu:`<rect x="8" y="12" width="48" height="40" rx="5" fill="#8a97b8" ${K}/><path d="M35 17 22 35h9l-3 13 13-19h-9z" fill="#ffd23f" ${K}/>`,
+ fan:`<rect x="6" y="6" width="52" height="52" rx="9" fill="#26344f" ${K}/><g class="blades"><path fill="#6fb2ff" d="M32 32c-2-10 2-18 9-19 4 7-1 15-9 19zM32 32c10-2 18 2 19 9-7 4-15-1-19-9zM32 32c2 10-2 18-9 19-4-7 1-15 9-19zM32 32c-10 2-18-2-19-9 7-4 15 1 19 9z"/></g><circle cx="32" cy="32" r="5" fill="#ffd23f" ${K}/>`,
+ mobo:`<rect x="6" y="6" width="52" height="52" rx="4" fill="#0fa37f" ${K}/><rect x="14" y="14" width="16" height="16" fill="#172447"/><rect x="38" y="12" width="5" height="26" fill="#ffd23f"/><rect x="46" y="12" width="5" height="26" fill="#ffd23f"/><rect x="13" y="42" width="38" height="6" fill="#ff4f9a"/><path d="M30 22h8" stroke="#ffd23f" stroke-width="2"/>`,
+ keyboard:`<rect x="3" y="20" width="58" height="28" rx="5" fill="#c7d3ee" ${K}/><g fill="#172447"><rect x="9" y="26" width="6" height="5" rx="1"/><rect x="18" y="26" width="6" height="5" rx="1"/><rect x="27" y="26" width="6" height="5" rx="1"/><rect x="36" y="26" width="6" height="5" rx="1"/><rect x="45" y="26" width="10" height="5" rx="1"/><rect x="9" y="34" width="6" height="5" rx="1"/><rect x="49" y="34" width="6" height="5" rx="1"/><rect x="18" y="34" width="28" height="5" rx="1"/></g>`,
+ mouse:`<rect x="18" y="8" width="28" height="48" rx="14" fill="#c7d3ee" ${K}/><path ${K} fill="none" d="M18 26h28M32 8v18"/><rect x="29" y="13" width="6" height="9" rx="3" fill="#ff4f9a"/>`,
+ mic:`<rect x="22" y="6" width="20" height="32" rx="10" fill="#ff4f9a" ${K}/><path ${K} fill="none" d="M14 28c0 22 36 22 36 0M32 47v9M21 57h22"/>`,
+ webcam:`<circle cx="32" cy="26" r="20" fill="#c7d3ee" ${K}/><circle cx="32" cy="26" r="10" fill="#172447"/><circle cx="35" cy="23" r="3" fill="#6fb2ff"/><path ${K} fill="#8a97b8" d="M20 46h24l4 11H16z"/>`,
+ scanner:`<path ${K} fill="#8a97b8" d="M8 26 14 12h36l6 14z"/><rect x="5" y="26" width="54" height="24" rx="4" fill="#c7d3ee" ${K}/><rect x="11" y="33" width="42" height="5" fill="#35e0ff"/><circle cx="50" cy="44" r="2.5" fill="#14b86a"/>`,
+ gamepad:`<path ${K} fill="#7a4dff" d="M18 18h28c9 0 14 13 14 26 0 9-9 11-14 3l-3-5H21l-3 5c-5 8-14 6-14-3 0-13 5-26 14-26z"/><path stroke="#fff" stroke-width="4" stroke-linecap="round" d="M20 26v10M15 31h10"/><circle cx="42" cy="27" r="3.5" fill="#ffd23f"/><circle cx="49" cy="34" r="3.5" fill="#ff4f9a"/>`,
+ monitor:`<rect x="4" y="8" width="56" height="38" rx="5" fill="#172447" ${K}/><rect x="9" y="13" width="46" height="28" rx="2" fill="#6fb2ff"/><path d="M12 38 24 24l8 9 6-6 13 11z" fill="#14b86a"/><circle cx="46" cy="20" r="3.5" fill="#ffd23f"/><path ${K} fill="#8a97b8" d="M26 46h12l3 10H23z"/>`,
+ speakers:`<rect x="16" y="4" width="32" height="56" rx="6" fill="#26344f" ${K}/><circle cx="32" cy="17" r="6" fill="#c7d3ee"/><circle cx="32" cy="41" r="12" fill="#c7d3ee"/><circle cx="32" cy="41" r="5" fill="#ff4f9a"/>`,
+ printer:`<rect x="17" y="6" width="30" height="18" fill="#fff" ${K}/><rect x="5" y="22" width="54" height="24" rx="5" fill="#c7d3ee" ${K}/><rect x="16" y="38" width="32" height="20" fill="#fff" ${K}/><path ${K} fill="none" d="M22 45h20M22 51h14"/><circle cx="50" cy="30" r="2.5" fill="#14b86a"/>`,
+ headphones:`<path ${K} fill="none" d="M10 38v-6a22 22 0 0 1 44 0v6"/><rect x="5" y="34" width="12" height="22" rx="5" fill="#ff4f9a" ${K}/><rect x="47" y="34" width="12" height="22" rx="5" fill="#ff4f9a" ${K}/>`,
+ headset:`<path ${K} fill="none" d="M10 38v-6a22 22 0 0 1 44 0v6"/><rect x="5" y="34" width="12" height="22" rx="5" fill="#3f7bff" ${K}/><rect x="47" y="34" width="12" height="22" rx="5" fill="#3f7bff" ${K}/><path ${K} fill="none" d="M12 56c2 5 8 6 16 5"/><circle cx="30" cy="60" r="3" fill="#ff4f9a"/>`,
+ tablet:`<rect x="13" y="4" width="38" height="56" rx="6" fill="#172447" ${K}/><rect x="18" y="10" width="28" height="42" fill="#6fb2ff"/><circle cx="32" cy="31" r="8" fill="#ffd23f" opacity=".8"/><path ${K} fill="#ffc9a8" d="M32 32v-9a3 3 0 0 1 6 0v11l6 2c3 1 3 5 2 8l-2 9H30l-8-13c-2-4 3-7 6-3z"/>`,
+ projector:`<path fill="#ffd23f" opacity=".75" d="M36 26 62 12v28z"/><rect x="4" y="22" width="38" height="24" rx="5" fill="#c7d3ee" ${K}/><circle cx="31" cy="34" r="8" fill="#172447"/><circle cx="31" cy="34" r="3.5" fill="#6fb2ff"/><path ${K} fill="none" d="M12 46v6M34 46v6"/>`,
+ shield:`<path ${K} fill="#7a4dff" d="M32 5 54 13v18c0 14-9 23-22 28C19 54 10 45 10 31V13z"/><path stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" d="m21 32 8 8 14-16"/>`,
+ lock:`<path ${K} fill="none" d="M20 28V19a12 12 0 0 1 24 0v9"/><rect x="11" y="28" width="42" height="30" rx="6" fill="#ffd23f" ${K}/><circle cx="32" cy="41" r="4" fill="#172447"/><path stroke="#172447" stroke-width="4" d="M32 42v8"/>`,
+ lens:`<circle cx="26" cy="26" r="18" fill="#dbe6ff" ${K}/><path stroke="#172447" stroke-width="8" stroke-linecap="round" d="m40 40 16 16"/><path stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none" d="M15 24a11 11 0 0 1 10-10"/>`,
+ chat:`<path ${K} fill="#ff4f9a" d="M8 10h48a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H26L14 58V46H8a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4z"/><circle cx="20" cy="28" r="3.5" fill="#fff"/><circle cx="32" cy="28" r="3.5" fill="#fff"/><circle cx="44" cy="28" r="3.5" fill="#fff"/>`,
+ secret:`<rect x="6" y="16" width="52" height="34" rx="5" fill="#ffd23f" ${K}/><path ${K} fill="none" d="m6 20 26 18 26-18"/>`,
+ route:`<rect x="4" y="22" width="16" height="20" rx="3" fill="#ff4f9a" ${K}/><rect x="24" y="16" width="16" height="32" rx="3" fill="#3f7bff" ${K}/><rect x="44" y="22" width="16" height="20" rx="3" fill="#14b86a" ${K}/>`,
+ bag:`<rect x="10" y="20" width="44" height="36" rx="6" fill="#ff8a1f" ${K}/><path ${K} fill="none" d="M22 20v-5a10 10 0 0 1 20 0v5"/><path stroke="#fff" stroke-width="4" stroke-linecap="round" d="M32 30v16M24 38h16"/>`,
+ question:`<circle cx="32" cy="32" r="26" fill="#3f7bff" ${K}/><path stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" d="M23 25a9 9 0 1 1 13 8c-3 2-4 3-4 7"/><circle cx="32" cy="49" r="3.5" fill="#fff"/>`,
+ twin:`<rect x="6" y="12" width="30" height="40" rx="5" fill="#3f7bff" ${K}/><rect x="28" y="12" width="30" height="40" rx="5" fill="#ffd23f" ${K}/>`,
+ chair:`<path ${K} fill="#ff8a1f" d="M18 8h8v28h20v8H18z"/><path ${K} fill="none" d="M32 44v10M18 58h28M32 54l-14 4M32 54l14 4"/>`,
+ eye:`<path ${K} fill="#fff" d="M4 32c8-14 18-20 28-20s20 6 28 20c-8 14-18 20-28 20S12 46 4 32z"/><circle cx="32" cy="32" r="12" fill="#007f8c"/><circle cx="32" cy="32" r="5" fill="#172447"/>`,
+ stretch:`<circle cx="32" cy="12" r="8" fill="#ffc9a8" stroke="#172447" stroke-width="3"/><path ${K} fill="#ff4f9a" d="M23 24h18l3 22H20z"/><path stroke="#172447" stroke-width="5" stroke-linecap="round" d="M23 26 10 6M41 26 54 6M26 46v14M38 46v14"/>`,
+ hands:`<path ${K} fill="#ffc9a8" d="M14 56V30l-6-8 5-3 8 7V8a4 4 0 0 1 8 0v16h2V4a4 4 0 0 1 8 0v20h2V8a4 4 0 0 1 8 0v18h2V14a4 4 0 0 1 8 0v24c0 12-6 18-16 18z"/>`,
+ rain:`<circle cx="18" cy="16" r="11" fill="#fff" stroke="#172447" stroke-width="3"/><circle cx="44" cy="30" r="11" fill="#ffd23f" stroke="#172447" stroke-width="3"/><circle cx="22" cy="48" r="11" fill="#3f7bff" stroke="#172447" stroke-width="3"/>`,
+ accent:`<rect x="10" y="10" width="44" height="44" rx="9" fill="#d2f3f5" stroke="#172447" stroke-width="3"/><path d="M36 14 28 24" stroke="#d9560a" stroke-width="5" stroke-linecap="round"/><path ${K} fill="none" d="M38 48V36a7 7 0 0 0-14 0M38 42c-2-4-14-4-14 2 0 6 11 6 14 0"/>`,
+ mapk:`<rect x="3" y="14" width="58" height="36" rx="5" fill="#d2f3f5" ${K}/><rect x="10" y="22" width="9" height="9" rx="2" fill="#ffc0da"/><rect x="23" y="22" width="9" height="9" rx="2" fill="#c9b8ff"/><rect x="36" y="22" width="9" height="9" rx="2" fill="#aee7ff"/><rect x="18" y="35" width="28" height="8" rx="2" fill="#ffd23f"/>`,
+ tools:`<rect x="10" y="10" width="44" height="44" rx="5" fill="#0fa37f" ${K}/><rect x="20" y="20" width="24" height="24" rx="3" fill="#ffd23f" ${K}/>`
+};
+const icon=(n,c)=>svg(ART[n],c);
+const star=on=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${on?"#ffd23f":"#d9e1f5"}" stroke="#172447" stroke-width="1.6" stroke-linejoin="round" d="M12 2l3 6.6 7.2.8-5.4 4.8 1.5 7.1L12 17.7l-6.3 3.6 1.5-7.1L1.8 9.4 9 8.6z"/></svg>`;
+const starsFor=p=>p>=90?3:p>=60?2:1;
+/* avaliação: métricas a partir do registo de tentativas (o modo avaliação só existe no modo ficheiro) */
+const tries=(t,id)=>(t.log||[]).filter(l=>l.a===id);
+const MET={best:"Melhor pontuação",first:"1.ª tentativa",mean:"Média das tentativas",exam:"Avaliação"};
+function metric(t,id,k){if(k==="best")return t.best[id]??null;const L=tries(t,id);if(k==="exam"){const X=L.filter(l=>l.x);return X.length?Math.max(...X.map(l=>l.p)):null}if(!L.length)return null;if(k==="first")return L[0].p;return Math.round(L.reduce((a,l)=>a+l.p,0)/L.length)}
+/* chave de avaliação: o professor cria-a, vale só no dia em que foi criada e só neste jogo; cada equipa escreve-a (só no modo ficheiro) */
+const KA="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+const dayN=()=>{const d=new Date();return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2026,0,1))/864e5)};
+const kEnc=n=>[Math.floor(n/1024)%32,Math.floor(n/32)%32,n%32].map(i=>KA[i]).join("");
+const kChk=b=>{const h=hash("exam:"+b);return KA[parseInt(h.slice(0,2),36)%32]+KA[parseInt(h.slice(2,4),36)%32]};
+function makeKey(max){const b=kEnc(dayN()*3+(max-1));return "AV-"+b+kChk(b)}
+function readKey(k){const v=String(k).toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^AV/,"").replace(/0/g,"O");if(v.length!==5||[...v].some(c=>!KA.includes(c)))return null;const b=v.slice(0,3);if(kChk(b)!==v.slice(3))return null;const n=b.split("").reduce((a,c)=>a*32+KA.indexOf(c),0);return{id:n,day:Math.floor(n/3),max:n%3+1}}
+const exOf=t=>{if(typeof ONLINE!=="undefined"&&ONLINE)return null;t=t||team();return t&&t.ex&&t.ex.day===dayN()?t.ex:null};
+const examOn=t=>!!exOf(t);
+const examMax=t=>exOf(t)?exOf(t).max:1;
+const exUsed=(t,id)=>{const e=exOf(t);return e?tries(t,id).filter(l=>l.x===e.id).length:0};
+const examLeft=(t,id)=>exOf(t)?Math.max(0,exOf(t).max-exUsed(t,id)):Infinity;
+const examTxt=()=>`Modo avaliação: cada jogo só pode ser jogado ${examMax()===1?"uma vez":examMax()+" vezes"}. ${examMax()===1?"Essa tentativa conta para a avaliação.":"Conta a melhor dessas tentativas."} Pensem bem antes de responder!`;
+
+/* O Bit: chip com cara, ganha um acessório por cada bairro terminado */
+function bit(mood="happy",cl=""){
+  const d=themeDone("comp"),e=themeDone("per"),f=themeDone("seg"),g2=themeDone("erg"),h2=themeDone("dig");
+  const mouth={happy:'<path d="M46 73c6 9 22 9 28 0" fill="none" stroke="#172447" stroke-width="5" stroke-linecap="round"/>',
+    wow:'<ellipse cx="60" cy="76" rx="8" ry="10" fill="#172447"/>',
+    oops:'<path d="M46 80c8-7 20-7 28 0" fill="none" stroke="#172447" stroke-width="5" stroke-linecap="round"/>'}[mood];
+  const pins=[34,52,70,88].map(v=>`<rect x="${v-3}" y="20" width="7" height="12" fill="#e0a400"/><rect x="${v-3}" y="104" width="7" height="12" fill="#e0a400"/><rect x="14" y="${v-3}" width="12" height="7" fill="#e0a400"/><rect x="96" y="${v-3}" width="12" height="7" fill="#e0a400"/>`).join("");
+  return `<svg class="bit ${cl}" viewBox="0 0 122 128" role="img" aria-label="O Bit, um chip com cara simpática">${pins}<rect x="24" y="28" width="74" height="78" rx="16" fill="#ffd23f" stroke="#172447" stroke-width="4"/><circle cx="46" cy="56" r="9" fill="#fff" stroke="#172447" stroke-width="3"/><circle cx="74" cy="56" r="9" fill="#fff" stroke="#172447" stroke-width="3"/><circle cx="48" cy="57" r="4" fill="#172447"/><circle cx="76" cy="57" r="4" fill="#172447"/><circle cx="36" cy="72" r="5" fill="#ff9fc6"/><circle cx="86" cy="72" r="5" fill="#ff9fc6"/>${mouth}
+  ${d?'<path d="M30 30a31 25 0 0 1 62 0z" fill="#ff8a1f" stroke="#172447" stroke-width="4"/><rect x="22" y="26" width="78" height="9" rx="4" fill="#ff8a1f" stroke="#172447" stroke-width="4"/>':""}
+  ${e?'<path d="M20 58V48a41 40 0 0 1 82 0v10" fill="none" stroke="#ff4f9a" stroke-width="7"/><rect x="11" y="50" width="16" height="30" rx="7" fill="#ff4f9a" stroke="#172447" stroke-width="3"/><rect x="95" y="50" width="16" height="30" rx="7" fill="#ff4f9a" stroke="#172447" stroke-width="3"/>':""}
+  ${f?'<g transform="translate(78 74) scale(.65)"><path d="M32 5 54 13v18c0 14-9 23-22 28C19 54 10 45 10 31V13z" fill="#7a4dff" stroke="#172447" stroke-width="4"/><path d="m21 32 8 8 14-16" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>':""}
+  ${g2?'<g fill="none" stroke="#d9560a" stroke-width="4"><circle cx="46" cy="56" r="13"/><circle cx="74" cy="56" r="13"/><path d="M59 56h2"/></g>':""}
+  ${h2?'<g fill="#fff" stroke="#172447" stroke-width="3"><circle cx="16" cy="100" r="11"/><path d="M10 92v-7M16 90v-8M22 92v-7"/></g>':""}</svg>`;
+}
+
+/* --- conteúdo --- */
+const THEMES=[
+ {id:"comp",cl:"t-blue",name:"Dentro do Computador",sub:"Descobre as peças que fazem o computador funcionar.",art:["cpu","ram","fan"],acts:[
+  {id:"monta",n:"Monta o computador",d:"Põe cada peça no sítio certo.",i:"tools",run:Monta},
+  {id:"quem",n:"Quem sou eu?",d:"Lê a pista e encontra a peça.",i:"question",run:Quem},
+  {id:"pares",n:"Jogo dos pares",d:"Junta cada peça ao que faz.",i:"twin",run:Pares}]},
+ {id:"per",cl:"t-pink",name:"Entra e Sai",sub:"Os periféricos levam informação para dentro e para fora.",art:["keyboard","monitor","printer"],acts:[
+  {id:"tapete",n:"Entra ou sai?",d:"Separa os periféricos.",i:"keyboard",run:Tapete},
+  {id:"historia",n:"Ordena a história",d:"Por onde passa a informação?",i:"route",run:Historia},
+  {id:"mochila",n:"Do que precisas?",d:"Escolhe os periféricos certos.",i:"bag",run:Mochila}]},
+ {id:"seg",cl:"t-violet",name:"Escudo Online",sub:"Aprende a proteger-te quando usas a internet.",art:["shield","lock","chat"],acts:[
+  {id:"forte",n:"Forte da palavra-passe",d:"Constrói uma palavra-passe forte.",i:"lock",run:Forte},
+  {id:"guardar",n:"Partilho ou guardo?",d:"O que pode ir para a internet?",i:"secret",run:Guardar},
+  {id:"detetive",n:"Detetive de mensagens",d:"Encontra as pistas de perigo.",i:"lens",run:Detetive},
+  {id:"fazes",n:"O que fazes?",d:"Escolhe a melhor decisão.",i:"chat",run:Fazes}]},
+ {id:"erg",cl:"t-orange",back:"Corpo Feliz",name:"Corpo Feliz",sub:"Aprende a sentar-te bem e a cuidar do corpo ao usar o computador.",art:["chair","eye","stretch"],acts:[
+  {id:"senta",n:"Senta-te bem",d:"Ajusta a cadeira e o ecrã.",i:"chair",run:Senta},
+  {id:"erros",n:"Caça aos erros",d:"O que está mal nesta imagem?",i:"lens",run:ErrosE},
+  {id:"habitos",n:"Bons hábitos",d:"Escolhe o que faz bem ao corpo.",i:"eye",run:Habitos},
+  {id:"pausa",n:"Pausa ativa",d:"Mexe o corpo com o Bit.",i:"stretch",run:Pausa}]},
+ {id:"dig",cl:"t-teal",back:"Dedos Rápidos",name:"Dedos Rápidos",sub:"Treina a escrever no teclado português, com os dedos certos.",art:["mapk","hands","rain"],acts:[
+  {id:"mapa",n:"Mapa do teclado",d:"Onde estão o Ç, o til e o @?",i:"mapk",run:Mapa},
+  {id:"filas",n:"Treino das filas",d:"Fila do meio, de cima e de baixo.",i:"hands",run:Filas},
+  {id:"acentos",n:"Palavras com acento",d:"Escreve á, ã, ç e muito mais.",i:"accent",run:Acentos},
+  {id:"chuva",n:"Chuva de letras",d:"Carrega nas letras antes de caírem.",i:"rain",run:Chuva}]}
+];
+const allActs=THEMES.flatMap(t=>t.acts);
+function themeDone(id){const t=THEMES.find(x=>x.id===id);return t&&t.acts.every(a=>S.best[a.id]!=null)}
+const themeOf=id=>THEMES.find(t=>t.acts.some(a=>a.id===id));
+const actOf=id=>allActs.find(a=>a.id===id);
+
+const PARTS={
+ cpu:{n:"Processador",what:"O processador segue as instruções e dá ordens às outras peças. É o cérebro do computador.",like:"O cérebro",riddle:"Faço as contas e dou ordens às outras peças. Chamam-me o cérebro do computador."},
+ ram:{n:"Memória RAM",what:"A memória RAM guarda o que estás a usar agora. Quando desligas o computador, ela esquece tudo.",like:"A mesa de trabalho",riddle:"Guardo o que estás a usar agora. Quando desligas o computador, esqueço tudo."},
+ ssd:{n:"Disco",what:"O disco guarda as fotos, os jogos e os trabalhos, mesmo com o computador desligado.",like:"O armário",riddle:"Guardo as tuas fotos e os teus jogos, mesmo com o computador desligado."},
+ gpu:{n:"Placa gráfica",what:"A placa gráfica prepara as imagens que aparecem no ecrã.",like:"O pintor",riddle:"Preparo as imagens e os jogos para aparecerem no ecrã."},
+ psu:{n:"Fonte de alimentação",what:"A fonte recebe a eletricidade da tomada e dá energia às outras peças.",like:"Dá energia a todos",riddle:"Recebo a eletricidade da tomada e dou energia às outras peças."},
+ fan:{n:"Ventoinha",what:"A ventoinha faz circular o ar para o computador não aquecer demasiado.",like:"Faz vento e arrefece",riddle:"Giro depressa para o computador não aquecer demasiado."},
+ mobo:{n:"Placa-mãe",what:"Todas as peças se ligam à placa-mãe. É por ela que as peças comunicam.",like:"As estradas da vila",riddle:"Sou uma placa grande. Todas as peças se ligam a mim."}
+};
+
+/* --- moldura das atividades --- */
+let say,curAct;
+function frame(act,intro,body,mood="happy"){
+  view.innerHTML=`<div class="wrap"><div class="talk"><span id="bitbox">${bit(mood)}</span><div class="bubble" id="bub"></div></div>${body}</div>`;
+  say=(t,kind="",btnText,fn)=>{
+    const b=$("#bub");b.className="bubble "+kind;
+    b.innerHTML=`<p></p><div class="bubrow">${btnText?`<button class="btn small" id="go"></button>`:""}<button class="btn small white say" id="ear">${earIcon}Ouvir</button></div>`;
+    $("p",b).textContent=t;$("#ear").onclick=()=>speak(t);
+    $("#bitbox").innerHTML=bit(kind==="right"?"wow":kind==="wrong"?"oops":"happy");
+    if(btnText){const g=$("#go");g.textContent=btnText;g.onclick=fn;g.focus()}
+  };
+  say(intro);
+}
+const dots=(n,marks,cur)=>`<div class="count" aria-label="Pergunta ${cur+1} de ${n}">${Array.from({length:n},(_,k)=>`<i class="${marks[k]===1?"ok":marks[k]===0?"no":k===cur?"cur":""}"></i>`).join("")}</div>`;
+
+/* Motor de perguntas de escolha, usado em várias atividades */
+function choiceGame(act,cfg){
+  const items=cfg.items,n=items.length;let k=0,marks=[],okc=0;
+  frame(act,cfg.intro,`<div class="stage" id="stg"></div>`);
+  function show(){
+    const it=items[k];
+    $("#stg").innerHTML=`${dots(n,marks,k)}${cfg.top(it)}<div class="opts" id="op">${cfg.opts(it).map(o=>`<button class="opt ${cfg.left?"text":""}" data-v="${o.v}">${o.icon?icon(o.icon):""}${o.l}</button>`).join("")}</div>`;
+    if(k>0||!cfg.keepIntro)if(k>0)say(cfg.prompt||cfg.intro);
+    $$("#op .opt").forEach(b=>b.onclick=()=>pick(b));
+  }
+  function pick(b){
+    const it=items[k],right=cfg.answer(it),ok=b.dataset.v===String(right);
+    $$("#op .opt").forEach(x=>{x.disabled=true;if(x.dataset.v===String(right))x.classList.add("right")});
+    if(!ok)b.classList.add("wrong");
+    marks[k]=ok?1:0;if(ok){okc++;sfx.ok()}else sfx.no();
+    if(cfg.anim)cfg.anim(it);
+    const pre=ok?take(["Boa!","Muito bem!","Certo!","Isso mesmo!"],1)[0]:"Quase!";
+    say(`${pre} ${cfg.why(it)}`,ok?"right":"wrong",k<n-1?"Continuar":"Ver os pontos",()=>{k++;if(k<n)show();else finish(act,Math.round(okc/n*100),`Acertaste ${okc} de ${n}.`)});
+  }
+  show();
+}
+
+/* --- atividades: componentes --- */
+const SLOTS=[
+ {k:"fan",x:9,y:8,w:21,h:20,c:"Aqui entra ar fresco"},
+ {k:"cpu",x:37,y:9,w:27,h:25,c:"Aqui fica o cérebro"},
+ {k:"ram",x:70,y:8,w:20,h:27,c:"Mesa de trabalho rápida"},
+ {k:"gpu",x:12,y:39,w:50,h:17,c:"Aqui preparam-se as imagens"},
+ {k:"ssd",x:67,y:40,w:23,h:17,c:"Armário que guarda tudo"},
+ {k:"psu",x:20,y:73,w:60,h:21,c:"Daqui vem a energia"}
+];
+function Monta(act){
+  let sel=null,errs=0,placed=0;
+  frame(act,"Temos as peças fora do computador! Arrasta cada peça para o lugar certo ou toca na peça e depois no lugar.",`
+  <div class="stage"><div class="casewrap"><div class="case" id="case"><div class="mobo"></div><span class="mobo-l">Placa-mãe: liga todas as peças</span>${SLOTS.map(s=>`<button class="slot" data-k="${s.k}" style="left:${s.x}%;top:${s.y}%;width:${s.w}%;height:${s.h}%">${s.c}</button>`).join("")}<i class="led"></i></div>
+  <div class="tray" id="tray">${shuffle(SLOTS).map(s=>`<button class="piece" data-k="${s.k}">${icon(s.k)}${PARTS[s.k].n}</button>`).join("")}</div></div></div>`);
+  function place(pk,slot){
+    if(slot.dataset.k!==pk){errs++;sfx.no();slot.classList.remove("shake");void slot.offsetWidth;slot.classList.add("shake");say(`A peça ${PARTS[pk].n} não vai aí. Lê bem a pista do lugar.`,"wrong");return}
+    sfx.ok();placed++;slot.classList.add("full");slot.innerHTML=`${icon(pk)}<span>${PARTS[pk].n}</span>`;slot.disabled=true;
+    $(`.piece[data-k="${pk}"]`).classList.add("used");sel=null;
+    if(placed<6)say(PARTS[pk].what,"right");
+    else say("Está tudo montado! Carrega no botão para ligar o computador.","right","Ligar o computador",powerOn);
+  }
+  function powerOn(){
+    $("#case").classList.add("power");sfx.win();say("Funciona! Todas as peças estão a trabalhar em conjunto.","right");
+    later(()=>finish(act,Math.max(40,100-8*errs),errs?`Fizeste ${errs} tentativa${errs>1?"s":""} errada${errs>1?"s":""}.`:"Sem nenhum erro!"),1700);
+  }
+  $$(".slot").forEach(s=>s.onclick=()=>{if(sel)place(sel,s);else say("Primeiro escolhe uma peça.")});
+  $$(".piece").forEach(p=>{
+    let start=null,ghost=null,dragged=false;
+    p.onclick=()=>{if(dragged){dragged=false;return}sel=p.dataset.k;$$(".piece").forEach(x=>x.classList.toggle("sel",x===p));sfx.tap();say(`Escolheste: ${PARTS[sel].n}. Agora toca no lugar certo.`)};
+    p.onpointerdown=e=>{start=[e.clientX,e.clientY];
+      const mv=m=>{if(!start)return;if(!ghost&&Math.hypot(m.clientX-start[0],m.clientY-start[1])>7){ghost=p.cloneNode(true);ghost.classList.add("ghostp");document.body.append(ghost);dragged=true}
+        if(ghost){ghost.style.left=m.clientX+"px";ghost.style.top=m.clientY+"px";$$(".slot").forEach(s=>s.classList.remove("drop"));const h=document.elementFromPoint(m.clientX,m.clientY);const sl=h&&h.closest(".slot:not(.full)");if(sl)sl.classList.add("drop")}};
+      const up=m=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);removeEventListener("pointercancel",up);start=null;
+        if(ghost){ghost.remove();ghost=null;$$(".slot").forEach(s=>s.classList.remove("drop"));const h=document.elementFromPoint(m.clientX,m.clientY);const sl=h&&h.closest(".slot:not(.full)");if(sl)place(p.dataset.k,sl);later(()=>dragged=false,60)}};
+      addEventListener("pointermove",mv);addEventListener("pointerup",up);addEventListener("pointercancel",up)};
+  });
+}
+function Quem(act){
+  const keys=shuffle(Object.keys(PARTS));
+  choiceGame(act,{intro:"Sou uma peça do computador. Lê a pista e descobre quem sou!",prompt:"Lê a pista. Quem sou eu?",items:keys,
+   top:k=>`<div class="q">${PARTS[k].riddle}</div>`,
+   opts:k=>shuffle([k,...take(keys.filter(x=>x!==k),2)]).map(v=>({v,l:PARTS[v].n,icon:v})),
+   answer:k=>k,why:k=>`É a peça ${PARTS[k].n}.`});
+}
+function Pares(act){
+  const keys=take(Object.keys(PARTS),6);let miss=0,open=[],lock=false,got=0;
+  const cards=shuffle(keys.flatMap(k=>[{k,t:"p"},{k,t:"l"}]));
+  frame(act,"Vira duas cartas. Junta cada peça ao que ela faz ou com o que se parece.",`<div class="stage"><div class="pairs">${cards.map((c,i)=>`<button class="flip" data-i="${i}" aria-label="Carta ${i+1}"><span class="in"><span class="face front">${icon("mobo")}</span><span class="face back">${c.t==="p"?icon(c.k)+`<span>${PARTS[c.k].n}</span>`:`<span>${PARTS[c.k].like}</span>`}</span></span></button>`).join("")}</div></div>`);
+  $$(".flip").forEach(b=>b.onclick=()=>{
+    if(lock||b.classList.contains("up"))return;b.classList.add("up");sfx.tap();open.push(b);
+    if(open.length<2)return;
+    const [a,c]=open,A=cards[+a.dataset.i],C=cards[+c.dataset.i];open=[];
+    if(A.k===C.k){a.classList.add("done");c.classList.add("done");a.disabled=c.disabled=true;got++;sfx.ok();
+      if(got<6)say(PARTS[A.k].what,"right");
+      else say("Encontraste todos os pares!","right","Ver os pontos",()=>finish(act,Math.max(40,100-Math.max(0,miss-4)*8),`Viraste as cartas erradas ${miss} vez${miss===1?"":"es"}.`));
+    }else{miss++;lock=true;later(()=>{a.classList.remove("up");c.classList.remove("up");lock=false},900)}
+  });
+}
+
+/* --- atividades: periféricos --- */
+const DEV=[
+ ["keyboard","Teclado","in","Carregas nas teclas e as letras entram no computador."],
+ ["mouse","Rato","in","Os teus movimentos e cliques entram no computador."],
+ ["mic","Microfone","in","A tua voz entra no computador."],
+ ["webcam","Câmara web","in","A imagem que a câmara capta entra no computador."],
+ ["scanner","Digitalizador","in","Um desenho em papel entra no computador como imagem."],
+ ["gamepad","Comando de jogos","in","Os botões que carregas enviam ordens para o computador."],
+ ["monitor","Monitor","out","O computador mostra-te as imagens no monitor."],
+ ["speakers","Colunas","out","O som sai do computador pelas colunas."],
+ ["printer","Impressora","out","A informação sai do computador para o papel."],
+ ["headphones","Auscultadores","out","O som sai do computador para os teus ouvidos."],
+ ["projector","Projetor","out","O computador mostra a imagem numa parede ou numa tela."],
+ ["tablet","Ecrã tátil","both","Mostra imagens, por isso é de saída. Sente os teus dedos, por isso também é de entrada."],
+ ["headset","Auscultadores com microfone","both","O som sai para os ouvidos e a tua voz entra pelo microfone."]
+];
+const KIND={in:"Entrada",out:"Saída",both:"Entrada e saída"};
+function Tapete(act){
+  const items=shuffle([...take(DEV.filter(d=>d[2]==="in"),5),...take(DEV.filter(d=>d[2]==="out"),5),...DEV.filter(d=>d[2]==="both")]);
+  choiceGame(act,{intro:"Entrada leva informação para dentro do computador. Saída traz informação para fora. Para onde vai este periférico?",prompt:"Este periférico é de entrada ou de saída?",items,
+   top:d=>`<div class="belt"><div class="side">ENTRADA<br>para dentro</div><div class="pc">${icon("monitor")}</div><div class="side">SAÍDA<br>para fora</div></div><div class="item" id="thing">${icon(d[0])}<b>${d[1]}</b></div>`,
+   opts:()=>["in","out","both"].map(v=>({v,l:KIND[v]})),answer:d=>d[2],why:d=>`${d[1]}: ${KIND[d[2]].toLowerCase()}. ${d[3]}`,
+   anim:d=>{const t=$("#thing");if(!t||reduced)return;t.classList.add(d[2]==="in"?"fly-in":d[2]==="out"?"fly-out":"fly-both")}});
+}
+const STORIES=[
+ {t:"Queres escrever o teu nome.",s:[["keyboard","Carregas nas teclas do teclado."],["cpu","O processador recebe as letras."],["monitor","O teu nome aparece no monitor."]]},
+ {t:"Queres imprimir um desenho que está no computador.",s:[["mouse","Clicas em Imprimir com o rato."],["cpu","O processador prepara o desenho."],["printer","A impressora põe o desenho no papel."]]},
+ {t:"Queres ouvir a tua voz gravada.",s:[["mic","Falas para o microfone."],["cpu","O computador trata o som e guarda-o."],["speakers","Ouves a tua voz nas colunas."]]},
+ {t:"Queres passar uma fotografia em papel para o ecrã.",s:[["scanner","O digitalizador lê a fotografia."],["cpu","O processador trata a imagem."],["monitor","A fotografia aparece no monitor."]]}
+];
+function Historia(act){
+  let r=0,pts=0;const LAB=["1. Entra","2. Processa","3. Sai"];
+  frame(act,"A informação faz sempre uma viagem: entra, é processada e sai. Toca nos cartões pela ordem certa.",`<div class="stage" id="stg"></div>`);
+  function show(){
+    const st=STORIES[r];let step=0,err=0;
+    $("#stg").innerHTML=`${dots(4,Array(r).fill(1),r)}<div class="q">${st.t}</div><div class="track">${LAB.map((l,i)=>`<div class="spot" id="sp${i}"><small>${l}</small></div>`).join("")}</div><div class="opts" id="op">${shuffle(st.s.map((x,i)=>({x,i}))).map(o=>`<button class="opt" data-i="${o.i}">${icon(o.x[0])}${o.x[1]}</button>`).join("")}</div>`;
+    if(r)say("Toca nos cartões pela ordem certa.");
+    $$("#op .opt").forEach(b=>b.onclick=()=>{
+      if(+b.dataset.i!==step){err++;sfx.no();b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake");say("Pensa bem: o que acontece primeiro?","wrong");return}
+      sfx.ok();const sp=$("#sp"+step);sp.classList.add("full");sp.innerHTML=`<small>${LAB[step]}</small>${icon(st.s[step][0])}${st.s[step][1]}`;b.style.visibility="hidden";step++;
+      if(step<3)say("Boa! E depois?","right");
+      else{pts+=Math.max(10,25-8*err);say("A informação chegou ao fim da viagem!","right",r<3?"Próxima história":"Ver os pontos",()=>{r++;if(r<4)show();else finish(act,pts,"Completaste 4 histórias.")})}
+    });
+  }
+  show();
+}
+const NEEDS=[
+ {t:"A Rita quer fazer uma videochamada com a avó. Ela tem de ver, ouvir e ser vista e ouvida.",o:["mic","webcam","speakers","printer","scanner","gamepad"],a:["mic","webcam","speakers"],w:"Precisa do microfone e da câmara para enviar a voz e a imagem, e das colunas para ouvir a avó."},
+ {t:"O Tiago quer passar um desenho em papel para o computador e imprimir uma cópia.",o:["scanner","printer","mic","speakers","gamepad","headphones"],a:["scanner","printer"],w:"O digitalizador faz o desenho entrar e a impressora faz a cópia sair."},
+ {t:"A Inês quer escrever uma história e entregá-la em papel.",o:["keyboard","printer","speakers","gamepad","webcam","projector"],a:["keyboard","printer"],w:"Escreve com o teclado e imprime com a impressora."},
+ {t:"O João quer gravar uma canção e ouvi-la a seguir sem incomodar ninguém.",o:["mic","headphones","printer","scanner","projector","gamepad"],a:["mic","headphones"],w:"O microfone grava e os auscultadores deixam-no ouvir sozinho."},
+ {t:"A professora quer mostrar imagens na parede para toda a turma ver.",o:["projector","scanner","mic","printer","gamepad","headset"],a:["projector"],w:"O projetor mostra a imagem na parede."}
+];
+function Mochila(act){
+  let r=0,pts=0;const marks=[];
+  frame(act,"Lê o que cada pessoa quer fazer. Escolhe só os periféricos de que precisa.",`<div class="stage" id="stg"></div>`);
+  function show(){
+    const q=NEEDS[r],name=k=>DEV.find(d=>d[0]===k)[1];
+    $("#stg").innerHTML=`${dots(5,marks,r)}<div class="q">${q.t}</div><div class="opts six" id="op">${shuffle(q.o).map(k=>`<button class="opt" data-k="${k}" aria-pressed="false">${icon(k)}${name(k)}</button>`).join("")}</div><div class="row"><button class="btn" id="chk">Confirmar</button></div>`;
+    if(r)say("Do que precisa esta pessoa?");
+    $$("#op .opt").forEach(b=>b.onclick=()=>{const on=b.classList.toggle("sel");b.setAttribute("aria-pressed",on);sfx.tap()});
+    $("#chk").onclick=()=>{
+      const sel=$$("#op .opt.sel").map(b=>b.dataset.k),ok=sel.length===q.a.length&&q.a.every(k=>sel.includes(k));
+      $$("#op .opt").forEach(b=>{b.disabled=true;b.classList.remove("sel");if(q.a.includes(b.dataset.k))b.classList.add("right");else if(sel.includes(b.dataset.k))b.classList.add("wrong")});
+      $("#chk").disabled=true;marks[r]=ok?1:0;if(ok){pts+=20;sfx.ok()}else sfx.no();
+      say(`${ok?"Certo!":"Quase!"} ${q.w}`,ok?"right":"wrong",r<4?"Continuar":"Ver os pontos",()=>{r++;if(r<5)show();else finish(act,pts,`Acertaste ${pts/20} de 5.`)});
+    };
+  }
+  show();
+}
+
+/* --- atividades: segurança --- */
+const RULES=[["Tem pelo menos 12 letras, números ou símbolos",p=>p.length>=12],["Tem letra maiúscula",p=>/[A-Z]/.test(p)],["Tem letra minúscula",p=>/[a-z]/.test(p)],["Tem número",p=>/[0-9]/.test(p)],["Tem símbolo",p=>/[^A-Za-z0-9]/.test(p)]];
+const TILES=["Dragao","nuvem","Pizza","salto","Lua","verde","7","42","19","#","!","?"];
+const TRAPS=[["O teu nome","O teu nome é fácil de adivinhar. Não uses."],["O teu aniversário","Muita gente sabe quando fazes anos. Não uses."],["123456","É das palavras-passe mais fáceis de descobrir. Não uses."],["O nome do teu cão","Quem te conhece sabe isto. Não uses."]];
+function Forte(act){
+  let pw="",parts=[],traps=0;
+  frame(act,"Constrói uma palavra-passe forte com os blocos. Cada regra cumprida levanta o castelo. Isto é só para treinar: não uses esta palavra-passe a sério.",`
+  <div class="stage"><div class="forge"><div style="display:flex;flex-direction:column;gap:13px;min-width:0"><div class="pw" id="pw"></div><div class="tiles" id="tiles">${shuffle([...TILES.map(t=>`<button class="tile" data-t="${t}">${t}</button>`),...TRAPS.map((t,i)=>`<button class="tile trap" data-trap="${i}">${t[0]}</button>`)]).join("")}</div><div class="row" style="justify-content:flex-start"><button class="btn small white" id="undo">Apagar o último</button><button class="btn" id="done" disabled>Fechar o castelo</button></div></div>
+  <div style="display:flex;flex-direction:column;gap:12px"><div class="fort" id="fort"></div><ul class="rules" id="rules"></ul></div></div></div>`);
+  function castle(n){
+    const row=(i,c)=>`<rect x="${20+i*8}" y="${130-(i+1)*22}" width="${160-i*16}" height="20" fill="${c}" stroke="#172447" stroke-width="3" opacity="${i<n?1:.12}"/>`;
+    const flag=n>=5?'<path d="M100 22V2" stroke="#172447" stroke-width="3"/><path d="M100 2h26l-7 7 7 7h-26z" fill="#ff4f9a" stroke="#172447" stroke-width="2"/>':"";
+    return `<svg viewBox="0 0 200 134" role="img" aria-label="Castelo com ${n} de 5 andares"><rect y="128" width="200" height="6" fill="#14b86a"/>${["#7a4dff","#8f69ff","#a487ff","#baa4ff","#d1c2ff"].map((c,i)=>row(i,c)).join("")}${flag}</svg>`;
+  }
+  function ui(){
+    const p=$("#pw");p.textContent=pw||"A tua palavra-passe aparece aqui";p.classList.toggle("empty",!pw);
+    const res=RULES.map(r=>r[1](pw)),n=res.filter(Boolean).length;
+    $("#rules").innerHTML=RULES.map((r,i)=>`<li class="${res[i]?"ok":""}"><i>${res[i]?"✓":""}</i>${r[0]}</li>`).join("");
+    $("#fort").innerHTML=castle(n);$("#done").disabled=n<5;
+  }
+  $$(".tile").forEach(b=>b.onclick=()=>{
+    if(b.dataset.trap!=null){const t=TRAPS[+b.dataset.trap];traps++;sfx.no();b.disabled=true;say(t[1],"wrong");return}
+    parts.push(b.dataset.t);pw=parts.join("");sfx.tap();say("Boa peça! Continua a construir.");ui();
+  });
+  $("#undo").onclick=()=>{parts.pop();pw=parts.join("");sfx.tap();ui()};
+  $("#done").onclick=()=>{sfx.ok();$("#done").disabled=true;$$(".tile").forEach(b=>b.disabled=true);
+    say("Castelo fechado! A palavra-passe verdadeira é só tua. Podes dizê-la aos teus pais, mais a ninguém.","right","Ver os pontos",()=>finish(act,Math.max(40,100-traps*15),traps?`Tocaste em ${traps} bloco${traps>1?"s":""} perigoso${traps>1?"s":""}.`:"Não tocaste em nenhum bloco perigoso."))};
+  ui();
+}
+const INFO=[
+ ["A tua cor preferida",1,"Não diz quem és nem onde estás."],
+ ["O teu animal preferido",1,"É uma informação que não te põe em perigo."],
+ ["O desenho de um dragão que inventaste",1,"Podes partilhar, desde que não tenha o teu nome completo ou a tua morada."],
+ ["O teu filme preferido",1,"Não ajuda ninguém a saber quem és."],
+ ["A tua morada",0,"Quem a souber pode descobrir onde moras."],
+ ["O número do teu telemóvel",0,"Desconhecidos poderiam contactar-te."],
+ ["A tua palavra-passe",0,"É como a chave de casa. Só os teus pais a podem saber."],
+ ["O nome da tua escola",0,"Ajuda desconhecidos a saber onde estás todos os dias."],
+ ["Uma fotografia tua com a camisola da escola",0,"A fotografia mostra quem és e onde andas."],
+ ["O sítio onde estás neste momento",0,"Ninguém desconhecido precisa de saber onde estás."],
+ ["Os números do cartão bancário dos teus pais",0,"Alguém poderia usá-los para gastar o dinheiro deles."],
+ ["Que estás sozinho em casa",0,"É uma informação perigosa. Guarda-a só para ti."]
+];
+function Guardar(act){
+  const items=shuffle([...take(INFO.filter(i=>i[1]),4),...take(INFO.filter(i=>!i[1]),6)]);
+  choiceGame(act,{intro:"Imagina que estás a jogar online com pessoas que não conheces. Podes partilhar isto?",prompt:"Com desconhecidos online, partilhas ou guardas?",items,
+   top:i=>`<div class="q" style="text-align:center;min-height:2.4em;display:grid;place-items:center">${i[0]}</div>`,
+   opts:()=>[{v:1,l:"Posso partilhar"},{v:0,l:"Guardo só para mim"}],answer:i=>i[1],why:i=>i[2]});
+}
+const MSGS=[
+ {from:"Número desconhecido",segs:[{t:"Olá!"},{t:"PARABÉNS! Ganhaste um telemóvel grátis!",c:"Não entraste em nenhum concurso. Prémios surpresa são um truque."},{t:"Clica já em premios-gratis.example",c:"Um endereço estranho pode levar-te a um sítio perigoso."},{t:"Tens de indicar a tua morada e o teu nome.",c:"Nunca dês dados pessoais a quem não conheces."},{t:"Até breve!"}]},
+ {from:"Apoio do Jogo",segs:[{t:"Caro jogador,"},{t:"A tua conta vai ser apagada dentro de 5 minutos!",c:"Quem te quer enganar assusta-te e obriga-te a ter pressa."},{t:"Para a salvar, envia-nos a tua palavra-passe.",c:"Nenhuma empresa séria te pede a palavra-passe."},{t:"Não contes a ninguém ou perdes tudo.",c:"Se te pedem segredo, desconfia e conta a um adulto."},{t:"Obrigado."}]},
+ {from:"Super_Amigo_11",segs:[{t:"Olá, gostei de jogar contigo."},{t:"Tenho 11 anos como tu, mas podes mandar-me uma foto?",c:"Online, qualquer pessoa pode mentir sobre a idade. Não envies fotografias."},{t:"Dou-te 1000 moedas do jogo se me disseres onde moras.",c:"Oferecer prendas em troca de informação é um truque perigoso."},{t:"Não digas nada aos teus pais.",c:"Um verdadeiro amigo nunca te pede para esconderes coisas dos teus pais."},{t:"Até logo."}]}
+];
+function Detetive(act){
+  let r=0,pts=0;
+  frame(act,"Sou o detetive Bit! Em cada mensagem há 3 pistas de perigo. Toca nas frases perigosas.",`<div class="stage" id="stg"></div>`);
+  function show(){
+    const m=MSGS[r],need=m.segs.filter(s=>s.c).length;let got=0,err=0;
+    $("#stg").innerHTML=`${dots(3,Array(r).fill(1),r)}<div class="phone"><header>${m.from}</header><div class="msg">${m.segs.map((s,i)=>`<button class="seg" data-i="${i}">${s.t}</button>`).join(" ")}</div></div><div class="q" style="text-align:center;font-size:22px" id="fnd">Pistas encontradas: 0 de ${need}</div>`;
+    if(r)say("Nova mensagem! Encontra as 3 pistas de perigo.");
+    $$(".seg").forEach(b=>b.onclick=()=>{
+      const s=m.segs[+b.dataset.i];b.disabled=true;
+      if(!s.c){err++;b.classList.add("fine");sfx.no();say("Essa parte parece normal. Procura outra.","wrong");return}
+      got++;b.classList.add("found");sfx.ok();$("#fnd").textContent=`Pistas encontradas: ${got} de ${need}`;
+      if(got<need)say(s.c,"right");
+      else{pts+=Math.max(14,r===2?34:33-5*err);$$(".seg").forEach(x=>x.disabled=true);say(`${s.c} Se receberes uma mensagem assim, não cliques, não respondas e conta a um adulto.`,"right",r<2?"Próxima mensagem":"Ver os pontos",()=>{r++;if(r<3)show();else finish(act,Math.min(100,pts),"Analisaste 3 mensagens perigosas.")})}
+    });
+  }
+  show();
+}
+const CASES=[
+ {t:"Alguém te envia mensagens más todos os dias num jogo.",o:["Guardo as mensagens, bloqueio essa pessoa e conto a um adulto.","Respondo com mensagens ainda piores.","Não digo nada a ninguém."],w:"Não estás sozinho. Bloquear e contar a um adulto é o melhor caminho."},
+ {t:"Uma pessoa que conheceste online quer encontrar-se contigo.",o:["Digo que não e conto logo aos meus pais.","Vou sem dizer a ninguém.","Dou-lhe a minha morada."],w:"Quem conheces online pode não ser quem diz. Conta sempre a um adulto."},
+ {t:"Aparece um aviso: O teu computador tem um vírus! Clica aqui!",o:["Não clico e chamo um adulto.","Clico logo para resolver.","Escrevo a minha palavra-passe."],w:"Estes avisos costumam ser truques. Não cliques e pede ajuda."},
+ {t:"Um jogo pede dinheiro para comprares moedas.",o:["Peço primeiro autorização aos meus pais.","Uso o cartão dos meus pais sem dizer.","Compro sem ler."],w:"As compras só com autorização de um adulto."},
+ {t:"Um colega publica uma fotografia tua que não querias que ninguém visse.",o:["Peço-lhe para a apagar e conto a um adulto.","Publico uma fotografia dele para me vingar.","Fico calado e triste."],w:"As fotografias de alguém só se publicam com autorização dessa pessoa."},
+ {t:"Acabaste de usar a tua conta num computador da escola.",o:["Termino a sessão antes de sair.","Deixo a conta aberta.","Escrevo a palavra-passe num papel e deixo-o na mesa."],w:"Termina sempre a sessão, para ninguém usar a tua conta."},
+ {t:"Encontras uma notícia incrível na internet.",o:["Confirmo noutros sítios de confiança antes de partilhar.","Partilho logo com toda a gente.","Acredito porque tem uma fotografia."],w:"Nem tudo o que está na internet é verdade. Confirma primeiro."}
+];
+function Fazes(act){
+  const items=take(CASES,6);
+  choiceGame(act,{intro:"Lê o que aconteceu. Qual é a melhor decisão?",prompt:"Qual é a melhor decisão?",items,
+   left:true,top:c=>`<div class="q">${c.t}</div>`,opts:c=>shuffle(c.o.map((l,i)=>({v:i,l}))),answer:()=>0,why:c=>c.w});
+}
+
+/* --- ergonomia --- */
+function ergoScene(v,extra=""){
+ const F=350,h=v.h,sY=F-h,st=v.straight;
+ const hip=[132,sY-8],sh=st?[140,sY-112]:[186,sY-88],head=st?[150,sY-152]:[224,sY-110];
+ const kx=hip[0]+98,ky=h>=110?sY-8:F-118,fy=Math.min(F-8,ky+112);
+ const el=[sh[0]+14,sh[1]+72],hand=[Math.max(el[0]+70,262),192];
+ const mx=head[0]+12+v.cm*2.4,top=120-v.stand;
+ const wrist=v.wrist?`<path d="M${hand[0]-10} ${hand[1]-2}h34" stroke="#ffc9a8" stroke-width="11" stroke-linecap="round"/>`:`<path d="M${hand[0]-10} ${hand[1]+3}l20-14l22 8" fill="none" stroke="#ffc9a8" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>`;
+ return `<svg viewBox="0 0 520 380" role="img" aria-label="Aluno sentado ao computador"><rect width="520" height="350" fill="#eaf2ff"/><rect y="350" width="520" height="30" fill="#c9a77c"/>
+ ${v.glare?'<rect x="430" y="18" width="78" height="100" fill="#fff4b0" stroke="#172447" stroke-width="4"/><path d="M469 18v100M430 68h78" stroke="#172447" stroke-width="3"/><path d="M430 90 '+(mx+12)+' '+(top+30)+'" stroke="#ffb000" stroke-width="6" stroke-dasharray="12 8"/>':""}
+ <rect x="245" y="200" width="265" height="12" fill="#a06a3b" stroke="#172447" stroke-width="3"/><rect x="480" y="212" width="12" height="138" fill="#a06a3b" stroke="#172447" stroke-width="3"/>
+ <rect x="82" y="${sY}" width="104" height="14" rx="6" fill="#3f7bff" stroke="#172447" stroke-width="3"/><rect x="84" y="${sY-118}" width="14" height="124" rx="6" fill="#3f7bff" stroke="#172447" stroke-width="3"/><path d="M134 ${sY+14}V340M100 346h68" stroke="#172447" stroke-width="7" stroke-linecap="round"/>
+ <rect x="${mx+6-(v.stand>0?0:0)}" y="${top+70}" width="8" height="${200-top-70}" fill="#26344f"/><rect x="${mx-12}" y="192" width="46" height="8" fill="#26344f"/><rect x="${mx}" y="${top}" width="16" height="72" rx="3" fill="#172447"/><rect x="${mx-3}" y="${top+4}" width="5" height="64" fill="${v.glare?"#fff4b0":"#6fb2ff"}"/>
+ <rect x="256" y="192" width="76" height="8" rx="2" fill="#c5cfe4" stroke="#172447" stroke-width="2"/>
+ <path d="M${kx} ${ky}V${fy}" stroke="#26344f" stroke-width="20" stroke-linecap="round"/><path d="M${hip[0]} ${hip[1]}L${kx} ${ky}" stroke="#26344f" stroke-width="24" stroke-linecap="round"/><rect x="${kx-10}" y="${fy-2}" width="40" height="11" rx="5" fill="#ff4f9a" stroke="#172447" stroke-width="2"/>
+ <path d="M${hip[0]} ${hip[1]}Q${st?hip[0]+2:hip[0]+16} ${(hip[1]+sh[1])/2-(st?0:26)} ${sh[0]} ${sh[1]}" stroke="#ff8a1f" stroke-width="42" fill="none" stroke-linecap="round"/>
+ <circle cx="${head[0]}" cy="${head[1]}" r="27" fill="#ffc9a8" stroke="#172447" stroke-width="3"/><path d="M${head[0]-27} ${head[1]-4}a27 27 0 0 1 46-16l-12 10z" fill="#5a3a22"/><circle cx="${head[0]+13}" cy="${head[1]-3}" r="3.5" fill="#172447"/>
+ ${v.lines?`<path d="M${head[0]+14} ${head[1]-3}L${mx} ${top+10}" stroke="#14b86a" stroke-width="2" stroke-dasharray="6 6"/>`:""}
+ <path d="M${sh[0]} ${sh[1]}L${el[0]} ${el[1]}L${hand[0]-10} ${hand[1]+(v.wrist?-2:3)}" stroke="#ff8a1f" stroke-width="17" fill="none" stroke-linecap="round" stroke-linejoin="round"/>${wrist}${extra}</svg>`;
+}
+function ergoRules(v){const eye=350-v.h-(v.straight?152:110),top=120-v.stand;return[
+ [v.h>=104&&v.h<=118,"Pés apoiados no chão","Os pés devem ficar bem apoiados no chão. Se não chegares, usa um apoio."],
+ [v.h>=100&&v.h<=120,"Braços à altura da mesa","Os antebraços ficam mais ou menos direitos, ao nível do teclado."],
+ [v.straight,"Costas apoiadas","Senta-te bem para trás e encosta as costas à cadeira."],
+ [v.wrist,"Pulsos direitos","Os pulsos não devem ficar dobrados."],
+ [Math.abs(top-eye)<=16,"Olhos perto do topo do ecrã","Assim não precisas de dobrar o pescoço."],
+ [v.cm>=45&&v.cm<=70,"Ecrã à distância de um braço","Se esticares o braço, os dedos quase tocam no ecrã."]]}
+function Senta(act){const v={h:160,stand:2,cm:32,straight:false,wrist:false,lines:true};let tries=0,shown=false;
+ frame(act,"Este aluno está muito desconfortável. Mexe nos controlos e, quando achares que está bem, carrega em Verificar.",`<div class="stage"><div class="ergo"><div id="sc"></div><div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+ <div class="ctl"><label for="eh">Altura da cadeira</label><input type="range" id="eh" min="70" max="175" value="${v.h}"></div>
+ <div class="ctl"><label for="es">Altura do ecrã</label><input type="range" id="es" min="0" max="80" value="${v.stand}"></div>
+ <div class="ctl"><label for="ec">Distância ao ecrã <output id="eo"></output></label><input type="range" id="ec" min="25" max="95" value="${v.cm}"></div>
+ <button class="tgl" id="tb" aria-pressed="false">Costas: dobradas</button><button class="tgl" id="tw" aria-pressed="false">Pulsos: dobrados</button>
+ <button class="btn" id="ok">Verificar</button><ul class="ruleg" id="rl"></ul></div></div></div>`);
+ function draw(){$("#sc").innerHTML=ergoScene(v);$("#eo").textContent=v.cm+" cm";$("#tb").textContent="Costas: "+(v.straight?"direitas e apoiadas":"dobradas");$("#tb").setAttribute("aria-pressed",v.straight);$("#tw").textContent="Pulsos: "+(v.wrist?"direitos":"dobrados");$("#tw").setAttribute("aria-pressed",v.wrist);if(shown)rules()}
+ function rules(){$("#rl").innerHTML=ergoRules(v).map(r=>`<li class="${r[0]?"ok":""}"><i>${r[0]?"✓":"!"}</i>${r[1]}</li>`).join("")}
+ [["eh","h"],["es","stand"],["ec","cm"]].forEach(([id,k])=>$("#"+id).oninput=e=>{v[k]=+e.target.value;draw()});
+ $("#tb").onclick=()=>{v.straight=!v.straight;sfx.tap();draw()};$("#tw").onclick=()=>{v.wrist=!v.wrist;sfx.tap();draw()};
+ $("#ok").onclick=()=>{const r=ergoRules(v),bad=r.filter(x=>!x[0]);shown=true;rules();if(bad.length){tries++;sfx.no();say(`Quase! ${bad[0][2]}`,"wrong");return}sfx.ok();$("#ok").disabled=true;say("Agora sim! Esta posição é confortável e protege o corpo.","right","Ver os pontos",()=>finish(act,Math.max(40,100-10*tries),tries?`Precisaste de ${tries+1} tentativas.`:"Conseguiste à primeira!"))};
+ draw();
+}
+const EERR={back:"Costas dobradas. Encosta as costas à cadeira.",feet:"Pés no ar. Baixa a cadeira ou usa um apoio para os pés.",wrist:"Pulso dobrado. Mantém os pulsos direitos.",screen:"Ecrã demasiado perto e baixo. Deve ficar à distância de um braço.",window:"A janela faz reflexos no ecrã. Muda o ecrã de sítio ou fecha a cortina."};
+function ErrosE(act){let found=new Set(),miss=0;const need=Object.keys(EERR).length;
+ const v={h:160,stand:0,cm:32,straight:false,wrist:false,glare:true};
+ const sY=190;const extra=`<rect class="ehit" data-n="1" width="520" height="380"/><rect class="ehit" data-e="window" x="430" y="18" width="78" height="100"/><rect class="ehit" data-e="back" x="118" y="${sY-105}" width="72" height="100"/><rect class="ehit" data-e="feet" x="208" y="${sY+50}" width="62" height="70"/><rect class="ehit" data-e="wrist" x="244" y="166" width="56" height="34"/><rect class="ehit" data-e="screen" x="${224+12+32*2.4-10}" y="112" width="36" height="84"/>`;
+ frame(act,`Há ${need} erros nesta imagem. Toca neles!`,`<div class="stage spot-e"><div id="sc" style="max-width:640px;margin-inline:auto;width:100%">${ergoScene(v,extra)}</div><div class="q" style="text-align:center;font-size:22px" id="c">Erros encontrados: 0 de ${need}</div></div>`);
+ $$(".ehit").forEach(h=>h.onclick=()=>{if(h.dataset.n){miss++;sfx.no();say("Aí está tudo bem. Procura outro sítio.","wrong");return}const k=h.dataset.e;if(found.has(k))return;found.add(k);h.classList.add("found");sfx.ok();$("#c").textContent=`Erros encontrados: ${found.size} de ${need}`;if(found.size<need)say(EERR[k],"right");else say(EERR[k]+" Encontraste todos!","right","Ver os pontos",()=>finish(act,Math.max(40,100-10*miss),miss?`Tocaste ${miss} vez${miss>1?"es":""} no sítio errado.`:"Sem nenhum toque errado!"))});
+}
+const HAB=[
+ {t:"Estás a ver um vídeo há 20 minutos e sentes os olhos cansados.",o:["Olho para algo longe durante 20 segundos.","Aproximo mais os olhos do ecrã.","Esfrego os olhos com força e continuo."],w:"É a regra 20-20-20: de 20 em 20 minutos, olha 20 segundos para algo a cerca de 6 metros."},
+ {t:"Há muito tempo que estás sentado a jogar.",o:["Faço uma pausa, levanto-me e mexo o corpo.","Continuo até acabar todos os níveis.","Deito-me por cima da mesa."],w:"O corpo gosta de movimento. Faz pausas com frequência."},
+ {t:"O sol da janela faz reflexos no ecrã.",o:["Mudo o ecrã de posição ou fecho a cortina.","Faço mais força com os olhos.","Ponho o ecrã mais perto da cara."],w:"Sem reflexos, os olhos cansam-se menos."},
+ {t:"Queres ler uma mensagem no telemóvel.",o:["Levanto o telemóvel e não dobro muito o pescoço.","Dobro bem o pescoço durante horas.","Encosto o telemóvel ao nariz."],w:"Assim o pescoço fica mais descansado."},
+ {t:"Vais ouvir música com auscultadores.",o:["Ponho o som num volume moderado.","Ponho o volume no máximo.","Durmo com o som bem alto."],w:"O som muito alto pode prejudicar a audição."},
+ {t:"Vais usar o rato durante algum tempo.",o:["Mantenho a mão relaxada e o pulso direito.","Aperto o rato com muita força.","Dobro o pulso para cima."],w:"Uma mão relaxada e um pulso direito cansam menos."},
+ {t:"O quarto está às escuras e queres usar o tablet.",o:["Acendo uma luz antes de usar o tablet.","Uso o brilho no máximo no escuro.","Tapo-me com o cobertor e continuo."],w:"Um espaço bem iluminado é mais confortável para os olhos."},
+ {t:"A cadeira é alta e os teus pés não chegam ao chão.",o:["Baixo a cadeira ou uso um apoio para os pés.","Deixo as pernas a balançar.","Sento-me em cima de uma perna."],w:"Os pés devem ficar bem apoiados."}
+];
+function Habitos(act){const items=take(HAB,7);choiceGame(act,{intro:"O que faz bem ao teu corpo? Escolhe a melhor decisão.",prompt:"Qual é o melhor hábito?",items,left:true,top:c=>`<div class="q">${c.t}</div>`,opts:c=>shuffle(c.o.map((l,i)=>({v:i,l}))),answer:()=>0,why:c=>c.w})}
+const STR=[["a1","Roda os ombros devagar.",10],["a2","Estica os braços bem para cima.",10],["a3","Olha para uma coisa longe, a cerca de 6 metros.",20],["a4","Abre e fecha as mãos.",10]];
+function Pausa(act){let k=0;frame(act,"Levanta-te e faz os exercícios com calma, sem forçar. Se te doer alguma coisa, para.",`<div class="stage"><div class="stretch" id="st"></div><div class="q" style="text-align:center" id="tt"></div><div class="bar-t"><i id="bt"></i></div><div class="row"><button class="btn" id="dn" disabled>Feito</button></div></div>`);
+ const fig=c=>`<svg viewBox="0 0 200 220" class="${c}" aria-hidden="true"><circle cx="100" cy="42" r="28" fill="#ffc9a8" stroke="#172447" stroke-width="3"/><g class="ey"><circle cx="90" cy="40" r="4" fill="#172447"/><circle cx="110" cy="40" r="4" fill="#172447"/></g><path d="M90 58a12 8 0 0 0 20 0" fill="none" stroke="#172447" stroke-width="3"/><path d="M70 76h60l8 80H62z" fill="#ff8a1f" stroke="#172447" stroke-width="3"/><path d="M80 156v56M120 156v56" stroke="#26344f" stroke-width="18" stroke-linecap="round"/><g class="ar"><path d="M74 84 42 ${c==="a2"?20:130}M126 84l32 ${c==="a2"?-64:46}" stroke="#ff8a1f" stroke-width="15" stroke-linecap="round" fill="none"/></g><circle class="hd" cx="42" cy="${c==="a2"?16:134}" r="10" fill="#ffc9a8" stroke="#172447" stroke-width="2"/><circle class="hd" cx="158" cy="${c==="a2"?16:134}" r="10" fill="#ffc9a8" stroke="#172447" stroke-width="2"/></svg>`;
+ function show(){const S=STR[k];$("#st").innerHTML=fig(S[0]);$("#tt").textContent=S[1];const dn=$("#dn");dn.disabled=true;dn.textContent="Espera um pouco";const b=$("#bt");b.style.width="0";const t0=performance.now(),id=setInterval(()=>{const f=(performance.now()-t0)/(S[2]*1000);b.style.width=Math.min(100,f*100)+"%";if(f>=1){clearInterval(id);dn.disabled=false;dn.textContent=k<STR.length-1?"Feito":"Terminar";sfx.ok();dn.focus()}},120);timers.push(id)}
+ $("#dn").onclick=()=>{k++;if(k<STR.length)show();else finish(act,100,"Fizeste a pausa ativa até ao fim.")};show();
+}
+/* --- teclado de Portugal --- */
+const K_=(n,s,a)=>({n,s:s||"",a:a||""}),L_=c=>({n:c,s:c.toUpperCase(),a:c==="e"?"€":""}),M_=(l,w,tap)=>({mod:l,w,tap});
+const KB_ROWS=[
+ [K_("\\","|"),K_("1","!"),K_("2",'"',"@"),K_("3","#","£"),K_("4","$","§"),K_("5","%"),K_("6","&"),K_("7","/","{"),K_("8","(","["),K_("9",")","]"),K_("0","=","}"),K_("'","?"),K_("«","»"),M_("Apagar",1.9)],
+ [M_("Tab",1.5),..."qwertyuiop".split("").map(L_),K_("+","*"),K_("´","`"),M_("Enter",1.4)],
+ [M_("Caps",1.75),..."asdfghjkl".split("").map(L_),K_("ç","Ç"),K_("º","ª"),K_("~","^"),M_("Enter",1.15)],
+ [M_("Shift",1.25,1),K_("<",">"),..."zxcvbnm".split("").map(L_),K_(",",";"),K_(".",":"),K_("-","_"),M_("Shift",2.65,1)],
+ [M_("Ctrl",1.25),M_("Win",1.25),M_("Alt",1.25),{n:" ",s:"",a:"",w:6.25},M_("AltGr",1.25),M_("Win",1.25),M_("Menu",1.25),M_("Ctrl",1.25)]
+];
+const FG={};[[0,"\\1qa<z"],[1,"2wsx"],[2,"3edc"],[3,"45rtfgvb"],[6,"67yuhjnm"],[7,"8ik,"],[8,"9ol."],[9,"0pç-'«+´º~"]].forEach(([f,c])=>[...c].forEach(x=>FG[x]=f));FG[" "]=4;
+const FCOL=["#ffc0da","#c9b8ff","#aee7ff","#b9f2c9","#ffe59a","#ffe59a","#b9f2c9","#aee7ff","#c9b8ff","#ffc0da"];
+const FNAME=["mindinho esquerdo","anelar esquerdo","médio esquerdo","indicador esquerdo","polegar","polegar","indicador direito","médio direito","anelar direito","mindinho direito"];
+const CH_={};KB_ROWS.flat().forEach(k=>{if(k.mod)return;CH_[k.n]={b:k.n};if(k.s&&!CH_[k.s])CH_[k.s]={b:k.n,shift:true};if(k.a&&!CH_[k.a])CH_[k.a]={b:k.n,alt:true}});
+const COMP_={};[["´","áéíóúÁÉÍÓÚ","aeiouAEIOU"],["`","àÀ","aA"],["~","ãõÃÕ","aoAO"],["^","âêôÂÊÔ","aeoAEO"]].forEach(([d,a,b])=>[...a].forEach((c,i)=>COMP_[c]=[d,b[i]]));
+const stepsFor=c=>COMP_[c]?COMP_[c].map(x=>({...CH_[x],ch:x})):[{...CH_[c],ch:c}];
+function kbHtml(){return `<div class="kb" id="kb" aria-label="Teclado português">${KB_ROWS.map(r=>`<div class="kr">${r.map(k=>{if(k.mod)return `<button type="button" tabindex="-1" class="k mod ${k.tap?"tap":""}" style="--w:${k.w}" ${k.tap?'data-mod="shift"':"disabled"}>${k.mod}</button>`;if(k.n===" ")return `<button type="button" tabindex="-1" class="k" data-b=" " style="--w:${k.w};--fc:${FCOL[4]}" aria-label="Barra de espaços"></button>`;const letter=k.n.length===1&&k.s===k.n.toUpperCase()&&k.s!==k.n;const eh=x=>x.replace(/&/g,"&amp;").replace(/</g,"&lt;");const lab=letter?`${k.s}`:`<span class="sh">${eh(k.s)}</span><span class="bs">${eh(k.n)}</span>`;return `<button type="button" tabindex="-1" class="k ${k.n==="f"||k.n==="j"?"bump":""}" data-b="${k.n.replace(/&/g,"&amp;").replace(/</g,"&lt;")}" style="--fc:${FCOL[FG[k.n]??0]}">${lab}${k.a?`<span class="ag">${k.a}</span>`:""}</button>`}).join("")}</div>`).join("")}</div>`}
+function handsSvg(){const X=[22,50,78,106,134,186,214,242,270,298],H=[30,16,8,16,44,44,16,8,16,30];return `<div class="hands"><svg viewBox="0 0 340 118" aria-hidden="true"><path d="M16 78h106l18 40H16zM218 78h106v40H200z" fill="#ffd8bc" stroke="#172447" stroke-width="3"/>${X.map((x,i)=>{const th=i===4||i===5;return `<rect id="fg${i}" x="${x-(th?2:0)}" y="${th?64:H[i]}" width="${th?26:22}" height="${th?30:88-H[i]}" rx="11" fill="${FCOL[i]}" stroke="#172447" stroke-width="3"/>`}).join("")}</svg></div>`}
+const keyEl=b=>$$("#kb [data-b]").find(k=>k.dataset.b===b);
+function clearMarks(){$$("#kb .next").forEach(k=>k.classList.remove("next"));$$("#kb .on").forEach(k=>k.classList.remove("on"));for(let i=0;i<10;i++){const f=$("#fg"+i);if(f)f.setAttribute("fill",FCOL[i])}}
+/* Liga o teclado físico e as teclas do ecrã a uma função de escrita */
+function captureKeys(onChar,onDead,onEnter){
+ const coarse=matchMedia("(pointer:coarse)").matches;let inp=null,vShift=false,vDead=null;
+ if(!coarse){inp=document.createElement("input");inp.className="vis";inp.autocomplete="off";inp.setAttribute("autocapitalize","off");inp.spellcheck=false;inp.setAttribute("aria-label","Escreve aqui");document.body.append(inp);
+  let comp=false;const flush=()=>{const v=inp.value;inp.value="";[...v].forEach(onChar)};
+  inp.addEventListener("compositionstart",()=>comp=true);inp.addEventListener("compositionend",()=>{comp=false;flush()});inp.addEventListener("input",()=>{if(!comp)flush()});
+  inp.addEventListener("keydown",e=>{if(e.key==="Dead"){onDead&&onDead(true)}else if(e.key==="Enter"){e.preventDefault();onEnter&&onEnter()}});
+  inp.addEventListener("blur",()=>{setTimeout(()=>{const a=document.activeElement;if(inp&&!(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)))inp.focus({preventScroll:true})},30)});inp.focus({preventScroll:true})}
+ const kb=$("#kb");
+ const tap=e=>{const m=e.target.closest("[data-mod]");if(m){vShift=!vShift;$$('#kb [data-mod]').forEach(x=>x.classList.toggle("on",vShift));return}const k=e.target.closest("[data-b]");if(!k)return;const base=KB_ROWS.flat().find(x=>x.n===k.dataset.b);let c=vShift&&base.s?base.s:base.n;if(vShift){vShift=false;$$('#kb [data-mod]').forEach(x=>x.classList.remove("on"))}if("´`~^".includes(c)&&c.length===1){vDead=c;onDead&&onDead(true);return}if(vDead){const hit=Object.keys(COMP_).find(x=>COMP_[x][0]===vDead&&COMP_[x][1]===c);c=hit||c;vDead=null}onChar(c);if(inp)inp.focus({preventScroll:true})};
+ kb.addEventListener("click",tap);
+ const stage=kb.closest(".stage");const refocus=e=>{if(inp&&!e.target.closest("button,a"))inp.focus({preventScroll:true})};if(stage)stage.addEventListener("click",refocus);
+ leaveFn=()=>{if(inp){const i=inp;inp=null;i.remove()}};
+ return()=>{if(leaveFn){leaveFn();leaveFn=null}};
+}
+function typer(host,lines,done){
+ let li=0,ci=0,errs=0,total=0,t0=0,dead=false;
+ host.innerHTML=`<div class="tmeta"><span id="tl"></span><span id="tp"></span></div><div class="tx" id="tx" aria-live="off"></div><div class="thint" id="th"></div>${kbHtml()}${handsSvg()}`;
+ function show(){const c=[...lines[li]];$("#tl").textContent=`Linha ${li+1} de ${lines.length}`;$("#tx").innerHTML=c.map((x,i)=>`<span class="${i<ci?"d":i===ci?"c"+(x===" "?" sp":""):"t"}">${x===" "?"&nbsp;":esc(x)}</span>`).join("");const acc=total?Math.round(total/(total+errs)*100):100;$("#tp").textContent=`Precisão: ${acc}%`;mark()}
+ const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+ function mark(){clearMarks();const target=[...lines[li]][ci];if(target===undefined)return;const st=stepsFor(target),s=st[Math.min(dead?1:0,st.length-1)],el=keyEl(s.b);if(el)el.classList.add("next");const f=FG[s.b]??0,fe=$("#fg"+f);if(fe)fe.setAttribute("fill","#ffd23f");let hint=target===" "?"Barra de espaços com o polegar":"Usa o "+FNAME[f];if(s.shift){const sf=f<5?1:0;$$('#kb [data-mod]')[sf].classList.add("next");const mf=$("#fg"+(sf?9:0));if(mf)mf.setAttribute("fill","#ffd23f");hint+=" e carrega em Shift com a outra mão"}if(st.length>1&&!dead)hint=`Primeiro o acento ${s.ch==="`"||s.ch==="^"?"(com Shift) ":""}e depois a letra. `+hint;$("#th").textContent=hint}
+ function onChar(ch){dead=false;const line=[...lines[li]],target=line[ci];if(target===undefined)return;if(!t0)t0=performance.now();if(ch===target){total++;ci++;sfx.tap();if(ci>=line.length){li++;ci=0;if(li>=lines.length){end();return}}show()}else{errs++;sfx.no();const tx=$("#tx");tx.classList.remove("shake");void tx.offsetWidth;tx.classList.add("shake");show()}}
+ function end(){release();clearMarks();const mins=(performance.now()-t0)/60000,acc=total/(total+errs);done({acc,lpm:Math.round(total/Math.max(mins,.05)),errs,total})}
+ const release=captureKeys(onChar,on=>{dead=on;mark()});show();
+}
+const typePts=a=>Math.round(Math.max(0,Math.min(1,(a-.55)/.4))*100);
+function typeMsg(act,r){say(`Terminaste! Precisão de ${Math.round(r.acc*100)}%. Foram ${r.lpm} letras por minuto.`,"right","Ver os pontos",()=>finish(act,typePts(r.acc),`Precisão de ${Math.round(r.acc*100)}%, com ${r.errs} erro${r.errs===1?"":"s"}.`));sfx.ok()}
+const MAPQ=[
+ {t:"Ç",k:["ç"],w:"O Ç fica ao lado do L."},{t:"º (como em 5.º ano)",k:["º"],w:"O º fica à direita do Ç."},
+ {t:"til, para escrever ã",k:["~"],w:"O til fica à direita do º. Carregas nele e depois na letra."},
+ {t:"acento agudo, para escrever á",k:["´"],w:"O acento agudo fica à direita da tecla +. Carregas nele e depois na letra."},
+ {t:"ponto de interrogação ?",k:["'"],w:"É a tecla à direita do 0, com Shift."},
+ {t:"ponto de exclamação !",k:["1"],w:"É a tecla do 1, com Shift."},
+ {t:"arroba @",k:["2"],w:"É a tecla do 2, com a tecla AltGr carregada."},
+ {t:"euro €",k:["e"],w:"Escreve-se com a tecla do E, com a tecla AltGr carregada."},
+ {t:"hífen -",k:["-"],w:"Fica à esquerda do Shift direito."},
+ {t:"dois pontos :",k:["."],w:"É a tecla do ponto, com Shift."}
+];
+function Mapa(act){const items=shuffle(MAPQ);let k=0,okc=0,tries=0;
+ frame(act,"Este é o teclado português. As cores mostram que dedo usa cada tecla. Encontra a tecla pedida!",`<div class="stage"><div class="q" style="text-align:center" id="q"></div>${kbHtml()}${handsSvg()}</div>`);
+ let lock=false;
+ function show(){tries=0;lock=false;$("#q").textContent="Toca na tecla de: "+items[k].t;$$("#kb .hit,#kb .bad").forEach(x=>x.classList.remove("hit","bad"));if(k)say("Toca na tecla pedida.")}
+ $("#kb").addEventListener("click",e=>{if(lock)return;const b=e.target.closest("[data-b]");if(!b)return;const it=items[k];if(it.k.includes(b.dataset.b)){lock=true;b.classList.add("hit");if(!tries)okc++;sfx.ok();const f=FG[b.dataset.b];const fe=$("#fg"+f);clearMarks();if(fe)fe.setAttribute("fill","#ffd23f");say(`${it.w} Usa o ${FNAME[f]}.`,"right",k<items.length-1?"Continuar":"Ver os pontos",()=>{k++;clearMarks();if(k<items.length)show();else finish(act,Math.round(okc/items.length*100),`Acertaste ${okc} de ${items.length} à primeira.`)})}else{tries++;sfx.no();b.classList.add("bad");setTimeout(()=>b.classList.remove("bad"),350);if(tries>=2){const t=keyEl(it.k[0]);if(t)t.classList.add("next");say("Olha para a tecla a brilhar.","wrong")}else say("Essa não é. Tenta outra vez.","wrong")}});
+ show();
+}
+function Filas(act){
+ frame(act,"Põe os indicadores nas teclas F e J: têm um relevo. Olha para o ecrã e usa o dedo indicado. Vamos pela fila do meio, depois a de cima e a de baixo.",`<div class="stage" id="tg"></div>`);
+ typer($("#tg"),["asdf jklç","fj dk sl aç","asa sala fada","a fada fala","qwert yuiop","tio rio quer","pote tropa","zxcv bnm","cama zona","vaca e cozinha"],r=>typeMsg(act,r));
+}
+function Acentos(act){
+ frame(act,"Para escrever á, carrega primeiro no acento, larga, e só depois na letra. O ç tem tecla própria. Para maiúsculas, usa Shift com a outra mão.",`<div class="stage" id="tg"></div>`);
+ typer($("#tg"),["pé","avó","lápis","água","maçã","mãe","pão","limões","coração","você","três","à noite","Olá, João!","O Tomás lê às três."],r=>typeMsg(act,r));
+}
+const RAIN=[{l:"asdfjklç",n:12,g:1500,v:42,t:"Fila do meio"},{l:"qwertyuiop",n:12,g:1300,v:50,t:"Fila de cima"},{l:"asdfghjklçqwertyuiopzxcvbnm",n:14,g:1150,v:58,t:"Todas as letras"}];
+function Chuva(act){let lv=0,hits=0,lives=5,alive=true,done2=0;const total=RAIN.reduce((a,r)=>a+r.n,0);
+ frame(act,"As letras estão a cair! Carrega na letra certa antes de tocarem no chão. Tens 5 vidas.",`<div class="stage"><div class="rainbar"><span id="rv"></span><span id="rl"></span><span id="rh"></span></div><div class="rain" id="rn"><div class="ground"></div></div><div class="row" id="gob"><button class="btn" id="st">Começar</button></div>${kbHtml()}</div>`);
+ const rn=$("#rn");let drops=[],spawned=0,last=0,nextAt=0,raf=0,running=false;
+ const ui=()=>{$("#rv").textContent="Vidas: "+"♥".repeat(Math.max(0,lives));$("#rl").textContent=`Nível ${lv+1} de 3: ${RAIN[lv].t}`;$("#rh").textContent=`Apanhadas: ${hits} de ${total}`};ui();
+ function spawn(){const R=RAIN[lv],c=R.l[Math.floor(Math.random()*R.l.length)],el=document.createElement("div");el.className="drop";el.textContent=c.toUpperCase();el.style.left=(8+Math.random()*84)+"%";rn.append(el);drops.push({c,el,y:-50});spawned++}
+ function loop(t){if(!alive||!running)return;const dt=Math.min(.05,(t-last)/1000);last=t;const R=RAIN[lv],H=rn.clientHeight-62;if(t>=nextAt&&spawned<R.n){spawn();nextAt=t+R.g}for(const d of [...drops]){d.y+=R.v*dt;d.el.style.transform=`translateY(${d.y}px)`;if(d.y>=H){lose(d)}}if(!alive||!running)return;if(spawned>=R.n&&!drops.length){next();return}raf=requestAnimationFrame(loop)}
+ function lose(d){drops=drops.filter(x=>x!==d);d.el.remove();lives--;sfx.no();ui();if(lives<=0)end(false)}
+ function next(){running=false;if(lv<2){lv++;spawned=0;ui();say("Muito bem! Próximo nível.","right");$("#gob").hidden=false;$("#st").textContent="Continuar"}else end(true)}
+ function end(ok){running=false;alive=false;drops.forEach(d=>d.el.remove());drops=[];cancelAnimationFrame(raf);release();say(ok?"Apanhaste a chuva toda!":"Acabaram-se as vidas. Treina e tenta outra vez!",ok?"right":"wrong","Ver os pontos",()=>finish(act,Math.round(hits/total*100),`Apanhaste ${hits} de ${total} letras.`))}
+ function onChar(ch){if(!running)return;const c=ch.toLowerCase(),t=drops.filter(d=>d.c===c).sort((a,b)=>b.y-a.y)[0];if(!t){sfx.no();return}hits++;sfx.tap();drops=drops.filter(x=>x!==t);t.el.classList.add("pop");setTimeout(()=>t.el.remove(),170);ui()}
+ function go2(){if(running||!alive)return;$("#gob").hidden=true;running=true;say("Vai! Carrega nas letras.");last=performance.now();nextAt=last;raf=requestAnimationFrame(loop)}
+ const release=captureKeys(onChar,null,go2);
+ $("#st").onclick=go2;
+ const oldLeave=leaveFn;leaveFn=()=>{alive=false;running=false;cancelAnimationFrame(raf);if(oldLeave)oldLeave()};
+}
+
+/* --- ecrãs --- */
+/* --- equipas --- */
+const escH=x=>String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TICONS=["cpu","mouse","shield","gamepad","rain","eye"],TCOL=["#ffd23f","#ff4f9a","#6fb2ff","#b9a2ff","#5fd99a","#ff9d4d"];
+const badge=(t,c="")=>`<span class="tb ${c}" style="background:${TCOL[t.col]||TCOL[0]}">${icon(TICONS[t.ic]||"cpu")}</span>`;
+const fmtD=t=>new Date(t).toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit",year:"numeric"});
+const fmtH=t=>new Date(t).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
+const tidy=s=>String(s).replace(/[|\r\n\t]/g," ").replace(/\s+/g," ").trim();
+async function saveFile(name,data,type){const blob=data instanceof Blob?data:new Blob([data],{type:type||"text/plain;charset=utf-8"});
+ try{if(window.claude&&window.claude.use){const d=await window.claude.use("downloads");if(d){await d.save({filename:name,data:blob});return true}}}catch(e){return false}
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);return true}
+async function copyTo(text,btn,box){try{await navigator.clipboard.writeText(text);const o=btn.textContent;btn.textContent="Copiado!";setTimeout(()=>btn.textContent=o,1500)}catch(e){const r=document.createRange();r.selectNodeContents(box);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent="Agora carrega em Ctrl+C"}}
+/* código de envio: resultados, tentativas e percurso, com verificação contra erros de cópia */
+const EP=Date.UTC(2026,0,1),SALT="vila-circuito-5ano";
+function hash(s){let h=0x811c9dc5;for(const ch of s+SALT){h^=ch.codePointAt(0);h=Math.imul(h,0x01000193)}return (h>>>0).toString(36).padStart(7,"0").slice(-5).toUpperCase()}
+const b64=s=>btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g,"_").replace(/\//g,"~").replace(/=+$/,"");
+const unb64=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/_/g,"+").replace(/~/g,"/")),c=>c.charCodeAt(0)));
+const members=t=>(t.members||[]).filter(m=>!m.out);
+const memLabel=(t,m)=>m.n+(m.t&&m.t!==(t.turma||"")?` (${m.t})`:"");
+const idsNames=(t,ids)=>[...ids].map(id=>{const m=(t.members||[]).find(x=>x.id===id);return m?memLabel(t,m):"?"}).join(", ");
+const playedIn=(t,th)=>{const ids=new Set(),acts=new Set(th?th.acts.map(a=>a.id):allActs.map(a=>a.id));t.log.forEach(l=>{if(acts.has(l.a)&&l.m)[...l.m].forEach(c=>ids.add(c))});return ids};
+function makeCode(t){const ix=Object.fromEntries(allActs.map((a,i)=>[a.id,i]));
+ const o={i:t.id,n:tidy(t.name),t:tidy(t.turma||""),c:t.ic,o:t.col,s:allActs.map(a=>t.best[a.id]??null),a:allActs.map(a=>t.att[a.id]||0),
+  m:(t.members||[]).map(m=>[m.id,tidy(m.n),tidy(m.t||""),m.out?1:0]),
+  l:(()=>{const L=t.log.filter(l=>l.a in ix),keep=new Set(L.slice(-90));allActs.forEach(a=>{const f=L.find(l=>l.a===a.id);if(f)keep.add(f)});return L.filter(l=>keep.has(l))})().map(l=>[ix[l.a],l.p,Math.max(0,Math.round((l.t-EP)/60000)),l.m||"",l.x||0])};
+ const p=b64(JSON.stringify(o));return `VC2.${p}.${hash(p)}`}
+function readCode(code){const m=code.trim().match(/^VC([12])\.([A-Za-z0-9_~]+)\.([A-Z0-9]{5})$/);if(!m||hash(m[2])!==m[3])return null;
+ try{if(m[1]==="2"){const o=JSON.parse(unb64(m[2])),t={id:String(o.i),name:String(o.n),turma:String(o.t||""),ic:+o.c||0,col:+o.o||0,best:{},att:{},log:[],members:[]};
+   allActs.forEach((a,i)=>{const v=o.s[i];if(v!=null){if(!(v>=0&&v<=100))throw 0;t.best[a.id]=+v}if(o.a[i])t.att[a.id]=+o.a[i]||0});
+   (o.m||[]).forEach(x=>t.members.push({id:String(x[0]),n:String(x[1]),t:String(x[2]||""),out:!!x[3]}));
+   (o.l||[]).forEach(x=>{if(allActs[x[0]]&&x[1]>=0&&x[1]<=100)t.log.push({a:allActs[x[0]].id,p:+x[1],t:EP+x[2]*60000,m:String(x[3]||""),...(x[4]?{x:+x[4]}:{})})});return t}
+  const [id,name,turma,ic,col,sc,at,lg]=unb64(m[2]).split("|"),S1=sc.split(","),A1=at.split(","),t={id,name,turma,ic:+ic,col:+col,best:{},att:{},log:[],members:[]};
+  allActs.forEach((a,i)=>{const v=S1[i];if(v!==""&&v!=null){const n=+v;if(!(n>=0&&n<=100))throw 0;t.best[a.id]=n}if(A1[i])t.att[a.id]=+A1[i]||0});
+  if(lg)lg.split(";").forEach(e=>{const [a,p,m2]=e.split(".").map(x=>parseInt(x,36));if(allActs[a]&&p>=0&&p<=100)t.log.push({a:allActs[a].id,p,t:EP+m2*60000})});
+  return t}catch(e){return null}}
+function mergeTeam(list,t){let o=list.find(x=>x.id===t.id);if(!o){o={...t,best:{...t.best},att:{...t.att},log:t.log.map(l=>({...l})),members:(t.members||[]).map(m=>({...m})),got:Date.now()};list.push(o);return"nova"}
+ Object.assign(o,{name:t.name,turma:t.turma,ic:t.ic,col:t.col,got:Date.now()});for(const k in t.best)o.best[k]=Math.max(o.best[k]??0,t.best[k]);for(const k in t.att)o.att[k]=Math.max(o.att[k]||0,t.att[k]);
+ if(t.members&&t.members.length){o.members=o.members||[];t.members.forEach(m=>{const e=o.members.find(x=>x.id===m.id);if(e)Object.assign(e,m);else o.members.push({...m})})}
+ const K=l=>l.a+"|"+Math.round(l.t/60000)+"|"+l.p+"|"+(l.m||"")+"|"+(l.x||0),cnt=new Map();o.log.forEach(l=>cnt.set(K(l),(cnt.get(K(l))||0)+1));const inc=new Map();t.log.forEach(l=>{const k=K(l);inc.set(k,(inc.get(k)||0)+1);if(inc.get(k)>(cnt.get(k)||0))o.log.push({...l})});o.log.sort((a,b)=>a.t-b.t);return"atualizada"}
+
+/* --- ecrãs --- */
+function bar(backFn,backLabel){const t=team();
+  topbar.innerHTML=`<button class="brand" id="home" aria-label="Ir para o início">Vila Circuito</button>${backFn?`<button class="ghost" id="back">${backLabel}</button>`:""}<span class="sp"></span>${examOn()?'<span class="exb">Avaliação</span>':""}${t?`<button class="tmb" id="tmb" aria-label="Mudar de equipa">${badge(t,"s")}<span>${escH(t.name)}</span></button><span class="score" aria-label="${totalPts()} pontos">${star(true)}${totalPts()}</span>`:""}${ONLINE?'<span class="net" id="net">A ligar</span>':""}<button class="ghost" id="snd" aria-pressed="${S.sound}">${S.sound?"Som sim":"Som não"}</button>`;
+  $("#home").onclick=goHome;if(backFn)$("#back").onclick=backFn;if($("#tmb"))$("#tmb").onclick=goTeams;
+  if(ONLINE)setNet(NET.ok);
+  $("#snd").onclick=()=>{S.sound=!S.sound;save();$("#snd").textContent=S.sound?"Som sim":"Som não";$("#snd").setAttribute("aria-pressed",S.sound)};
+}
+const turmasLocais=()=>[...new Set(S.teams.map(t=>t.turma||""))].sort((a,b)=>a.localeCompare(b,"pt",{numeric:true}));
+function goTeams(noPull){clearAll();if(ONLINE&&noPull!==true){const my=scr;pull().then(ch=>{if(ch&&scr===my)goTeams(true)})}S.current=S.current&&team()?S.current:null;bar();view.scrollTop=0;
+ const ts=turmasLocais();if(ts.length===1)S.curTurma=ts[0];if(S.curTurma!=null&&!ts.includes(S.curTurma))S.curTurma=null;
+ const sel=S.curTurma,list=sel==null?[]:S.teams.filter(t=>(t.turma||"")===sel);
+ const tName=x=>x||"Sem turma";
+ view.innerHTML=`<div class="wrap narrow2"><div class="hero">${bit("happy","idle")}<div style="display:flex;flex-direction:column;gap:6px"><h1 class="logo">Vila <em>Circuito</em></h1><p>Olá! Sou o Bit. ${ts.length>1?"Primeiro escolham a vossa turma.":"Escolham a vossa equipa para começar."}</p></div></div>
+ ${S.teams.length?`<div class="stage"><b class="fl" style="font-size:20px">Qual é a vossa turma?</b><div class="chips tchips">${ts.map(x=>`<button class="chip" data-tu="${escH(x)}" aria-pressed="${x===sel}">${escH(tName(x))}</button>`).join("")}<button class="chip" id="otra">Outra turma</button></div></div>`:""}
+ <div class="stage">${!S.teams.length?`<p class="q" style="font-size:22px">${ONLINE?(NET.ok===null?"A carregar as equipas...":"Ainda não há equipas. Criem a primeira!"):"Ainda não há equipas neste computador."}</p>`:sel==null?'<p class="q" style="font-size:22px">Escolham a turma para verem as vossas equipas.</p>':`<h2 class="ttl3">Equipas da turma ${escH(tName(sel))}</h2>${list.map(t=>`<div class="trow">${badge(t)}<div class="grow"><b>${escH(t.name)}</b><span>${t.turma?escH(t.turma)+" · ":""}${Object.values(t.best).reduce((a,b)=>a+b,0)} pontos</span></div><span class="row" style="gap:6px"><button class="btn white small" data-ed="${t.id}">Elementos</button><button class="btn small" data-t="${t.id}">Jogar</button></span>${members(t).length?`<span class="mlist">${members(t).map(m=>escH(memLabel(t,m))).join(" · ")}</span>`:""}</div>`).join("")}`}
+ <div class="row" style="justify-content:flex-start"><button class="btn" id="new">${sel?`Criar equipa na turma ${escH(sel)}`:"Criar equipa"}</button></div></div>
+ <div class="foot"><span></span><span class="row" style="gap:8px">${S.teams.length?'<button class="ghost" id="rkb">Classificação</button>':""}<button class="ghost" id="prof">Área do professor</button></span></div></div>`;
+ if($("#rkb"))$("#rkb").onclick=()=>goRank();
+ $$("[data-tu]").forEach(b=>b.onclick=()=>{S.curTurma=b.dataset.tu;save();sfx.tap();goTeams()});
+ if($("#otra"))$("#otra").onclick=()=>{S.curTurma=null;save();goNewTeam()};
+ $$("[data-t]").forEach(b=>b.onclick=()=>{S.current=b.dataset.t;save();sfx.tap();goHome()});$$("[data-ed]").forEach(b=>b.onclick=()=>goNewTeam(b.dataset.ed));$("#new").onclick=()=>goNewTeam();$("#prof").onclick=goProf;
+}
+function goNewTeam(editId){clearAll();const ed=editId?S.teams.find(t=>t.id===editId):null;bar(ed&&ed.id===S.current?goHome:goTeams,ed&&ed.id===S.current?"Vila":"Equipas");view.scrollTop=0;let ic=ed?ed.ic:0,col=ed?ed.col:0;
+ const rows=ed&&members(ed).length?members(ed).map(m=>({id:m.id,n:m.n,t:m.t})):[{n:"",t:""},{n:"",t:""}];
+ view.innerHTML=`<div class="wrap narrow2"><form class="stage" id="f" autocomplete="off"><h2 class="ttl2">${ed?"Editar equipa":"Nova equipa"}</h2>
+ <label class="fl" for="tn">Nome da equipa</label><input class="fld" id="tn" maxlength="20" placeholder="Por exemplo, Os Bits Rápidos" required value="${ed?escH(ed.name):""}">
+ <label class="fl" for="tt">Turma da equipa</label><input class="fld" id="tt" maxlength="8" placeholder="Por exemplo, 5.º A" style="max-width:200px" value="${ed?escH(ed.turma||""):escH(S.curTurma||"")}">
+ <span class="fl">Elementos da equipa</span><p style="font-size:16px">Escrevam o primeiro nome e a inicial do apelido de cada elemento, e a sua turma. Se a turma ficar vazia, conta a turma da equipa.</p>
+ <div id="ml" class="mlist2"></div><div class="row" style="justify-content:flex-start"><button type="button" class="btn white small" id="addm">Acrescentar elemento</button></div>
+ <span class="fl">Escolham um símbolo</span><div class="picks" id="pi">${TICONS.map((x,i)=>`<button type="button" class="pk" data-i="${i}" aria-pressed="${i===ic}" aria-label="Símbolo ${i+1}">${badge({ic:i,col})}</button>`).join("")}</div>
+ <span class="fl">Escolham uma cor</span><div class="picks" id="pc">${TCOL.map((c,i)=>`<button type="button" class="pk" data-c="${i}" aria-pressed="${i===col}" aria-label="Cor ${i+1}"><span class="sw" style="background:${c}"></span></button>`).join("")}</div>
+ <p id="er" style="color:var(--wrong);font-weight:800;font-size:16px"></p><div class="row" style="justify-content:flex-start"><button class="btn" id="sv">${ed?"Guardar":"Criar equipa"}</button></div></form></div>`;
+ const read=()=>$$("#ml .mrow").forEach((r,i)=>{rows[i].n=$("[data-mn]",r).value;rows[i].t=$("[data-mt]",r).value});
+ const drawM=()=>{$("#ml").innerHTML=rows.map((m,i)=>`<div class="mrow"><span class="mi">${i+1}</span><input class="fld" data-mn maxlength="24" placeholder="Nome" aria-label="Nome do elemento ${i+1}" value="${escH(m.n)}"><input class="fld" data-mt maxlength="8" placeholder="Turma" aria-label="Turma do elemento ${i+1}" value="${escH(m.t||"")}"><button type="button" class="btn white small" data-rm="${i}" aria-label="Remover elemento ${i+1}">Remover</button></div>`).join("");$("#addm").disabled=rows.length>=6;$$("[data-rm]").forEach(b=>b.onclick=()=>{read();rows.splice(+b.dataset.rm,1);if(!rows.length)rows.push({n:"",t:""});drawM()})};drawM();
+ $("#addm").onclick=()=>{read();if(rows.length<6){rows.push({n:"",t:""});drawM();$$("#ml [data-mn]").pop().focus()}};
+ const paint=()=>{$$("#pi .pk").forEach(b=>{b.setAttribute("aria-pressed",+b.dataset.i===ic);b.innerHTML=badge({ic:+b.dataset.i,col})});$$("#pc .pk").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.c===col))};
+ $$("#pi .pk").forEach(b=>b.onclick=()=>{ic=+b.dataset.i;sfx.tap();paint()});$$("#pc .pk").forEach(b=>b.onclick=()=>{col=+b.dataset.c;sfx.tap();paint()});
+ $("#f").onsubmit=e=>{e.preventDefault();read();const name=tidy($("#tn").value),turma=tidy($("#tt").value);if(!name){$("#er").textContent="Escrevam o nome da equipa.";return}
+  if(S.teams.some(t=>t!==ed&&t.name.toLowerCase()===name.toLowerCase()&&(t.turma||"")===turma)){$("#er").textContent="Já existe uma equipa com esse nome nesta turma.";return}
+  const ms=rows.map(m=>({id:m.id,n:tidy(m.n),t:tidy(m.t)||turma})).filter(m=>m.n);
+  if(!ms.length){$("#er").textContent="Escrevam pelo menos um elemento da equipa.";return}
+  const t=ed||{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),best:{},att:{},log:[],members:[],play:{},made:Date.now()};
+  Object.assign(t,{name,turma,ic,col});t.members=t.members||[];t.play=t.play||{};
+  const used=new Set(t.members.map(m=>m.id));let nx=0;const nid=()=>{while(used.has(nx.toString(36)))nx++;const v=nx.toString(36);used.add(v);return v};
+  const keep=new Set();ms.forEach(m=>{let o=m.id&&t.members.find(x=>x.id===m.id);if(o){o.n=m.n;o.t=m.t;o.out=false}else{o={id:nid(),n:m.n,t:m.t};t.members.push(o)}keep.add(o.id)});
+  t.members.forEach(m=>{if(!keep.has(m.id))m.out=true});for(const k in t.play)t.play[k]=t.play[k].filter(id=>keep.has(id));
+  if(!ed){if(S.legacy){t.best={...S.legacy};delete S.legacy}S.teams.push(t);S.current=t.id;S.curTurma=turma;save();pushTeam(t);sfx.win();confetti();goHome()}else{save();pushTeam(t);sfx.ok();ed.id===S.current?goHome():goTeams()}};
+ if(!ed)$("#tn").focus();
+}
+function goHome(){
+  if(!team()){goTeams();return}
+  clearAll();bar();view.scrollTop=0;
+  const done=allActs.every(a=>S.best[a.id]!=null);
+  view.innerHTML=`<div class="wrap"><div class="hero">${bit(done?"wow":"happy","idle")}<div style="display:flex;flex-direction:column;gap:6px"><h1 class="logo">Vila <em>Circuito</em></h1><p>${done?"Conseguiram! Visitaram todos os bairros e o Bit já é Mestre Digital.":`Olá, equipa ${escH(team().name)}! Escolham um bairro para explorar.`}</p></div></div>
+  ${examOn()?`<div class="exam">${examTxt()}</div>`:""}<div class="bairros">${THEMES.map(t=>{const n=t.acts.filter(a=>S.best[a.id]!=null).length;return `<button class="bairro ${t.cl}" data-t="${t.id}"><span class="art">${t.art.map(a=>icon(a)).join("")}</span><span class="txt"><h2>${t.name}</h2><p>${t.sub}</p><span class="pips">${t.acts.map(a=>`<i class="${S.best[a.id]!=null?"on":""}"></i>`).join("")}<span>${n} de ${t.acts.length}</span></span></span></button>`}).join("")}</div>
+  <div class="foot"><span>Termina um bairro inteiro e o Bit ganha uma prenda.</span><span class="row" style="gap:8px"><button class="ghost" id="rkb">Classificação</button>${ONLINE?"":`<button class="ghost" id="exb">${examOn()?"Avaliação: ligada":"Avaliação"}</button><button class="ghost" id="share">Enviar ao professor</button>`}<button class="ghost" id="prof">Área do professor</button></span></div></div>`;
+  if(done)confetti();
+  $$(".bairro").forEach(b=>b.onclick=()=>{sfx.tap();goTheme(b.dataset.t)});
+  if($("#share"))$("#share").onclick=goShare;if($("#exb"))$("#exb").onclick=goExam;$("#prof").onclick=goProf;$("#rkb").onclick=()=>goRank();
+}
+function goExam(){const t=team();if(!t){goTeams();return}clearAll();bar(goHome,"Vila");view.scrollTop=0;const e=exOf(t);
+ view.innerHTML=`<div class="wrap narrow2"><div class="stage"><h2 class="ttl2">Avaliação</h2>${e?`<div class="exam">${examTxt()}</div><p style="font-size:17px">A equipa ${escH(t.name)} está em modo avaliação até ao fim do dia. Se saírem, podem voltar a treinar, mas as tentativas de avaliação já feitas continuam a contar.</p><div class="row" style="justify-content:flex-start" id="xb"><button class="btn white" id="xo">Sair do modo avaliação</button><button class="btn" id="xh">Voltar à vila</button></div>`:`<p style="font-size:17px">Quando o professor disser, escrevam aqui a chave de avaliação que está no quadro. A partir daí, cada jogo só pode ser jogado o número de vezes que o professor escolheu.</p><form class="row" style="justify-content:flex-start" id="kf" autocomplete="off"><label class="fl" for="key">Chave de avaliação</label><input class="fld" id="key" maxlength="10" placeholder="AV-....." style="max-width:220px;text-transform:uppercase;font-family:ui-monospace,Consolas,monospace" spellcheck="false"><button class="btn">Começar a avaliação</button></form><p id="er" style="color:var(--wrong);font-weight:800;font-size:16px"></p>`}</div></div>`;
+ if(e){$("#xh").onclick=goHome;$("#xo").onclick=()=>{$("#xb").innerHTML='<span style="font-weight:800">Sair do modo avaliação?</span> <button class="btn small" id="y">Sim, sair</button> <button class="btn white small" id="n">Não</button>';$("#y").onclick=()=>{delete t.ex;save();goHome()};$("#n").onclick=goExam};return}
+ $("#key").focus();$("#kf").onsubmit=ev=>{ev.preventDefault();const k=readKey($("#key").value);if(!k){$("#er").textContent="Esta chave não é válida. Confirmem as letras no quadro.";sfx.no();return}if(k.day!==dayN()){$("#er").textContent="Esta chave não é de hoje. Peçam a chave nova ao professor.";sfx.no();return}t.ex=k;save();sfx.win();goHome()}}
+function goShare(){const t=team();if(!t){goTeams();return}clearAll();bar(goHome,"Vila");view.scrollTop=0;const code=makeCode(t);
+ view.innerHTML=`<div class="wrap narrow2"><div class="stage"><div class="trow">${badge(t)}<div class="grow"><b>${escH(t.name)}</b><span>${t.turma?escH(t.turma)+" · ":""}${totalPts()} pontos</span>${members(t).length?`<span class="mlist">Elementos: ${members(t).map(m=>escH(memLabel(t,m))).join(", ")}</span>`:""}</div><button class="btn white small" id="edm">Editar elementos</button></div>
+ <div class="prog">${THEMES.map(th=>{const n=th.acts.filter(a=>t.best[a.id]!=null).length;return `<div class="${th.cl}"><b>${th.name}</b><span class="pbar"><i style="width:${n/th.acts.length*100}%"></i></span><span>${n} de ${th.acts.length}</span></div>`}).join("")}</div>
+ <h2 class="ttl2">Enviar ao professor</h2><p style="font-size:17px">Copiem este código e enviem-no ao professor, por exemplo no Moodle. Também podem descarregar um ficheiro e enviá-lo. Podem enviar sempre que quiserem: o professor junta tudo.</p>
+ <div class="codebox" id="cb">${code}</div><div class="row" style="justify-content:flex-start"><button class="btn" id="cp">Copiar o código</button><button class="btn white" id="dl">Descarregar ficheiro</button></div><p id="ms" style="font-weight:800;font-size:16px"></p></div></div>`;
+ $("#cp").onclick=()=>copyTo(code,$("#cp"),$("#cb"));$("#edm").onclick=()=>goNewTeam(t.id);
+ $("#dl").onclick=async()=>{const ok=await saveFile(`VilaCircuito_${t.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"_")}.txt`,`Vila Circuito\nEquipa: ${t.name}\nTurma: ${t.turma||""}\nElementos: ${members(t).map(m=>memLabel(t,m)).join(", ")}\nPontos: ${totalPts()}\nData: ${fmtD(Date.now())} ${fmtH(Date.now())}\n\nCódigo para o professor:\n${code}\n`);$("#ms").textContent=ok?"Ficheiro pronto. Enviem-no ao professor.":"O ficheiro não foi guardado. Usem Copiar o código."}
+}
+function goTheme(id){
+  clearAll();bar(goHome,"Vila");view.scrollTop=0;
+  const t=THEMES.find(x=>x.id===id);
+  view.innerHTML=`<div class="wrap ${t.cl}"><div class="head"><h2>${t.name}</h2></div>
+  ${(()=>{const tm=team(),ms=members(tm);if(!ms.length)return `<div class="who"><b>Ainda não escreveram os elementos da equipa.</b><button class="btn small" id="addw">Escrever os elementos</button></div>`;const on=new Set(playersOf(tm,id));return `<div class="who"><b>Quem está a jogar neste bairro?</b><div class="chips">${ms.map(m=>`<button class="chip" data-m="${m.id}" aria-pressed="${on.has(m.id)}">${escH(m.n)}</button>`).join("")}</div></div>`})()}
+  ${examOn()?`<div class="exam">${examTxt()}</div>`:""}<div class="acts">${t.acts.map(a=>{const p=S.best[a.id],left=examLeft(team(),a.id);return `<button class="act" data-a="${a.id}" ${left>0?"":"disabled"}><span class="ic">${icon(a.i)}</span><span><b>${a.n}</b><span>${a.d}</span><span class="pts">${examOn()?(left<=0?`Avaliação feita: ${metric(team(),a.id,"exam")} de 100`:`Avaliação: ${left===1?"1 tentativa":left+" tentativas"}`):p!=null?`O vosso melhor: ${p} de 100`:"Por jogar"}</span></span></button>`}).join("")}</div>
+  ${id==="seg"?'<div class="help">Se alguma coisa na internet te deixar triste ou com medo, conta a um adulto de confiança. Em Portugal, também podes ligar para a Linha Internet Segura: <b>800 21 90 90</b></div>':""}<div class="tk" id="tk"></div>${id==="dig"?'<div class="help">Estes jogos seguem o teclado português de Portugal. Se o computador tiver outro teclado configurado, algumas teclas ficam noutro sítio. Sem teclado físico, toca nas teclas do ecrã.</div>':""}</div>`;
+  $$(".act").forEach(b=>b.onclick=()=>{sfx.tap();play(b.dataset.a)});
+  const drawTk=()=>{const box=$("#tk");if(!box)return;const tu=team().turma||"";box.innerHTML=`<h3>Pontuações neste bairro${tu?` na turma ${escH(tu)}`:""}</h3>${rankTable(S.teams.filter(x=>(x.turma||"")===tu),t,false)}<div class="row" style="justify-content:flex-start"><button class="btn white small" id="rkt">Ver a classificação completa</button></div>`;$("#rkt").onclick=()=>goRank(t.id)};
+  drawTk();if(ONLINE){const my=scr;pull().then(ch=>{if(ch&&scr===my)drawTk()})}
+  if($("#addw"))$("#addw").onclick=()=>goNewTeam(team().id);
+  $$(".chip").forEach(b=>b.onclick=()=>{const tm=team();let cur=playersOf(tm,id);const m=b.dataset.m;if(cur.includes(m)){if(cur.length===1){sfx.no();return}cur=cur.filter(x=>x!==m)}else cur=[...cur,m];tm.play=tm.play||{};tm.play[id]=cur;save();pushTeam(tm);sfx.tap();b.setAttribute("aria-pressed",cur.includes(m))});
+}
+const RV={tab:"all",turma:null};
+function rankRows(list,th){const r=list.map(t=>({t,pts:th?thPts(t,th):THEMES.reduce((a,x)=>a+thPts(t,x),0),done:th?thDone(t,th):allActs.filter(a=>t.best[a.id]!=null).length})).sort((a,b)=>b.pts-a.pts||b.done-a.done||a.t.name.localeCompare(b.t.name,"pt"));
+ let pos=0,prev=null;r.forEach((x,i)=>{if(x.pts!==prev){pos=i+1;prev=x.pts}x.pos=pos});return r}
+function rankTable(list,th,showTurma){if(!list.length)return '<p class="small2">Ainda não há equipas.</p>';const me=S.current;
+ const cols=th?th.acts.map(a=>`<th>${a.n}</th>`).join("")+"<th>Total do bairro</th>":THEMES.map(x=>`<th>${x.name}</th>`).join("")+"<th>Total</th>";
+ return `<div class="tw"><table class="pt rank"><thead><tr><th>Lugar</th><th>Equipa</th>${showTurma?"<th>Turma</th>":""}${cols}</tr></thead><tbody>${rankRows(list,th).map(x=>`<tr class="${x.t.id===me?"me":""}"><td class="pos"><span class="med ${x.pos<=3&&x.pts>0?"m"+x.pos:""}">${x.pos}</span></td><td><span class="tn">${badge(x.t,"s")}${escH(x.t.name)}</span></td>${showTurma?`<td>${escH(x.t.turma||"")}</td>`:""}${th?th.acts.map(a=>`<td class="n">${x.t.best[a.id]!=null?x.t.best[a.id]:"·"}</td>`).join(""):THEMES.map(y=>`<td class="n">${thPts(x.t,y)}</td>`).join("")}<td class="n"><b>${x.pts}</b></td></tr>`).join("")}</tbody></table></div>`}
+function goRank(tab){clearAll();if(typeof tab==="string")RV.tab=tab;if(RV.tab!=="all"&&!THEMES.some(t=>t.id===RV.tab))RV.tab="all";
+ bar(team()?goHome:goTeams,team()?"Vila":"Equipas");view.scrollTop=0;
+ if(RV.turma==null)RV.turma=team()?(team().turma||""):(S.curTurma??"*");
+ const draw=()=>{const ts=turmasLocais();if(RV.turma!=="*"&&!ts.includes(RV.turma))RV.turma=ts.length===1?ts[0]:"*";
+  const th=THEMES.find(t=>t.id===RV.tab),list=S.teams.filter(t=>RV.turma==="*"||(t.turma||"")===RV.turma);
+  $("#rk").innerHTML=`<div class="row" style="justify-content:flex-start"><div class="tabs">${[["all","Geral"],...THEMES.map(t=>[t.id,t.name])].map(([k,n])=>`<button class="tab" data-k="${k}" aria-pressed="${RV.tab===k}">${n}</button>`).join("")}</div></div>
+  ${ts.length>1?`<div class="chips"><b class="fl" style="align-self:center">Turma</b>${ts.map(x=>`<button class="chip" data-tu="${escH(x)}" aria-pressed="${x===RV.turma}">${escH(x||"Sem turma")}</button>`).join("")}<button class="chip" data-tu="*" aria-pressed="${RV.turma==="*"}">Todas</button></div>`:""}
+  <p class="small2">${th?`Melhor pontuação de cada equipa em cada jogo do bairro ${th.name}. Cada jogo vale até 100 pontos.`:"Pontos de cada equipa em cada bairro."}</p>${rankTable(list,th,RV.turma==="*")}
+  <p class="small2">${ONLINE?"A classificação atualiza-se sozinha a cada 30 segundos.":"Mostra as equipas que jogaram neste computador."}</p>`;
+  $$("#rk .tab").forEach(b=>b.onclick=()=>{RV.tab=b.dataset.k;sfx.tap();draw()});
+  $$("#rk [data-tu]").forEach(b=>b.onclick=()=>{RV.turma=b.dataset.tu;sfx.tap();draw()})};
+ view.innerHTML=`<div class="wrap wide"><div class="stage rk"><h2 class="ttl2">Classificação</h2><div class="rk" id="rk"></div></div></div>`;draw();
+ if(ONLINE){const my=scr;const tick=()=>pull().then(ch=>{if(scr!==my)return;if(ch)draw();later(tick,30000)});tick()}
+}
+function playersOf(tm,themeId){const ms=members(tm).map(m=>m.id),p=tm.play&&tm.play[themeId];const v=p?p.filter(x=>ms.includes(x)):[];return v.length?v:ms}
+function play(id){
+  if(team()&&examLeft(team(),id)<=0){goTheme(themeOf(id).id);return}
+  clearAll();const a=actOf(id),t=themeOf(id);curAct=id;bar(()=>goTheme(t.id),t.back||(t.name.split(" ")[0]==="Dentro"?"Peças":t.name.split(" ")[0]==="Entra"?"Entra e Sai":"Escudo"));view.scrollTop=0;
+  a.run(id);
+}
+function finish(id,pts,detail){
+  clearAll();pts=Math.max(0,Math.min(100,Math.round(pts)));
+  const tm=team(),t=themeOf(id),was=themeDone(t.id),prev=S.best[id];
+  if(prev==null||pts>prev)S.best[id]=pts;
+  if(tm){tm.att[id]=(tm.att[id]||0)+1;tm.log.push({i:newId(),a:id,p:pts,t:Date.now(),m:playersOf(tm,t.id).join(""),...(exOf(tm)?{x:exOf(tm).id}:{})});if(tm.log.length>200)tm.log=tm.log.slice(-200)}save();if(ONLINE)pushTeam(tm);
+  const nowDone=themeDone(t.id),s=starsFor(pts),nextA=t.acts.find(a=>S.best[a.id]==null&&examLeft(tm,a.id)>0)||(examOn()?t.acts.find(a=>examLeft(tm,a.id)>0):null),leftNow=examLeft(tm,id);
+  bar(()=>goTheme(t.id),"Voltar");view.scrollTop=0;
+  sfx.win();if(s>=2||(!was&&nowDone))confetti();
+  const gifts={comp:"um capacete de construtor",per:"uns auscultadores",seg:"um escudo",erg:"uns óculos",dig:"umas luvas de teclista"};
+  view.innerHTML=`<div class="wrap" style="max-width:640px"><div class="stage end">${bit("wow","idle")}<h2>${s===3?"Fantástico!":s===2?"Muito bem!":"Bom trabalho!"}</h2><div class="bstars">${[0,1,2].map(i=>star(i<s)).join("")}</div><div class="big">${pts}</div><p>pontos em 100. ${detail}</p>
+  ${examOn()?`<div class="exam">Esta tentativa conta para a avaliação.${leftNow>0?` Ainda podem jogar mais ${leftNow===1?"uma vez":leftNow+" vezes"} este jogo.`:" Este jogo já está fechado."}</div>`:prev!=null&&pts<=prev?`<p>O vosso melhor resultado continua a ser ${prev}.</p>`:""}
+  ${!was&&nowDone?`<div class="help">Terminaram o bairro! O Bit ganhou ${gifts[t.id]}.${ONLINE?"":" Enviem os resultados ao professor."}</div>`:""}
+  ${id==="fazes"||id==="detetive"?'<div class="help">Lembra-te: conta sempre a um adulto de confiança. Linha Internet Segura: <b>800 21 90 90</b></div>':""}
+  <div class="row">${nextA?`<button class="btn" id="n">Próximo jogo</button>`:`<button class="btn" id="h">Ver a vila</button>`}${leftNow>0?'<button class="btn white" id="r">Jogar outra vez</button>':""}<button class="btn white" id="k">Classificação</button>${ONLINE?"":`<button class="btn white" id="e">Enviar ao professor</button>`}</div></div></div>`;
+  if($("#n"))$("#n").onclick=()=>play(nextA.id);if($("#h"))$("#h").onclick=goHome;if($("#r"))$("#r").onclick=()=>play(id);$("#k").onclick=()=>goRank(t.id);if($("#e"))$("#e").onclick=goShare;
+}
+
+/* --- área do professor --- */
+let profOk=false,PROF={pin:"",teams:[],url:""};
+async function profLoad(){const r=await rpc("vcTeacher",PROF.pin);if(!r.ok)throw new Error(r.err||"pin");PROF.teams=r.teams||[];PROF.url=r.url||"";return r}
+function goProf(){clearAll();bar(team()?goHome:goTeams,"Sair");view.scrollTop=0;
+ if(profOk){profMain();return}
+ if(ONLINE){view.innerHTML='<div class="wrap narrow2"><div class="stage"><h2 class="ttl2">Área do professor</h2><p style="font-size:17px" id="er">A verificar a ligação...</p><div class="row" style="justify-content:flex-start"><button class="btn white small" id="again" hidden>Tentar outra vez</button></div></div></div>';$("#again").onclick=goProf;const my=scr;
+  rpc("vcPinStatus").then(r=>{if(scr===my)profForm(!r.set)}).catch(()=>{if(scr!==my)return;$("#er").textContent="Não foi possível ligar ao servidor. Verifique a internet.";$("#again").hidden=false});return}
+ profForm(!S.prof.pin)}
+function profForm(first){const P=S.prof;
+ view.innerHTML=`<div class="wrap narrow2"><form class="stage" id="f" autocomplete="off"><h2 class="ttl2">Área do professor</h2>
+ <p style="font-size:17px">${first?"Crie um PIN de 4 a 8 algarismos para proteger esta área neste computador.":"Escreva o PIN."}</p>
+ <label class="fl" for="p1">PIN</label><input class="fld" id="p1" type="password" inputmode="numeric" maxlength="8" style="max-width:220px">
+ ${first?'<label class="fl" for="p2">Repetir o PIN</label><input class="fld" id="p2" type="password" inputmode="numeric" maxlength="8" style="max-width:220px">':""}
+ <p id="er" style="color:var(--wrong);font-weight:800;font-size:16px"></p><div class="row" style="justify-content:flex-start"><button class="btn">${first?"Criar PIN e entrar":"Entrar"}</button>${first?"":'<span id="fg"><button type="button" class="btn white small" id="forg">Esqueci-me do PIN</button></span>'}</div></form></div>`;
+ $("#p1").focus();
+ if(ONLINE){$("#f").onsubmit=async e=>{e.preventDefault();const a=$("#p1").value.trim(),er=$("#er"),bt=$("#f .btn");
+   if(!/^\d{4,8}$/.test(a)){er.textContent="O PIN tem de ter entre 4 e 8 algarismos.";return}
+   if(first&&a!==$("#p2").value.trim()){er.textContent="Os dois PIN não coincidem.";return}
+   bt.disabled=true;er.textContent="A entrar...";
+   try{if(first){const r=await rpc("vcSetPin",a);if(!r.ok){er.textContent=r.err==="existe"?"Já existe um PIN. Volte a abrir a área do professor.":"Não foi possível criar o PIN.";bt.disabled=false;return}}
+    PROF.pin=a;await profLoad();profOk=true;profMain()}
+   catch(x){bt.disabled=false;const m=String(x&&x.message||x);er.textContent=m==="errado"?"PIN errado.":m==="bloqueado"?"Demasiadas tentativas erradas. Espere 10 minutos.":"Não foi possível ligar ao servidor.";if(m==="errado")sfx.no()}};
+  if($("#forg"))$("#forg").onclick=()=>{$("#fg").innerHTML='<span style="font-size:15px;font-weight:800">Abra a Folha de cálculo Google do jogo, vá à folha Config e apague o conteúdo da célula B1. Depois volte aqui para criar um PIN novo. As equipas e os resultados não se perdem.</span>'};
+  return}
+ $("#f").onsubmit=e=>{e.preventDefault();const a=$("#p1").value.trim();if(first){if(!/^\d{4,8}$/.test(a)){$("#er").textContent="O PIN tem de ter entre 4 e 8 algarismos.";return}if(a!==$("#p2").value.trim()){$("#er").textContent="Os dois PIN não coincidem.";return}P.pin=hash("pin:"+a);save();profOk=true;profMain();return}
+  if(hash("pin:"+a)!==P.pin){$("#er").textContent="PIN errado.";sfx.no();return}profOk=true;profMain()};
+ if($("#forg"))$("#forg").onclick=()=>{$("#fg").innerHTML='<span style="font-size:15px;font-weight:800">Para criar um PIN novo, os resultados guardados nesta área são apagados.</span> <button type="button" class="btn small" id="y">Apagar e criar PIN novo</button>';$("#y").onclick=()=>{S.prof={pin:null,teams:[]};save();goProf()}};
+}
+let PV={tab:"sum",turma:"",sel:null,met:"best"};
+const thM=(t,th,k)=>th.acts.reduce((a,x)=>a+(metric(t,x.id,k)||0),0);
+const thPts=(t,th)=>th.acts.reduce((a,x)=>a+(t.best[x.id]||0),0);
+const thDone=(t,th)=>th.acts.filter(x=>t.best[x.id]!=null).length;
+const lastT=(t,th)=>{const ids=th?new Set(th.acts.map(a=>a.id)):null;const l=t.log.filter(x=>!ids||ids.has(x.a));return l.length?l[l.length-1].t:null};
+const shownTeams=()=>(ONLINE?PROF:S.prof).teams.filter(t=>!PV.turma||(t.turma||"")===PV.turma).sort((a,b)=>(a.turma||"").localeCompare(b.turma||"","pt")||a.name.localeCompare(b.name,"pt"));
+function profMain(){clearAll();bar(team()?goHome:goTeams,"Sair");
+ const P=ONLINE?PROF:S.prof,turmas=[...new Set(P.teams.map(t=>t.turma||""))].sort((a,b)=>a.localeCompare(b,"pt")),list=shownTeams();
+ if(PV.turma&&!turmas.includes(PV.turma))PV.turma="";
+ const tabs=[["sum","Resumo"],...THEMES.map(t=>[t.id,t.name])];
+ let body="";
+ if(!P.teams.length)body=ONLINE?'<p class="q" style="font-size:21px">Ainda não há equipas. Quando os alunos criarem as equipas no jogo, elas aparecem aqui.</p>':'<p class="q" style="font-size:21px">Ainda não recebeu resultados. Cole os códigos das equipas ou abra os ficheiros que elas enviaram.</p>';
+ else if(PV.tab==="sum")body=`<div class="tw"><table class="pt"><thead><tr><th>Equipa</th><th>Turma</th><th>Elementos</th>${THEMES.map(t=>`<th>${t.name}</th>`).join("")}<th>Total</th><th>Última atividade</th></tr></thead><tbody>${list.map(t=>{const L=lastT(t);return `<tr><td><span class="tn">${badge(t,"s")}${escH(t.name)}</span></td><td>${escH(t.turma||"")}</td><td class="wr">${escH(members(t).map(m=>memLabel(t,m)).join(", "))||"·"}</td>${THEMES.map(th=>`<td class="n">${thM(t,th,PV.met)} <small>(${th.acts.filter(a=>metric(t,a.id,PV.met)!=null).length}/${th.acts.length})</small></td>`).join("")}<td class="n"><b>${THEMES.reduce((a,th)=>a+thM(t,th,PV.met),0)}</b></td><td>${L?fmtD(L)+" "+fmtH(L):"·"}</td></tr>`}).join("")}</tbody></table></div>`;
+ else{const th=THEMES.find(t=>t.id===PV.tab);const sel=list.find(t=>t.id===PV.sel);
+  body=`<p style="font-size:15.5px">Cada célula mostra: ${MET[PV.met].toLowerCase()}. Entre parênteses, o número de tentativas. Toque numa equipa para ver o percurso.</p><div class="tw"><table class="pt"><thead><tr><th>Equipa</th><th>Turma</th><th>Jogaram neste bairro</th>${th.acts.map(a=>`<th>${a.n}</th>`).join("")}<th>Total</th><th>Última vez</th></tr></thead><tbody>${list.map(t=>{const L=lastT(t,th);return `<tr class="pick ${sel&&sel.id===t.id?"sel":""}" data-id="${t.id}" tabindex="0"><td><span class="tn">${badge(t,"s")}${escH(t.name)}</span></td><td>${escH(t.turma||"")}</td><td class="wr">${escH(idsNames(t,playedIn(t,th)))||"·"}</td>${th.acts.map(a=>`<td class="n">${metric(t,a.id,PV.met)??"·"} <small>${t.att[a.id]?`(${t.att[a.id]})`:""}</small></td>`).join("")}<td class="n"><b>${thM(t,th,PV.met)}</b></td><td>${L?fmtD(L):"·"}</td></tr>`}).join("")}</tbody></table></div>
+  ${sel?`<div class="path"><div class="trow">${badge(sel)}<div class="grow"><b>Percurso de ${escH(sel.name)} em ${th.name}</b><span>${thDone(sel,th)} de ${th.acts.length} atividades concluídas · ${thPts(sel,th)} pontos</span></div></div>${members(sel).length?`<div class="mem3">${members(sel).map(m=>{const n=sel.log.filter(l=>th.acts.some(a=>a.id===l.a)&&(l.m||"").includes(m.id)).length;return `<span class="${n?"":"off"}"><b>${escH(m.n)}</b> ${escH(m.t||sel.turma||"")} · ${n} tentativa${n===1?"":"s"} neste bairro</span>`}).join("")}</div>`:""}<ol class="tl2">${sel.log.filter(l=>th.acts.some(a=>a.id===l.a)).map(l=>`<li><span class="when">${fmtD(l.t)} ${fmtH(l.t)}</span><span class="what">${actOf(l.a).n}</span><span class="whom">${l.m?escH(idsNames(sel,l.m)):"Sem registo"}${l.x?' <b class="exb s">Avaliação</b>':""}</span><span class="pbar"><i style="width:${l.p}%"></i></span><b>${l.p}</b></li>`).join("")||"<li>Ainda não jogou nesta temática.</li>"}</ol>${th.acts.filter(a=>sel.best[a.id]==null).length?`<p style="font-size:15.5px">Por jogar: ${th.acts.filter(a=>sel.best[a.id]==null).map(a=>a.n).join(", ")}.</p>`:""}<div class="row" style="justify-content:flex-start" id="rmb"><button class="btn white small" id="rm">Remover esta equipa</button></div></div>`:""}`}
+ const topOn=`<p style="font-size:17px">As equipas e os resultados chegam sozinhos, de todos os computadores. Tudo fica guardado na sua Folha de cálculo Google.</p><div class="row" style="justify-content:flex-start;gap:8px"><button class="btn small" id="upd">Atualizar</button><button class="btn white small" id="xl" ${P.teams.length?"":"disabled"}>Exportar para Excel</button>${PROF.url?`<a class="btn white small" href="${escH(PROF.url)}" target="_blank" rel="noopener">Abrir a Folha de cálculo</a>`:""}</div>`;
+ const botOn=`<div class="stage"><h3 class="ttl3">Apagar equipas</h3>${turmas.length?turmas.map(tu=>`<div class="row" style="justify-content:space-between;border-top:3px solid var(--ink);padding-top:8px"><b class="fl">Turma ${escH(tu||"sem nome")} · ${P.teams.filter(t=>(t.turma||"")===tu).length} equipa${P.teams.filter(t=>(t.turma||"")===tu).length===1?"":"s"}</b><span><button class="btn white small" data-delt="${escH(tu)}">Apagar as equipas desta turma</button></span></div>`).join(""):'<p style="font-size:16px">Não há equipas.</p>'}
+ <p style="font-size:15px">Apagar uma equipa tira-a do jogo em todos os computadores e apaga o seu percurso da Folha de cálculo. Exporte antes para Excel se quiser guardar os resultados.</p><div class="row" style="justify-content:flex-start"><button class="btn white small" id="out">Sair da área</button></div></div>`;
+ view.innerHTML=`<div class="wrap wide"><div class="stage"><h2 class="ttl2">Área do professor</h2>
+ ${ONLINE?topOn:` <div class="pgrid"><div><label class="fl" for="codes">Colar códigos das equipas</label><textarea class="fld" id="codes" rows="3" placeholder="VC2..."></textarea><div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn small" id="add">Juntar códigos</button><label class="btn white small" for="ff" style="cursor:pointer">Abrir ficheiros das equipas</label><input type="file" id="ff" accept=".txt,text/plain" multiple hidden></div></div>
+ <div><span class="fl">Guardar e exportar</span><div class="row" style="justify-content:flex-start;gap:8px"><button class="btn small" id="xl" ${P.teams.length?"":"disabled"}>Exportar para Excel</button><button class="btn white small" id="bk" ${P.teams.length?"":"disabled"}>Guardar cópia de segurança</button><label class="btn white small" for="rf" style="cursor:pointer">Abrir cópia</label><input type="file" id="rf" accept=".json,application/json" hidden></div></div></div>
+ `}
+ <p id="ms" role="status" style="font-weight:800;font-size:16px"></p></div>
+ <div class="stage"><div class="row" style="justify-content:space-between"><div class="tabs">${tabs.map(([k,n])=>`<button class="tab" data-k="${k}" aria-pressed="${PV.tab===k}">${n}</button>`).join("")}</div><span class="row" style="gap:10px"><label style="font-weight:800;font-size:16px">Pontuação <select class="fld" id="mt" style="width:auto;display:inline-block;padding:5px 9px">${Object.entries(MET).map(([k,n])=>`<option value="${k}" ${PV.met===k?"selected":""}>${n}</option>`).join("")}</select></label><label style="font-weight:800;font-size:16px">Turma <select class="fld" id="tu" style="width:auto;display:inline-block;padding:5px 9px"><option value="">Todas</option>${turmas.filter(Boolean).map(x=>`<option ${x===PV.turma?"selected":""}>${escH(x)}</option>`).join("")}${turmas.includes("")?`<option value="" disabled>Sem turma incluída em Todas</option>`:""}</select></label></span></div>${body}</div>
+ ${ONLINE?"":`<div class="stage"><h3 class="ttl3">Chave de avaliação</h3><p style="font-size:16px">Para uma aula de avaliação, crie a chave de hoje e escreva-a no quadro. Cada equipa escreve a chave no seu computador, no botão Avaliação, e passa a ter um número limitado de tentativas em cada jogo. As equipas que não escreverem a chave continuam em treino. A chave só vale hoje e só neste jogo.</p><div class="row" style="justify-content:flex-start"><label style="font-weight:800;font-size:16px">Tentativas por jogo <select class="fld" id="exm" style="width:auto;display:inline-block;padding:5px 9px">${[1,2,3].map(n=>`<option ${S.keyMax===n?"selected":""}>${n}</option>`).join("")}</select></label><button class="btn small" id="mk">Criar a chave de hoje</button></div><div id="kbox"></div><p style="font-size:15px">Na tabela acima, escolha Pontuação: Avaliação para ver só as tentativas feitas com chave.</p></div>`}
+ ${ONLINE?botOn:`<div class="stage"><h3 class="ttl3">Equipas neste computador</h3>${S.teams.length?`<div class="row" style="justify-content:flex-start"><button class="btn small" id="loc">Juntar as equipas deste computador</button></div>${turmasLocais().map(tu=>`<div class="row" style="justify-content:space-between;border-top:3px solid var(--ink);padding-top:8px"><b class="fl">Turma ${escH(tu||"sem nome")} · ${S.teams.filter(t=>(t.turma||"")===tu).length} equipa${S.teams.filter(t=>(t.turma||"")===tu).length===1?"":"s"}</b><span data-tub="${escH(tu)}"><button class="btn white small" data-delt="${escH(tu)}">Apagar as equipas desta turma</button></span></div>`).join("")}${S.teams.slice().sort((a,b)=>(a.turma||"").localeCompare(b.turma||"","pt",{numeric:true})).map(t=>`<div class="trow">${badge(t,"s")}<div class="grow"><b>${escH(t.name)}</b><span>${t.turma?escH(t.turma)+" · ":""}${Object.values(t.best).reduce((a,b)=>a+b,0)} pontos${members(t).length?" · "+escH(members(t).map(m=>m.n).join(", ")):""}</span></div><span id="lt${t.id}"><button class="btn white small" data-del="${t.id}">Apagar</button></span></div>`).join("")}`:'<p style="font-size:16px">Não há equipas neste computador.</p>'}
+ <div class="row" style="justify-content:flex-start" id="wb"><button class="btn white small" id="wipe" ${P.teams.length?"":"disabled"}>Apagar os resultados recebidos</button><button class="btn white small" id="out">Sair da área</button></div>
+ <p style="font-size:15px">Os resultados ficam guardados neste browser. Use a cópia de segurança para os passar para outro computador ou para não os perder ao limpar o browser.</p></div>`}</div>`;
+ const msg=t=>$("#ms").textContent=t;
+ const stamp=()=>new Date().toISOString().slice(0,10);
+ $("#xl").onclick=async()=>{const ok=await saveFile(`VilaCircuito_resultados${PV.turma?"_"+PV.turma.replace(/[^A-Za-z0-9]+/g,""):""}_${stamp()}.xlsx`,buildXlsx(shownTeams()));msg(ok?`Ficheiro Excel criado com ${shownTeams().length} equipa${shownTeams().length===1?"":"s"}.${ONLINE?" Se não aparecer, abra a Folha de cálculo e use Ficheiro, Transferir, Microsoft Excel.":""}`:"O ficheiro não foi guardado.")};
+ $$(".tab").forEach(b=>b.onclick=()=>{PV.tab=b.dataset.k;PV.sel=null;profMain()});
+ $("#tu").onchange=e=>{PV.turma=e.target.value;PV.sel=null;profMain()};
+ $("#mt").onchange=e=>{PV.met=e.target.value;profMain()};
+ const showKey=()=>{$("#kbox").innerHTML=`<div class="keyb"><span>Chave de hoje, ${fmtD(Date.now())}, com ${S.keyMax===1?"1 tentativa":S.keyMax+" tentativas"} por jogo</span><b id="kv">${makeKey(S.keyMax)}</b></div>`};
+ if($("#exm"))$("#exm").onchange=e=>{S.keyMax=+e.target.value;save();if($("#kv"))showKey()};
+ if($("#mk"))$("#mk").onclick=()=>{showKey();sfx.tap()};
+ $$("tr.pick").forEach(r=>{const f=()=>{PV.sel=PV.sel===r.dataset.id?null:r.dataset.id;profMain();const p=$(".path");if(p)p.scrollIntoView({block:"nearest"})};r.onclick=f;r.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();f()}}});
+ $("#out").onclick=()=>{profOk=false;if(ONLINE)PROF={pin:"",teams:[],url:""};team()?goHome():goTeams()};
+ if(ONLINE){
+  const reload=async(t)=>{msg("A atualizar...");try{await profLoad();profMain();if(t)msg(t)}catch(x){msg("Não foi possível ligar ao servidor.")}};
+  const del=async(ids,t)=>{msg("A apagar...");try{const r=await rpc("vcDelete",PROF.pin,JSON.stringify({ids}));if(!r.ok)throw 0;S.teams=S.teams.filter(x=>!ids.includes(x.id));if(S.current&&!team())S.current=null;save();PV.sel=null;await reload(t)}catch(x){msg("Não foi possível apagar. Tente outra vez.")}};
+  $("#upd").onclick=()=>reload("Resultados atualizados.");
+  if($("#rm"))$("#rm").onclick=()=>{$("#rmb").innerHTML='<span style="font-weight:800">Apagar esta equipa em todos os computadores?</span> <button class="btn small" id="y">Sim, apagar</button> <button class="btn white small" id="n">Não</button>';$("#y").onclick=()=>del([PV.sel],"Equipa apagada.");$("#n").onclick=profMain};
+  $$("[data-delt]").forEach(b=>b.onclick=()=>{const tu=b.dataset.delt,box=b.parentElement;box.innerHTML='<span style="font-weight:800;font-size:15px">Apagar mesmo todas as equipas desta turma?</span> <button class="btn small" data-yt>Sim, apagar</button>';$("[data-yt]",box).onclick=()=>del(P.teams.filter(t=>(t.turma||"")===tu).map(t=>t.id),"Equipas da turma apagadas.")});
+  return}
+ const take2=txt=>{const cs=txt.match(/VC[12]\.[A-Za-z0-9_~]+\.[A-Z0-9]{5}/g)||[];let n=0,u=0,bad=0;cs.forEach(c=>{const t=readCode(c);if(!t){bad++;return}mergeTeam(P.teams,t)==="nova"?n++:u++});const raw=(txt.match(/VC[12]\.\S*/g)||[]).length;bad+=Math.max(0,raw-cs.length);save();return{n,u,bad,tot:cs.length}};
+ const report=r=>{if(!r.tot&&!r.bad){msg("Não foi encontrado nenhum código.");return}profMain();msg([r.n?`${r.n} equipa${r.n>1?"s":""} nova${r.n>1?"s":""}.`:"",r.u?`${r.u} equipa${r.u>1?"s":""} atualizada${r.u>1?"s":""}.`:"",r.bad?`${r.bad} código${r.bad>1?"s":""} com erro: peçam à equipa para o copiar outra vez.`:""].filter(Boolean).join(" "))};
+ $("#add").onclick=()=>report(take2($("#codes").value));
+ $("#ff").onchange=async e=>{let txt="";for(const f of e.target.files)txt+="\n"+await f.text();report(take2(txt))};
+ $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(d.app!=="vila-circuito-prof"||!Array.isArray(d.teams))throw 0;let n=0;d.teams.forEach(t=>{if(t&&t.id&&t.best&&Array.isArray(t.log)){mergeTeam(P.teams,{...t,att:t.att||{}});n++}});save();profMain();msg(`Cópia aberta: ${n} equipa${n===1?"":"s"}.`)}catch(x){msg("Este ficheiro não é uma cópia de segurança do Vila Circuito.")}};
+ $("#bk").onclick=async()=>{const ok=await saveFile(`VilaCircuito_copia_${stamp()}.json`,JSON.stringify({app:"vila-circuito-prof",v:1,saved:Date.now(),teams:P.teams}),"application/json");msg(ok?"Cópia de segurança guardada.":"A cópia não foi guardada.")};
+ if($("#rm"))$("#rm").onclick=()=>{$("#rmb").innerHTML='<span style="font-weight:800">Remover dos resultados recebidos?</span> <button class="btn small" id="y">Sim, remover</button> <button class="btn white small" id="n">Não</button>';$("#y").onclick=()=>{P.teams=P.teams.filter(t=>t.id!==PV.sel);PV.sel=null;save();profMain()};$("#n").onclick=profMain};
+ if($("#loc"))$("#loc").onclick=()=>{let n=0,u=0;S.teams.forEach(t=>mergeTeam(P.teams,JSON.parse(JSON.stringify(t)))==="nova"?n++:u++);save();profMain();msg(`${n} nova${n===1?"":"s"}, ${u} atualizada${u===1?"":"s"}.`)};
+ $$("[data-delt]").forEach(b=>b.onclick=()=>{const tu=b.dataset.delt,box=b.parentElement;box.innerHTML='<span style="font-weight:800;font-size:15px">Junte primeiro os resultados. Apagar mesmo?</span> <button class="btn small" data-yt>Sim, apagar</button>';$("[data-yt]",box).onclick=()=>{S.teams=S.teams.filter(t=>(t.turma||"")!==tu);if(!team())S.current=null;if(S.curTurma===tu)S.curTurma=null;save();profMain()}});
+ $$("[data-del]").forEach(b=>b.onclick=()=>{const id=b.dataset.del;$("#lt"+id).innerHTML=`<button class="btn small" data-y="${id}">Apagar mesmo</button>`;$(`[data-y="${id}"]`).onclick=()=>{S.teams=S.teams.filter(t=>t.id!==id);if(S.current===id)S.current=null;save();profMain()}});
+ $("#wipe").onclick=()=>{$("#wb").innerHTML='<span style="font-weight:800">Apagar todos os resultados recebidos? Guarde antes uma cópia.</span> <button class="btn small" id="y">Sim, apagar</button> <button class="btn white small" id="n">Não</button>';$("#y").onclick=()=>{P.teams=[];PV.sel=null;save();profMain()};$("#n").onclick=profMain};
+}
+
+/* --- ficheiro Excel (.xlsx) criado no próprio browser --- */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+function zipStore(files){const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+ for(const f of files){const nm=enc.encode(f.name),d=enc.encode(f.data),crc=crc32(d),h=new DataView(new ArrayBuffer(30));
+  [[0,0x04034b50,4],[4,20,2],[6,0x0800,2],[8,0,2],[10,0,2],[12,0x21,2],[14,crc,4],[18,d.length,4],[22,d.length,4],[26,nm.length,2],[28,0,2]].forEach(([o,v,s])=>s===4?h.setUint32(o,v,true):h.setUint16(o,v,true));
+  parts.push(new Uint8Array(h.buffer),nm,d);const c=new DataView(new ArrayBuffer(46));
+  [[0,0x02014b50,4],[4,20,2],[6,20,2],[8,0x0800,2],[10,0,2],[12,0,2],[14,0x21,2],[16,crc,4],[20,d.length,4],[24,d.length,4],[28,nm.length,2],[30,0,2],[32,0,2],[34,0,2],[36,0,2],[38,0,4],[42,off,4]].forEach(([o,v,s])=>s===4?c.setUint32(o,v,true):c.setUint16(o,v,true));
+  cd.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+d.length}
+ const size=cd.reduce((a,b)=>a+b.length,0),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,size,true);e.setUint32(16,off,true);
+ return new Blob([...parts,...cd,new Uint8Array(e.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})}
+const xe=s=>String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const colL=n=>{let s="";n++;while(n){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
+function sheetXml(rows,widths){const r=rows.map((row,y)=>`<row r="${y+1}">${row.map((v,x)=>{const ref=colL(x)+(y+1),st=y===0?' s="1"':"";if(v===null||v===undefined||v==="")return `<c r="${ref}"${st}/>`;if(typeof v==="number")return `<c r="${ref}"${st}><v>${v}</v></c>`;return `<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${xe(v)}</t></is></c>`}).join("")}</row>`).join("");
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${r}</sheetData></worksheet>`}
+function buildXlsx(list){const sheets=[];
+ const L=(t,th)=>{const v=lastT(t,th);return v?fmtD(v)+" "+fmtH(v):""};
+ const MK=["best","first","mean","exam"];
+ sheets.push(["Resumo",[["Equipa","Turma","Elementos",...THEMES.map(t=>t.name+" (melhor)"),...MK.map(k=>"Total: "+MET[k].toLowerCase()),"Atividades concluídas","Tentativas","Tentativas em avaliação","Última atividade"],...list.map(t=>[t.name,t.turma||"",members(t).map(m=>memLabel(t,m)).join(", "),...THEMES.map(th=>thPts(t,th)),...MK.map(k=>THEMES.reduce((a,th)=>a+thM(t,th,k),0)),allActs.filter(a=>t.best[a.id]!=null).length,t.log.length,t.log.filter(l=>l.x).length,L(t)])],[24,10,36,...THEMES.map(()=>18),16,16,16,16,12,11,12,18]]);
+ const er=[["Equipa","Turma da equipa","Elemento","Turma do elemento",...THEMES.map(t=>t.name+" (tentativas)"),"Total de tentativas"]];
+ list.forEach(t=>(t.members||[]).filter(m=>!m.out||t.log.some(l=>(l.m||"").includes(m.id))).forEach(m=>{const c=THEMES.map(th=>t.log.filter(l=>th.acts.some(a=>a.id===l.a)&&(l.m||"").includes(m.id)).length);er.push([t.name,t.turma||"",m.n+(m.out?" (saiu da equipa)":""),m.t||t.turma||"",...c,c.reduce((a,b)=>a+b,0)])}));
+ sheets.push(["Elementos",er,[24,12,22,14,...THEMES.map(()=>18),14]]);
+ THEMES.forEach(th=>sheets.push([th.name.slice(0,31),[["Equipa","Turma","Elementos que jogaram",...th.acts.flatMap(a=>[a.n+": melhor",a.n+": 1.ª tentativa",a.n+": média",a.n+": avaliação",a.n+": tentativas"]),"Total (melhor)","Total (1.ª tentativa)","Total (média)","Total (avaliação)","Última atividade"],...list.map(t=>[t.name,t.turma||"",idsNames(t,playedIn(t,th)),...th.acts.flatMap(a=>[...MK.map(k=>metric(t,a.id,k)??""),t.att[a.id]||0]),...MK.map(k=>thM(t,th,k)),L(t,th)])],[24,10,36,...th.acts.flatMap(()=>[14,14,12,13,12]),12,14,12,14,18]]));
+ const pr=[["Equipa","Turma","Bairro","Atividade","Elementos","Pontos","Modo","N.º da tentativa","Data","Hora"]];list.forEach(t=>{const nn={};t.log.forEach(l=>{const a=actOf(l.a),th=themeOf(l.a);nn[l.a]=(nn[l.a]||0)+1;if(a)pr.push([t.name,t.turma||"",th.name,a.n,l.m?idsNames(t,l.m):"",l.p,l.x?"Avaliação":"Treino",nn[l.a],fmtD(l.t),fmtH(l.t)])})});
+ sheets.push(["Percurso",pr,[24,10,20,26,36,9,11,10,12,8]]);
+ const files=[{name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`},
+ {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+ {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xe(s[0].replace(/[\[\]:*?\/\\]/g," "))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets></workbook>`},
+ {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+ {name:"xl/styles.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0A7A60"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`},
+ ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXml(s[1],s[2])}))];
+ return zipStore(files)}
+if(ONLINE){view.innerHTML='<div class="wrap narrow2"><div class="stage"><p class="q" style="font-size:22px">A abrir a Vila Circuito...</p></div></div>';
+ S.teams.forEach(t=>(t.log||[]).forEach(l=>{if(!l.i)l.i=newId()}));
+ pull().then(()=>{flush();goHome()});setInterval(()=>{if(S.teams.some(t=>t.dirty))flush()},20000)}
+else goHome();
+</script>
+</body></html>

@@ -1,0 +1,1282 @@
+<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Operação Farol</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Lexend:wght@300;400;600;800&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Conceito: uma noite no Cabo da Roca. O mar animado fica sempre atrás; cada nível acende uma lente do farol e os painéis são placas de latão de um instrumento náutico. */
+:root{
+  color-scheme:dark;
+  --abyss:#0a1140; --hull:#121c5c; --hull-2:#1b2a7a; --hull-deep:#060a2b;
+  --flare:#ffc23d; --flare-deep:#d9820f; --coral:#ff5a78; --coral-deep:#b02448;
+  --kelp:#2ee6b0; --kelp-deep:#0e9673; --foam:#eef6ff; --mist:#a9bce6; --line:#ffffff24;
+  --f-display:"Bungee","Arial Black",Impact,sans-serif;
+  --f-body:"Lexend","Trebuchet MS",Verdana,sans-serif;
+  --f-data:"DM Mono",ui-monospace,Consolas,monospace;
+}
+html,body{height:100%}
+body{background:var(--abyss);color:var(--foam);font-family:var(--f-body);font-weight:300;font-size:16px;line-height:1.5;overflow:hidden}
+*{box-sizing:border-box}
+#sea{position:fixed;inset:0;width:100%;height:100%;display:block}
+#app{position:relative;height:100%;display:flex;flex-direction:column}
+#hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:#060a2bcc;border-bottom:2px solid var(--line)}
+#hud[hidden]{display:none}
+.hud-team{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 160px}
+.hud-team b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-pts{font-family:var(--f-data);color:var(--flare);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hud-nav{display:flex;gap:6px;flex-wrap:wrap}
+#view.dim{background:#0a114070}
+#view{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1020px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4.6vw,42px);line-height:1.05;color:var(--foam)}
+h3{font-weight:800;font-size:19px;line-height:1.25}
+p{margin:0}
+.eyebrow{font-family:var(--f-data);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--flare)}
+.lead{font-size:17px;max-width:66ch;color:var(--foam)}
+.muted{color:var(--mist)}
+.small{font-size:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+
+/* Placa de latão: rebites nos quatro cantos */
+.plate{position:relative;background:#121c5cf2;border:2px solid var(--line);border-radius:5px;padding:20px;box-shadow:0 7px 0 var(--hull-deep);display:flex;flex-direction:column;gap:14px;min-width:0}
+.plate::before{content:"";position:absolute;inset:6px;pointer-events:none;
+  background:
+   radial-gradient(circle,var(--flare) 0 2px,transparent 2.6px) 0 0/6px 6px no-repeat,
+   radial-gradient(circle,var(--flare) 0 2px,transparent 2.6px) 100% 0/6px 6px no-repeat,
+   radial-gradient(circle,var(--flare) 0 2px,transparent 2.6px) 0 100%/6px 6px no-repeat,
+   radial-gradient(circle,var(--flare) 0 2px,transparent 2.6px) 100% 100%/6px 6px no-repeat;opacity:.75}
+
+.btn{font-family:var(--f-body);font-weight:800;font-size:16px;color:var(--hull-deep);background:var(--flare);border:0;border-radius:5px;padding:12px 20px;cursor:pointer;box-shadow:0 5px 0 var(--flare-deep);transition:transform .08s,box-shadow .08s,filter .15s;position:relative}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--flare-deep)}
+.btn.ghost{background:var(--hull-2);color:var(--foam);box-shadow:0 5px 0 var(--hull-deep)}
+.btn.good{background:var(--kelp);box-shadow:0 5px 0 var(--kelp-deep)}
+.btn.bad{background:var(--coral);box-shadow:0 5px 0 var(--coral-deep);color:#fff}
+.btn.mini{padding:7px 11px;font-size:14px;box-shadow:0 3px 0 var(--hull-deep);font-weight:600}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:saturate(.4)}
+:focus-visible{outline:3px solid var(--foam);outline-offset:2px}
+input[type=text],textarea{width:100%;font:inherit;font-weight:400;color:var(--foam);background:var(--hull-deep);border:2px solid var(--line);border-radius:5px;padding:11px 12px}
+textarea{font-family:var(--f-data);font-size:13px;min-height:90px;resize:vertical}
+
+/* Ecrã inicial */
+.title{min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:20px;max-width:1020px;margin-inline:auto}
+.logo{display:flex;flex-direction:column;line-height:.88}
+.logo small{font-family:var(--f-display);font-size:clamp(24px,5.2vw,50px);color:var(--foam);letter-spacing:.04em}
+.logo strong{font-family:var(--f-display);font-weight:400;font-size:clamp(82px,19vw,196px);letter-spacing:-.01em;background:linear-gradient(100deg,#fff2c4 0%,var(--flare) 38%,#ff8a3d 62%,var(--coral) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 7px 0 var(--hull-deep))}
+.pitch{max-width:44ch;font-size:clamp(17px,2.2vw,21px);font-weight:400;text-shadow:0 2px 10px var(--hull-deep)}
+
+@media (max-width:700px){.title{justify-content:flex-start;padding-top:5vh}#view.dim{background:#0a1140c4}th,td{padding:6px 4px;font-size:13px}}
+
+/* Mapa */
+.route{position:relative;width:100%}
+.route svg.path{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.buoy{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;border:4px solid var(--foam);background:radial-gradient(circle at 35% 30%,#ff8fa3,var(--coral) 55%,var(--coral-deep));color:#fff;font-family:var(--f-display);font-size:28px;cursor:pointer;box-shadow:0 6px 0 var(--hull-deep);display:grid;place-items:center;transition:transform .15s;padding:0}
+.buoy:hover:not([disabled]){transform:scale(1.09)}
+.buoy.done{background:radial-gradient(circle at 35% 30%,#fff0bd,var(--flare) 55%,var(--flare-deep));color:var(--hull-deep)}
+.buoy.next{animation:pulse 1.5s infinite}
+.buoy[disabled]{background:var(--hull-2);border-color:var(--line);color:var(--mist);cursor:not-allowed}
+@keyframes pulse{0%,100%{box-shadow:0 6px 0 var(--hull-deep),0 0 0 0 #ffc23daa}50%{box-shadow:0 6px 0 var(--hull-deep),0 0 0 16px #ffc23d00}}
+.tag{position:absolute;text-shadow:0 1px 6px var(--hull-deep);line-height:1.15;min-width:0}
+.tag b{font-weight:800;font-size:15px;display:block}
+.tag span.c{font-size:12.5px;color:var(--foam);display:block}
+.stars{display:inline-flex;gap:2px;vertical-align:middle}
+.stars svg{width:15px;height:15px}
+
+/* Componentes de nível */
+.lvtop{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.lvscore{font-family:var(--f-data);font-size:30px;color:var(--flare);font-variant-numeric:tabular-nums;line-height:1}
+.lvscore small{display:block;font-size:12px;letter-spacing:.12em;color:var(--mist);text-transform:uppercase;margin-bottom:5px}
+.timer{height:10px;background:var(--hull-deep);border-radius:5px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--coral),var(--flare) 40%,var(--kelp))}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--hull-deep);border:2px solid var(--line)}
+.dots i.ok{background:var(--kelp);border-color:var(--kelp)}
+.dots i.no{background:var(--coral);border-color:var(--coral)}
+.dots i.cur{border-color:var(--flare)}
+.card{font-size:clamp(20px,3vw,27px);font-weight:600;line-height:1.3;min-height:3.6em;display:flex;align-items:center}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.choices .btn{min-height:62px;font-size:17px}
+.choices.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:520px){.choices.four{grid-template-columns:minmax(0,1fr)}}
+.fb{padding:14px 16px;border-radius:5px;border:2px solid;display:flex;flex-direction:column;gap:10px;animation:rise .22s ease-out}
+.fb.ok{border-color:var(--kelp);background:#2ee6b01f}
+.fb.no{border-color:var(--coral);background:#ff5a781f}
+.fb b{font-weight:800}
+@keyframes rise{from{transform:translateY(8px)}to{transform:none}}
+.split{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.split{grid-template-columns:minmax(0,1fr)}}
+canvas.game{width:100%;height:auto;display:block;border-radius:5px;background:var(--hull-deep);cursor:crosshair;touch-action:manipulation}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.stat{display:flex;justify-content:space-between;gap:10px;font-family:var(--f-data);font-size:15px;font-variant-numeric:tabular-nums}
+.cams{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px}
+.cam{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cam svg{width:100%;height:auto;border-radius:5px;display:block}
+input[type=range]{width:100%;accent-color:var(--flare);height:26px}
+.bar{height:22px;background:var(--hull-deep);border-radius:4px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;background:var(--kelp);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.bar i.warn{background:var(--flare)}
+.bar i.crit{background:var(--coral)}
+.neuron svg{width:100%;height:auto;display:block}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+th{font-weight:600;color:var(--mist);text-align:center;padding:6px 8px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{text-align:center;padding:6px 8px;border-bottom:1px solid var(--line);font-family:var(--f-data)}
+tr.pick{cursor:pointer}
+tr.pick:hover td{background:#ffffff0d}
+tr.sel td{background:#ffc23d26}
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.stepper output{font-family:var(--f-data);font-size:20px;min-width:2.2em;text-align:center;color:var(--flare)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font:inherit;font-weight:600;font-size:14.5px;color:var(--foam);background:var(--hull-deep);border:2px solid var(--line);border-radius:5px;padding:7px 12px;cursor:pointer;font-variant-numeric:tabular-nums}
+.pill[aria-pressed=true]{background:var(--flare);border-color:var(--flare);color:var(--hull-deep)}
+.opt-title{font-weight:600;font-size:15px}
+.wbars{display:flex;flex-direction:column;gap:7px}
+.wbar{display:grid;grid-template-columns:96px 1fr 50px;gap:8px;align-items:center;font-size:15px}
+.wbar span:last-child{font-family:var(--f-data);text-align:right}
+.phrase{font-size:clamp(24px,4vw,36px);font-weight:800}
+.phrase u{text-decoration:none;color:var(--flare);border-bottom:4px dashed var(--flare);padding-inline:.4em}
+.sent{display:block;width:100%;text-align:left;font:inherit;font-size:17px;font-weight:400;color:var(--foam);background:var(--hull-deep);border:2px solid var(--line);border-radius:5px;padding:12px 14px;cursor:pointer}
+.sent:hover:not([disabled]){border-color:var(--flare)}
+.sent.right{border-color:var(--kelp);background:#2ee6b026}
+.sent.wrong{border-color:var(--coral);background:#ff5a7826}
+.pyr{display:flex;flex-direction:column;align-items:center;gap:6px}
+.tier{border:0;color:var(--hull-deep);font-family:var(--f-body);font-weight:800;font-size:15px;line-height:1.15;cursor:pointer;height:62px;display:flex;align-items:center;justify-content:center;text-align:center;padding-inline:15%;transition:filter .15s,transform .1s}
+.tier:hover:not([disabled]){filter:brightness(1.15);transform:scale(1.02)}
+.tier[disabled]{cursor:default}
+.t1{width:46%;background:var(--coral);clip-path:polygon(22% 0,78% 0,100% 100%,0 100%);color:#fff;padding-inline:20%}
+.t2{width:66%;background:#ff9a4a;clip-path:polygon(13% 0,87% 0,100% 100%,0 100%)}
+.t3{width:84%;background:var(--flare);clip-path:polygon(10% 0,90% 0,100% 100%,0 100%)}
+.t4{width:100%;background:var(--kelp);clip-path:polygon(8% 0,92% 0,100% 100%,0 100%)}
+@media (max-width:520px){.t1{width:62%;font-size:13px;padding-inline:17%}.t2{width:76%}.t3{width:90%}}
+.ships{display:flex;gap:4px;flex-wrap:wrap}
+.ships svg{width:24px;height:16px}
+
+input[type=password],select{font:inherit;font-weight:400;color:var(--foam);background:var(--hull-deep);border:2px solid var(--line);border-radius:5px;padding:9px 11px;width:100%}
+select{width:auto;padding:6px 9px}
+.mlist2{display:flex;flex-direction:column;gap:8px}
+.mrow{display:grid;grid-template-columns:28px minmax(0,2fr) minmax(0,1fr) auto;gap:8px;align-items:center}
+.mi{width:28px;height:28px;border-radius:50%;background:var(--flare);color:var(--hull-deep);display:grid;place-items:center;font-weight:800;font-family:var(--f-data)}
+@media (max-width:520px){.mrow{grid-template-columns:28px minmax(0,1fr) 84px}.mrow .btn{grid-column:2/-1;justify-self:start}}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:inherit;font-weight:600;font-size:16px;border:2px solid var(--line);border-radius:30px;padding:7px 15px;background:var(--hull-deep);color:var(--foam);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--flare);border-color:var(--flare);color:var(--hull-deep)}
+.chip[aria-pressed=true]::before{content:"✓ "}
+.pgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.pgrid{grid-template-columns:minmax(0,1fr)}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-weight:600;font-size:14px;border:2px solid var(--line);border-radius:30px;background:none;color:var(--foam);padding:5px 12px;cursor:pointer}
+.tab[aria-pressed=true]{background:var(--flare);border-color:var(--flare);color:var(--hull-deep)}
+table.pt td,table.pt th{text-align:left;white-space:nowrap}
+table.pt td.n{text-align:center;font-family:var(--f-data)}table.pt small{color:var(--mist);font-size:12px}
+table.pt td.wr{white-space:normal;min-width:150px;font-family:var(--f-body);font-size:14px}
+table.pt tr.pick{cursor:pointer}table.pt tr.pick:hover td{background:#ffffff0d}table.pt tr.sel td{background:#ffc23d26}
+.tn{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-family:var(--f-body)}
+.path{border:2px solid var(--flare);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--hull-deep)}
+.mem3{display:flex;flex-wrap:wrap;gap:6px}.mem3 span{background:var(--hull-2);border-radius:6px;padding:4px 9px;font-size:14px}.mem3 span.off{opacity:.5}
+ol.tl2{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ol.tl2 li{display:grid;grid-template-columns:140px minmax(0,1.4fr) minmax(60px,180px) 46px;gap:10px;align-items:center;font-size:14.5px}
+@media (max-width:620px){ol.tl2 li{grid-template-columns:minmax(0,1fr) 80px 42px}ol.tl2 .when{grid-column:1/-1}}
+.when{color:var(--mist);font-family:var(--f-data);font-size:13px}
+.pbar{display:block;height:10px;background:var(--hull-2);border-radius:5px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--flare)}
+
+/* Resultado */
+.big{font-family:var(--f-display);font-size:clamp(60px,13vw,120px);line-height:1;color:var(--flare);font-variant-numeric:tabular-nums;filter:drop-shadow(0 6px 0 var(--hull-deep))}
+.bigstars svg{width:clamp(44px,8vw,68px);height:clamp(44px,8vw,68px)}
+.bigstars{display:flex;gap:8px}
+.bigstars svg{animation:pop .45s cubic-bezier(.3,1.6,.5,1) backwards}
+.bigstars svg:nth-child(2){animation-delay:.18s}
+.bigstars svg:nth-child(3){animation-delay:.36s}
+@keyframes pop{from{transform:scale(0) rotate(-40deg)}to{transform:none}}
+ul.learn{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:68ch}
+.code{font-family:var(--f-data);font-size:13px;word-break:break-all;background:var(--hull-deep);border:2px dashed var(--line);border-radius:5px;padding:10px 12px;user-select:all}
+
+/* Equipas e classificação */
+.emb{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--hull-deep);border:3px solid var(--foam)}
+.emb.s{width:30px;height:30px;border-width:2px}
+.emb svg{width:64%;height:64%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pick-grid{display:flex;gap:10px;flex-wrap:wrap}
+.pick-it{background:none;border:3px solid transparent;border-radius:50%;padding:3px;cursor:pointer}
+.pick-it[aria-pressed=true]{border-color:var(--flare)}
+.swatch{display:block;width:38px;height:38px;border-radius:50%;border:2px solid var(--foam)}
+.teamrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
+.ped{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-width:0}
+.ped .nm{font-weight:800;line-height:1.15;overflow-wrap:anywhere;font-size:clamp(14px,2.2vw,19px)}
+.ped .col{width:100%;border-radius:5px 5px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:10px;font-family:var(--f-display);color:var(--hull-deep);animation:grow .7s cubic-bezier(.2,.9,.3,1) backwards}
+@keyframes grow{from{height:0}}
+.ped .pts{font-family:var(--f-data);color:var(--flare);font-variant-numeric:tabular-nums}
+.ped.p1 .col{height:170px;background:var(--flare);font-size:56px}
+.ped.p2 .col{height:120px;background:#d5e3f7;font-size:42px}
+.ped.p3 .col{height:88px;background:#e39a63;font-size:36px}
+.src{font-family:var(--f-data);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mist)}
+.ranktab td:nth-child(2){text-align:left;font-family:var(--f-body);font-weight:600}
+.ranktab th:nth-child(2){text-align:left}
+details>summary{cursor:pointer;font-weight:600}
+.guide{display:flex;flex-direction:column;gap:12px}
+.guide article{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:3px}
+.empty{padding:22px;text-align:center;color:var(--mist);border:2px dashed var(--line);border-radius:5px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.fexam{background:#fff3c4;color:#3a2a00;border:2px solid #d99a00;border-radius:10px;padding:10px 14px;font-weight:700;font-size:15.5px}
+.fexb{display:inline-flex;align-items:center;background:#ffc23d;color:#1a1200;font-weight:800;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 9px;white-space:nowrap}
+.fexb.s{font-size:10.5px;padding:1px 6px}
+.fkey{display:flex;flex-direction:column;gap:4px;align-items:flex-start;background:#fff3c4;color:#3a2a00;border:3px dashed #d99a00;border-radius:10px;padding:12px 16px}
+.fkey span{font-weight:600;font-size:14.5px}
+.fkey b{font-family:var(--f-data);font-size:clamp(32px,6vw,50px);letter-spacing:.12em;line-height:1.1}
+</style>
+
+<canvas id="sea" aria-hidden="true"></canvas>
+<div id="app">
+  <div id="hud" hidden></div>
+  <main id="view"></main>
+</div>
+
+<script>
+"use strict";
+/* ---------- utilitários ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const take=(a,n)=>shuffle(a).slice(0,n);
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const view=$("#view"), hud=$("#hud");
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Limpeza de temporizadores ao mudar de ecrã */
+let timers=[], runToken=0;
+const later=(fn,ms)=>{const id=setTimeout(fn,ms);timers.push(id);return id};
+function clearRun(){timers.forEach(clearTimeout);timers.forEach(clearInterval);timers=[];runToken++}
+function countdown(sec,onFrac,onEnd){
+  const t0=performance.now();
+  const id=setInterval(()=>{const f=1-(performance.now()-t0)/(sec*1000);onFrac(Math.max(0,f));if(f<=0){clearInterval(id);onEnd()}},80);
+  timers.push(id);return ()=>{clearInterval(id);const f=1-(performance.now()-t0)/(sec*1000);return Math.max(0,f)};
+}
+
+/* ---------- som ---------- */
+let audio=null;
+function tone(f,d,w="triangle",v=.14,at=0){
+  if(!S.sound)return;
+  try{
+    audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+    if(audio.state==="suspended")audio.resume();
+    const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime+at;
+    o.type=w;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(audio.destination);o.start(t);o.stop(t+d);
+  }catch(e){}
+}
+const sfx={
+  ok(){tone(660,.12);tone(990,.18,"triangle",.14,.09)},
+  bad(){tone(180,.28,"sawtooth",.1)},
+  tap(){tone(440,.05,"square",.05)},
+  win(){[523,659,784,1047].forEach((f,i)=>tone(f,.28,"triangle",.15,i*.12))}
+};
+
+/* ---------- gráficos do mar ---------- */
+const Scene=(()=>{
+  const c=$("#sea"),x=c.getContext("2d");
+  let W=0,H=0,lit=0,storm=false,flash=0,sparks=[],last=0,sky=null;
+  const stars=Array.from({length:150},()=>({x:Math.random(),y:Math.random()*.62,r:Math.random()*1.5+.3,p:Math.random()*6.28}));
+  const drops=Array.from({length:140},()=>({x:Math.random(),y:Math.random(),s:.7+Math.random()*.8}));
+  const boats=[.02,.31,.57,.83,.17,.44,.69,.93].map((o,i)=>({o,v:(i%2?-1:1)*(4+i*1.1),l:1+(i%3)}));
+  function size(){
+    const D=Math.min(window.devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;
+    c.width=W*D;c.height=H*D;x.setTransform(D,0,0,D,0,0);sky=null;draw(performance.now());
+  }
+  const narrow=()=>W<700;
+  const horizon=()=>H*(narrow()?.76:.66);
+  function paintSky(){
+    const g=x.createLinearGradient(0,0,0,horizon());
+    if(storm){g.addColorStop(0,"#070b26");g.addColorStop(.6,"#141b4c");g.addColorStop(1,"#343a78")}
+    else{g.addColorStop(0,"#0a1140");g.addColorStop(.42,"#2b1f7c");g.addColorStop(.76,"#a23a92");g.addColorStop(.93,"#ff7a5c");g.addColorStop(1,"#ffc067")}
+    return g;
+  }
+  function waveY(i,px,t){const hz=horizon();const base=hz+Math.pow(i/4,1.5)*(H-hz)*.9;const a=(storm?2.4:1)*(2+i*3);return base+Math.sin(px*.012/(1+i*.3)+t*(.7+i*.25))*a+Math.sin(px*.03+t*1.3)*a*.35}
+  function boat(px,py,s,dir){
+    x.save();x.translate(px,py);x.scale(s*dir,s);
+    x.fillStyle="#0a0f33";x.beginPath();x.moveTo(-16,0);x.lineTo(16,0);x.lineTo(10,8);x.lineTo(-11,8);x.closePath();x.fill();
+    x.fillStyle="#eef6ff";x.beginPath();x.moveTo(0,-26);x.lineTo(13,-3);x.lineTo(0,-3);x.closePath();x.fill();
+    x.fillStyle="#ff5a78";x.beginPath();x.moveTo(-2,-22);x.lineTo(-12,-3);x.lineTo(-2,-3);x.closePath();x.fill();
+    x.fillStyle="#ffc23d";x.beginPath();x.arc(11,-2,2,0,6.3);x.fill();x.restore();
+  }
+  function draw(now){
+    const t=now/1000,hz=horizon();
+    sky=sky||paintSky();x.fillStyle=sky;x.fillRect(0,0,W,hz+4);
+    x.fillStyle="#fff";
+    stars.forEach(s=>{x.globalAlpha=(storm?.18:.85)*(.5+.5*Math.sin(t*1.4+s.p));x.beginPath();x.arc(s.x*W,s.y*H,s.r,0,6.3);x.fill()});
+    x.globalAlpha=1;
+    if(!storm){ // lua
+      const mx=W*.93,my=H*.13,mr=Math.max(20,H*.042);
+      const mg=x.createRadialGradient(mx,my,mr*.4,mx,my,mr*3.4);mg.addColorStop(0,"#ffe9b866");mg.addColorStop(1,"#ffe9b800");
+      x.fillStyle=mg;x.beginPath();x.arc(mx,my,mr*3.4,0,6.3);x.fill();
+      x.fillStyle="#ffefcf";x.beginPath();x.arc(mx,my,mr,0,6.3);x.fill();
+      x.fillStyle="#e9cfa0";[[-.3,-.2,.2],[.3,.25,.26],[-.1,.45,.13]].forEach(k=>{x.beginPath();x.arc(mx+k[0]*mr,my+k[1]*mr,k[2]*mr,0,6.3);x.fill()});
+    }
+    // arribas
+    const lx=W*(narrow()?.86:.78), cliffTop=hz-Math.max(36,H*(narrow()?.05:.13));
+    x.fillStyle=storm?"#0c1138":"#1a1456";
+    x.beginPath();x.moveTo(W*.42,hz+6);x.lineTo(W*.5,hz-H*.03);x.lineTo(W*.57,hz-H*.022);x.lineTo(W*.64,hz-H*.09);x.lineTo(lx-46,cliffTop+7);x.lineTo(lx+40,cliffTop);x.lineTo(W*.92,cliffTop+H*.03);x.lineTo(W,cliffTop-H*.02);x.lineTo(W,hz+6);x.closePath();x.fill();
+    x.fillStyle=storm?"#161c52":"#2b1f7c";
+    x.beginPath();x.moveTo(W*.6,hz+6);x.lineTo(W*.7,hz-H*.05);x.lineTo(W*.84,hz-H*.04);x.lineTo(W,hz-H*.07);x.lineTo(W,hz+6);x.closePath();x.fill();
+    // torre
+    const th=narrow()?Math.max(90,H*.15):Math.max(120,H*.27),bw=Math.max(19,th*.13),tw=bw*.68,topY=cliffTop-th;
+    x.fillStyle="#f2f5ff";x.beginPath();x.moveTo(lx-bw,cliffTop+4);x.lineTo(lx-tw,topY);x.lineTo(lx+tw,topY);x.lineTo(lx+bw,cliffTop+4);x.closePath();x.fill();
+    x.fillStyle="#c2cdf0";x.beginPath();x.moveTo(lx+bw*.2,cliffTop+4);x.lineTo(lx+tw*.2,topY);x.lineTo(lx+tw,topY);x.lineTo(lx+bw,cliffTop+4);x.closePath();x.fill();
+    x.fillStyle="#ff5a78";for(let i=0;i<3;i++){const y0=topY+th*(.1+i*.31),y1=y0+th*.13;const ww=y=>tw+(bw-tw)*(y-topY)/th;x.beginPath();x.moveTo(lx-ww(y0),y0);x.lineTo(lx+ww(y0),y0);x.lineTo(lx+ww(y1),y1);x.lineTo(lx-ww(y1),y1);x.closePath();x.fill()}
+    x.fillStyle="#0a0f33";x.fillRect(lx-tw-7,topY-5,2*tw+14,6);
+    const lh=th*.13,ly=topY-5-lh;
+    const power=lit/8;
+    x.fillStyle=lit?"#ffe9a8":"#39437e";x.fillRect(lx-tw*.72,ly,tw*1.44,lh);
+    x.fillStyle="#ff5a78";x.beginPath();x.moveTo(lx-tw*.9,ly);x.lineTo(lx,ly-lh*.9);x.lineTo(lx+tw*.9,ly);x.closePath();x.fill();
+    // lentes acesas
+    for(let i=0;i<8;i++){x.fillStyle=i<lit?"#ff9d2e":"#1b2a7a";x.fillRect(lx-tw*.66+i*(tw*1.32/8),ly+lh*.62,tw*1.32/8-1,lh*.28)}
+    const cy=ly+lh*.42;
+    // feixe
+    if(lit>0||true){
+      x.save();x.globalCompositeOperation="lighter";
+      const a=reduced?-.75:t*.55, len=Math.max(W,H)*1.25, sw=.075+.1*power, alpha=.14+.5*power;
+      for(const off of [0,Math.PI]){
+        const ang=a+off, proj=Math.cos(ang), lx2=lx+proj*len, dy=Math.sin(ang)*len*.11;
+        const spread=Math.abs(Math.sin(ang))*.5+.5;
+        const halo=len*sw*spread;
+        const g=x.createLinearGradient(lx,cy,lx2,cy+dy);
+        const amp=alpha*(.55+.45*Math.abs(proj));
+        g.addColorStop(0,`rgba(255,226,140,${amp})`);g.addColorStop(.55,`rgba(255,190,90,${amp*.35})`);g.addColorStop(1,"rgba(255,180,80,0)");
+        x.fillStyle=g;x.beginPath();x.moveTo(lx,cy);x.lineTo(lx2,cy+dy-halo);x.lineTo(lx2,cy+dy+halo);x.closePath();x.fill();
+      }
+      const gl=x.createRadialGradient(lx,cy,2,lx,cy,40+150*power);gl.addColorStop(0,`rgba(255,235,170,${.3+.6*power})`);gl.addColorStop(1,"rgba(255,200,100,0)");
+      x.fillStyle=gl;x.beginPath();x.arc(lx,cy,40+150*power,0,6.3);x.fill();
+      x.restore();
+    }
+    // mar
+    const seas=storm?["#1a2263","#141b52","#0f1542","#0b1034","#080c28"]:["#5b3a9c","#37308f","#232a80","#172264","#0d174a"];
+    for(let i=0;i<5;i++){
+      x.fillStyle=seas[i];x.beginPath();x.moveTo(0,H);
+      for(let px=0;px<=W+14;px+=14)x.lineTo(px,waveY(i,px,t));
+      x.lineTo(W,H);x.closePath();x.fill();
+      // reflexo
+      if(i>0){x.fillStyle=`rgba(255,200,110,${.1+.32*power})`;for(let k=0;k<3;k++){const px=lx+Math.sin(t*.8+k*2+i)*(16+i*22)-(k*22);const w=(18+i*16)*(1+power);x.fillRect(px-w/2,waveY(i,px,t)+6+k*7,w,2)}}
+      // barcos
+      boats.forEach((b,bi)=>{if(bi<lit&&b.l===i%4&&i>0){const span=W+120;const px=((b.o*span+b.v*t*(storm?2.2:1))%span+span)%span-60;boat(px,waveY(i,px,t)-3,.55+i*.17,b.v>0?1:-1)}});
+    }
+    if(storm){
+      x.strokeStyle="#bcd0ff66";x.lineWidth=1.2;x.beginPath();
+      drops.forEach(d=>{const y=((d.y+t*d.s*1.4)%1)*H,px=((d.x-t*d.s*.35)%1+1)%1*W;x.moveTo(px,y);x.lineTo(px-7,y+20)});x.stroke();
+      if(!reduced&&Math.random()<.008)flash=1;
+      if(flash>.02){x.fillStyle=`rgba(220,230,255,${flash*.55})`;x.fillRect(0,0,W,H);flash*=.84}
+    }
+    // faíscas de vitória
+    if(sparks.length){
+      x.save();x.globalCompositeOperation="lighter";
+      sparks=sparks.filter(s=>s.l>0);
+      sparks.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.vy+=.09;s.l-=.012;x.fillStyle=`hsla(${s.h},100%,68%,${s.l})`;x.fillRect(s.x,s.y,4,4)});
+      x.restore();
+    }
+  }
+  function loop(now){
+    requestAnimationFrame(loop);
+    if(reduced)return;
+    if(now-last<33)return; // cerca de 30 imagens por segundo, para poupar os computadores da escola
+    last=now;draw(now);
+  }
+  addEventListener("resize",size);
+  size();requestAnimationFrame(loop);
+  return{
+    setLit(n){lit=n;if(reduced)draw(performance.now())},
+    setStorm(v){if(storm!==v){storm=v;sky=null;if(reduced)draw(performance.now())}},
+    burst(){if(reduced)return;for(let i=0;i<170;i++){const a=Math.random()*6.3,v=2+Math.random()*7;sparks.push({x:W*.5,y:H*.35,vx:Math.cos(a)*v,vy:Math.sin(a)*v-2,l:1,h:30+Math.random()*30})}}
+  };
+})();
+
+/* ---------- ícones ---------- */
+const EMBLEMS={
+  ancora:'<circle cx="12" cy="5" r="2.5"/><path d="M12 7.5V21M7 11h10M4 13c0 5 4 8 8 8s8-3 8-8"/>',
+  peixe:'<path d="M3 12c3-5 9-7 14-3l4-3v12l-4-3c-5 4-11 2-14-3z"/><circle cx="8" cy="11" r=".6"/>',
+  onda:'<path d="M2 9c3-4 5-4 8 0s5 4 8 0 3-3 4-2M2 16c3-4 5-4 8 0s5 4 8 0 3-3 4-2"/>',
+  bussola:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  raio:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>',
+  robo:'<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4M9 13h.01M15 13h.01M9 16h6"/><circle cx="12" cy="3" r="1"/>'
+};
+const COLORS=["#ffc23d","#ff8a3d","#ff7f9b","#2ee6b0","#6fd3ff","#c9a6ff"];
+const emblem=(t,small)=>`<span class="emb${small?" s":""}" style="background:${COLORS[t.color]||COLORS[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${EMBLEMS[t.emblem]||EMBLEMS.ancora}</svg></span>`;
+const starSvg=on=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${on?"var(--flare)":"#ffffff22"}" d="M12 2l3 6.6 7.2.8-5.4 4.8 1.5 7.1L12 17.7l-6.3 3.6 1.5-7.1L1.8 9.4 9 8.6z"/></svg>`;
+const starsOf=v=>v==null?0:v>=850?3:v>=600?2:1;
+const starRow=v=>`<span class="stars" role="img" aria-label="${starsOf(v)} de 3 estrelas">${[0,1,2].map(i=>starSvg(i<starsOf(v))).join("")}</span>`;
+const shipSvg=on=>`<svg viewBox="0 0 30 20" aria-hidden="true"><path fill="${on?"var(--kelp)":"#ffffff26"}" d="M2 13h26l-5 6H7zM14 1v11H5zM16 3l8 9h-8z"/></svg>`;
+
+/* ---------- estado guardado ---------- */
+const KEY="operacao-farol-v1";
+const memory={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return memory[k]??null}},set(k,v){memory[k]=v;try{localStorage.setItem(k,v)}catch(e){}}};
+const S=Object.assign({teams:[],imported:[],current:null,unlock:false,sound:true,exam:{on:false,max:1}},(()=>{try{return JSON.parse(store.get(KEY))||{}}catch(e){return{}}})());
+const save=()=>store.set(KEY,JSON.stringify(S));
+const team=()=>S.teams.find(t=>t.id===S.current)||null;
+const total=t=>t.scores.reduce((a,b)=>a+(b||0),0);
+const doneCount=t=>t?t.scores.filter(v=>v!=null).length:0;
+const NAVAL=[[0,"Grumete"],[2000,"Marinheiro"],[3800,"Contramestre"],[5400,"Capitão"],[6800,"Almirante do Farol"]];
+const rankName=p=>NAVAL.filter(r=>p>=r[0]).pop()[1];
+delete S.exam;if(!S.keyMax)S.keyMax=1;
+/* avaliação: métricas a partir do registo de tentativas */
+const tries=(t,i)=>(t.log||[]).filter(l=>l.l===i);
+const MET={best:"Melhor pontuação",first:"1.ª tentativa",mean:"Média das tentativas",exam:"Avaliação"};
+function metric(t,i,k){if(k==="best")return t.scores[i];const L=tries(t,i);if(k==="exam"){const X=L.filter(l=>l.x);return X.length?Math.max(...X.map(l=>l.p)):null}if(!L.length)return null;if(k==="first")return L[0].p;return Math.round(L.reduce((a,l)=>a+l.p,0)/L.length)}
+const mTotal=(t,k)=>LEVELS.reduce((a,_,i)=>a+(metric(t,i,k)||0),0);
+const KA="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+const dayN=()=>{const d=new Date();return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2026,0,1))/864e5)};
+const kEnc=n=>[Math.floor(n/1024)%32,Math.floor(n/32)%32,n%32].map(i=>KA[i]).join("");
+const kChk=b=>{const h=hash("exam:"+b);return KA[parseInt(h.slice(0,2),36)%32]+KA[parseInt(h.slice(2,4),36)%32]};
+function makeKey(max){const b=kEnc(dayN()*3+(max-1));return "AV-"+b+kChk(b)}
+function readKey(k){const v=String(k).toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^AV/,"").replace(/0/g,"O");if(v.length!==5||[...v].some(c=>!KA.includes(c)))return null;const b=v.slice(0,3);if(kChk(b)!==v.slice(3))return null;const n=b.split("").reduce((a,c)=>a*32+KA.indexOf(c),0);return{id:n,day:Math.floor(n/3),max:n%3+1}}
+const exOf=t=>{t=t||team();return t&&t.ex&&t.ex.day===dayN()?t.ex:null};
+const examOn=t=>!!exOf(t);
+const examMax=t=>exOf(t)?exOf(t).max:1;
+const exUsed=(t,i)=>{const e=exOf(t);return e?tries(t,i).filter(l=>l.x===e.id).length:0};
+const examLeft=(t,i)=>exOf(t)?Math.max(0,exOf(t).max-exUsed(t,i)):Infinity;
+const examTxt=()=>`Modo avaliação: cada nível só pode ser jogado ${examMax()===1?"uma vez":examMax()+" vezes"}. ${examMax()===1?"Essa tentativa conta para a avaliação.":"Conta a melhor dessas tentativas."}`;
+const canPlay=(t,i)=>(S.unlock||i===0||(t&&t.scores[i-1]!=null))&&(!t||examLeft(t,i)>0);
+const attemptFactor=(t,i)=>Math.max(.5,1-.15*(exOf(t)?exUsed(t,i):(t.att[i]||0)));
+
+/* Código da equipa: resultados, elementos e percurso, com verificação contra erros de cópia */
+const SALT="cabo-da-roca-38.78N";
+function hash(s){let h=0x811c9dc5;for(const ch of s+SALT){h^=ch.codePointAt(0);h=Math.imul(h,0x01000193)}return (h>>>0).toString(36).padStart(7,"0").slice(-5).toUpperCase()}
+function b64(s){return btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g,"_").replace(/\//g,"~").replace(/=+$/,"")}
+function unb64(s){s=s.replace(/_/g,"+").replace(/~/g,"/");return new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)))}
+const EP=Date.UTC(2026,0,1);
+const tidy=s=>String(s).replace(/[|\r\n\t]/g," ").replace(/\s+/g," ").trim();
+const fixTeam=t=>{t.turma=t.turma||"";t.members=t.members||[];t.log=t.log||[];t.play=t.play||{};t.att=t.att||Array(8).fill(0);t.scores=t.scores||Array(8).fill(null);return t};
+const members=t=>(t.members||[]).filter(m=>!m.out);
+const memLabel=(t,m)=>m.n+(m.t&&m.t!==(t.turma||"")?` (${m.t})`:"");
+const idsNames=(t,ids)=>[...ids].map(id=>{const m=(t.members||[]).find(x=>x.id===id);return m?memLabel(t,m):"?"}).join(", ");
+const playedIn=(t,i)=>{const s=new Set();t.log.forEach(l=>{if((i==null||l.l===i)&&l.m)[...l.m].forEach(c=>s.add(c))});return s};
+const fmtD=t=>new Date(t).toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit",year:"numeric"});
+const fmtH=t=>new Date(t).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
+function makeCode(t){const o={i:t.id,n:tidy(t.name),t:tidy(t.turma||""),e:t.emblem,c:t.color,s:t.scores,a:t.att,m:(t.members||[]).map(m=>[m.id,tidy(m.n),tidy(m.t||""),m.out?1:0]),l:(()=>{const L=t.log||[],keep=new Set(L.slice(-90));for(let i=0;i<8;i++){const f=L.find(l=>l.l===i);if(f)keep.add(f)}return L.filter(l=>keep.has(l))})().map(l=>[l.l,l.p,Math.max(0,Math.round((l.t-EP)/60000)),l.m||"",l.x||0])};const p=b64(JSON.stringify(o));return `FAROL2.${p}.${hash(p)}`}
+function readCode(code){
+  const m=code.trim().match(/^FAROL(2?)\.([A-Za-z0-9_~]+)\.([A-Z0-9]{5})$/);
+  if(!m||hash(m[2])!==m[3])return null;
+  try{
+    if(m[1]){const o=JSON.parse(unb64(m[2]));const ok=v=>v==null||(v>=0&&v<=1000);if(!Array.isArray(o.s)||o.s.length!==8||!o.s.every(ok))return null;
+      return fixTeam({id:String(o.i),name:String(o.n),turma:String(o.t||""),emblem:String(o.e),color:+o.c||0,scores:o.s.map(v=>v==null?null:+v),att:(o.a||[]).map(v=>+v||0),members:(o.m||[]).map(x=>({id:String(x[0]),n:String(x[1]),t:String(x[2]||""),out:!!x[3]})),log:(o.l||[]).filter(x=>x[0]>=0&&x[0]<8&&ok(x[1])).map(x=>({l:+x[0],p:+x[1],t:EP+x[2]*60000,m:String(x[3]||""),...(x[4]?{x:+x[4]}:{})}))})}
+    const [id,name,em,color,sc]=unb64(m[2]).split("|");
+    const scores=sc.split(",").map(v=>v===""?null:+v);
+    if(scores.length!==8||scores.some(v=>v!=null&&(!(v>=0)||v>1000)))return null;
+    return fixTeam({id,name,emblem:em,color:+color,scores});
+  }catch(e){return null}
+}
+function mergeTeam(list,t){let o=list.find(x=>x.id===t.id);t=fixTeam(JSON.parse(JSON.stringify(t)));if(!o){t.got=Date.now();list.push(t);return"nova"}
+  fixTeam(o);Object.assign(o,{name:t.name,turma:t.turma,emblem:t.emblem,color:t.color,got:Date.now()});
+  o.scores=o.scores.map((v,i)=>v==null?t.scores[i]:t.scores[i]==null?v:Math.max(v,t.scores[i]));o.att=o.att.map((v,i)=>Math.max(v||0,t.att[i]||0));
+  t.members.forEach(m=>{const e=o.members.find(x=>x.id===m.id);if(e)Object.assign(e,m);else o.members.push(m)});
+  const K=l=>l.l+"|"+Math.round(l.t/60000)+"|"+l.p+"|"+(l.m||"")+"|"+(l.x||0),cnt=new Map(),inc=new Map();o.log.forEach(l=>cnt.set(K(l),(cnt.get(K(l))||0)+1));
+  t.log.forEach(l=>{const k=K(l);inc.set(k,(inc.get(k)||0)+1);if(inc.get(k)>(cnt.get(k)||0))o.log.push(l)});o.log.sort((a,b)=>a.t-b.t);return"atualizada"}
+async function saveFile(name,data,type){const blob=data instanceof Blob?data:new Blob([data],{type:type||"text/plain;charset=utf-8"});
+  try{if(window.claude&&window.claude.use){const d=await window.claude.use("downloads");if(d){await d.save({filename:name,data:blob});return true}}}catch(e){return false}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);return true}
+if(!S.prof||!Array.isArray(S.prof.teams))S.prof={pin:null,teams:[]};S.teams.forEach(t=>fixTeam(t));
+if(S.imported&&S.imported.length){S.imported.forEach(t=>{if(!S.prof.teams.some(x=>x.id===t.id))S.prof.teams.push(fixTeam(t))});S.imported=[]}
+async function copy(text,btn,box){
+  try{await navigator.clipboard.writeText(text);if(btn){const o=btn.textContent;btn.textContent="Copiado";later(()=>btn.textContent=o,1400)}}
+  catch(e){if(box){const r=document.createRange();r.selectNodeContents(box);const s=getSelection();s.removeAllRanges();s.addRange(r)}if(btn)btn.textContent="Seleciona e copia"}
+}
+
+/* ---------- conteúdo dos níveis ---------- */
+const LEVELS=[
+ {t:"Caça à IA",c:"O que é a IA",run:L1,min:15,
+  learn:["A IA que usas todos os dias aprende padrões a partir de dados.","Um programa com regras fixas faz apenas o que alguém escreveu, passo a passo.","Também existe IA baseada em regras escritas por especialistas, mas hoje a maior parte aprende com dados."],
+  q:"Que aplicação do vosso telemóvel melhora com o uso? De onde vêm os dados dela?"},
+ {t:"Treina o Radar",c:"Aprendizagem supervisionada",run:L2,min:20,
+  learn:["Na aprendizagem supervisionada, o modelo aprende com exemplos que têm etiqueta.","O teste usa dados que o modelo nunca viu: é assim que se sabe se aprendeu mesmo.","Mais exemplos ajudam, sobretudo se cobrirem todos os tipos de caso."],
+  q:"Porque é que seria batota testar o modelo com os mesmos exemplos que usou para aprender?"},
+ {t:"Três Câmaras",c:"Enviesamento nos dados",run:L3,min:20,
+  learn:["Um modelo só conhece o mundo que aparece nos seus dados.","A média pode parecer boa e esconder um grupo onde o modelo falha muito.","Em 2018, o estudo Gender Shades testou sistemas comerciais de análise facial: o erro chegou a 34,7% em mulheres de pele mais escura e não passou de 0,8% em homens de pele mais clara."],
+  q:"Se um sistema falha mais num grupo de pessoas, de quem é a responsabilidade?"},
+ {t:"O Neurónio",c:"Redes neuronais",run:L4,min:20,
+  learn:["Um neurónio artificial multiplica cada entrada por um peso e soma tudo.","Se a soma atingir o limiar, o neurónio dispara.","Treinar uma rede é ajustar milhões de pesos de forma automática. Um único neurónio não resolve o OU exclusivo: para isso são precisas camadas."],
+  q:"O que significa um peso negativo? Deem um exemplo da vossa vida."},
+ {t:"O Barco que Aprende",c:"Aprendizagem por reforço",run:L5,min:25,
+  learn:["Na aprendizagem por reforço, um agente aprende por tentativa e erro, com recompensas.","O agente procura a recompensa que lhe deste, mesmo que isso não seja o que querias.","Explorar é essencial: um agente que só repete o que já conhece pode nunca encontrar a melhor rota."],
+  q:"Se premiassem uma IA por cada clique num vídeo, que tipo de vídeos ela iria mostrar?"},
+ {t:"A Máquina de Palavras",c:"Modelos de linguagem e alucinações",run:L6,min:20,
+  learn:["Um modelo de linguagem escolhe o que vem a seguir com base em probabilidades aprendidas com textos.","Os modelos reais são redes enormes que olham para muito mais contexto do que esta versão simples.","Soar bem não é o mesmo que ser verdade: confirma sempre em fontes fiáveis."],
+  q:"Em que situações é perigoso confiar numa resposta sem a confirmar?"},
+ {t:"A Lei do Farol",c:"Ética e Regulamento Europeu da IA",run:L7,min:15,
+  learn:["O Regulamento (UE) 2024/1689 trata a IA de forma diferente consoante o risco.","Algumas práticas são proibidas, como a classificação social e, nas escolas, o reconhecimento de emoções, salvo razões médicas ou de segurança.","Deves saber quando estás a falar com uma IA, e os deepfakes têm de ser identificados."],
+  q:"Concordam que uma escola não possa usar IA para detetar emoções dos alunos? Porquê?"},
+ {t:"A Tempestade",c:"Prova final",run:L8,min:15,
+  learn:["Já sabes distinguir IA de regras fixas, treinar e testar modelos e procurar enviesamentos.","Sabes como funciona um neurónio e como as recompensas moldam um agente.","E sabes a regra mais importante: a IA ajuda, mas quem pensa e decide és tu."],
+  q:"Qual foi a ideia que mais vos surpreendeu nesta missão?"}
+];
+
+function shell(i,mission,body){
+  return `<div class="wrap"><div class="lvtop"><div class="grow" style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Nível ${i+1} de 8 · ${esc(LEVELS[i].c)}</span><h2>${esc(LEVELS[i].t)}</h2><p class="lead">${mission}</p></div><div class="lvscore"><small>Pontos</small><span id="lvp">0</span></div></div>${body}</div>`;
+}
+const setPts=v=>{const e=$("#lvp");if(e)e.textContent=Math.round(v)};
+const fbBox=(ok,title,txt,btn="Continuar")=>`<div class="fb ${ok?"ok":"no"}" role="status"><div><b>${title}</b> ${txt}</div>${btn?`<div><button class="btn" id="next">${btn}</button></div>`:""}</div>`;
+
+/* ---------- Nível 1 ---------- */
+const CARDS=[
+ ["Filtro de email que aprendeu a detetar spam a partir de milhões de mensagens marcadas.",1,"Aprendeu com exemplos de mensagens marcadas como spam ou não."],
+ ["Telemóvel que se desbloqueia ao reconhecer a tua cara.",1,"O reconhecimento facial usa modelos treinados com imagens de rostos."],
+ ["App que te sugere o próximo vídeo com base no que já viste.",1,"Os sistemas de recomendação aprendem com o comportamento de quem usa a app."],
+ ["Tradutor automático treinado com textos em várias línguas.",1,"Aprende correspondências entre línguas a partir de enormes conjuntos de textos."],
+ ["Teclado que prevê a próxima palavra enquanto escreves.",1,"A previsão vem de um modelo que aprendeu como as palavras costumam surgir juntas."],
+ ["App que identifica uma planta a partir de uma fotografia.",1,"Foi treinada com muitas fotografias de plantas já identificadas."],
+ ["Assistente de voz que transforma o que dizes em texto.",1,"O reconhecimento de fala é treinado com gravações e as respetivas transcrições."],
+ ["Sistema do banco que deteta pagamentos suspeitos ao analisar padrões.",1,"Aprende como são os pagamentos normais e os fraudulentos."],
+ ["Calculadora que soma dois números.",0,"Executa sempre a mesma operação. Não aprende nada."],
+ ["Semáforo que muda de cor de 60 em 60 segundos.",0,"É apenas um temporizador com regra fixa."],
+ ["Alarme que toca todos os dias às 7h30.",0,"Faz exatamente o que foi programado para fazer."],
+ ["Folha de cálculo que soma uma coluna com a função SOMA.",0,"Uma fórmula dá sempre o mesmo resultado para os mesmos dados."],
+ ["Porta automática que abre quando o sensor deteta movimento.",0,"A regra é simples: há movimento, a porta abre."],
+ ["Máquina de venda que entrega um sumo depois de receber 1 euro.",0,"Segue uma sequência fixa de passos."],
+ ["Site que recusa a entrada se a palavra-passe estiver errada.",0,"Compara dois valores. É uma regra e não uma aprendizagem."],
+ ["Termóstato que liga o aquecimento abaixo de 19 °C.",0,"Compara a temperatura com um valor fixo."]
+];
+function L1(i,done){
+  const deck=shuffle([...take(CARDS.filter(c=>c[1]),5),...take(CARDS.filter(c=>!c[1]),5)]);
+  const SEC=10;let n=0,pts=0,marks=[];
+  view.innerHTML=shell(i,"Uma tempestade apagou a memória do farol. Para começar, descobre que sistemas aprendem com dados e quais seguem apenas regras escritas por pessoas. Quanto mais depressa, mais pontos.",`
+   <div class="plate"><div class="dots" id="dots"></div><div class="timer"><i id="tb"></i></div><div class="card" id="card" aria-live="polite"></div>
+   <div class="choices" id="ch"><button class="btn good" data-a="1">Aprende com dados</button><button class="btn ghost" data-a="0">Só segue regras fixas</button></div><div id="fb"></div></div>`);
+  let stop;
+  const dots=()=>$("#dots").innerHTML=deck.map((_,k)=>`<i class="${marks[k]===1?"ok":marks[k]===0?"no":k===n?"cur":""}"></i>`).join("");
+  function show(){
+    clearRun();dots();$("#card").textContent=deck[n][0];$("#fb").innerHTML="";$$("#ch button").forEach(b=>b.disabled=false);
+    stop=countdown(SEC,f=>{$("#tb").style.width=f*100+"%"},()=>answer(-1,0));
+  }
+  function answer(a){
+    const f=stop();
+    $$("#ch button").forEach(b=>b.disabled=true);
+    const c=deck[n],ok=a===c[1];
+    if(ok){pts+=70+30*f;sfx.ok()}else sfx.bad();
+    marks[n]=ok?1:0;setPts(pts);dots();
+    const label=c[1]?"Aprende com dados.":"Só segue regras fixas.";
+    $("#fb").innerHTML=fbBox(ok,ok?"Certo!":a<0?"Acabou o tempo.":"Não desta vez.",`<br>${label} ${c[2]}`,n<9?"Próximo sistema":"Ver resultado");
+    $("#next").focus();
+    $("#next").onclick=()=>{n++;if(n<10)show();else done(pts,`${marks.filter(Boolean).length} de 10 certas`)};
+  }
+  $$("#ch button").forEach(b=>b.onclick=()=>answer(+b.dataset.a));
+  show();
+}
+
+/* ---------- Nível 2 ---------- */
+const FISH_BLOBS=[[.2,.76],[.2,.24],[.5,.86]], JELLY_BLOBS=[[.8,.22],[.82,.72],[.55,.3]];
+function radarPoint(kind){
+  const b=(kind?JELLY_BLOBS:FISH_BLOBS)[Math.floor(Math.random()*3)];
+  return{x:clamp(b[0]+gauss()*.075,.03,.97),y:clamp(b[1]+gauss()*.075,.03,.97),k:kind};
+}
+const radarSet=n=>shuffle(Array.from({length:n},(_,i)=>radarPoint(i%2)));
+function nearest(labeled,p){let best=null,bd=1e9;for(const q of labeled){const d=(q.x-p.x)**2+(q.y-p.y)**2;if(d<bd){bd=d;best=q}}return best?best.k:null}
+const accuracy=(labeled,test)=>test.filter(p=>nearest(labeled,p)===p.k).length/test.length;
+function drawFish(g,x,y,col){g.fillStyle=col;g.beginPath();g.ellipse(x,y,11,6.5,0,0,6.3);g.fill();g.beginPath();g.moveTo(x-9,y);g.lineTo(x-18,y-7);g.lineTo(x-18,y+7);g.closePath();g.fill();g.fillStyle="#0a1140";g.beginPath();g.arc(x+5,y-1,1.6,0,6.3);g.fill()}
+function drawJelly(g,x,y,col){g.fillStyle=col;g.beginPath();g.arc(x,y-1,10,Math.PI,0);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=2;g.beginPath();for(let i=-6;i<=6;i+=4){g.moveTo(x+i,y-1);g.quadraticCurveTo(x+i+3,y+6,x+i,y+11)}g.stroke()}
+function L2(i,done){
+  const rounds=[4,10],res=[];let r=0;
+  const FISH="#ffc23d",JELLY="#ff7f9b",SZ=[640,470],PAD=34;
+  function start(){
+    clearRun();
+    const budget=rounds[r],pool=radarSet(40),test=radarSet(60);let labeled=[],phase="label",tested=[];
+    view.innerHTML=shell(i,"O radar do farol vê criaturas no mar, mas não sabe distinguir <b>peixes</b> de <b>medusas</b>. Escolhe que pontos vais identificar. Cada etiqueta gasta orçamento, por isso escolhe exemplos variados. Dados simulados.",`
+    <div class="split"><div class="plate"><canvas class="game" id="rad" width="${SZ[0]*2}" height="${SZ[1]*2}" aria-label="Gráfico de transparência e velocidade. Clica num ponto para o identificar."></canvas>
+    <div class="legend"><span><i style="background:${FISH}"></i>Zona que o modelo acha peixe</span><span><i style="background:${JELLY}"></i>Zona que o modelo acha medusa</span></div></div>
+    <div class="plate"><span class="eyebrow">Ronda ${r+1} de 2</span><h3 id="bud"></h3><p class="small muted">O modelo olha para o exemplo conhecido mais parecido e copia-lhe a etiqueta. As zonas coloridas mostram o que ele já pensa.</p>
+    <button class="btn ghost" id="rnd">Identificar um ponto ao acaso</button><button class="btn" id="go" disabled>Testar o modelo</button><div id="out"></div></div></div>`);
+    const cv=$("#rad"),g=cv.getContext("2d");g.scale(2,2);
+    const px=p=>[PAD+p.x*(SZ[0]-PAD-10),SZ[1]-PAD-p.y*(SZ[1]-PAD-10)];
+    function draw(){
+      g.clearRect(0,0,SZ[0],SZ[1]);
+      if(labeled.length){
+        const step=12;
+        for(let a=PAD;a<SZ[0]-10;a+=step)for(let b=10;b<SZ[1]-PAD;b+=step){
+          const k=nearest(labeled,{x:(a+step/2-PAD)/(SZ[0]-PAD-10),y:(SZ[1]-PAD-b-step/2)/(SZ[1]-PAD-10)});
+          g.fillStyle=k?"#ff7f9b30":"#ffc23d26";g.fillRect(a,b,step,step);
+        }
+      }
+      g.strokeStyle="#ffffff30";g.lineWidth=1;g.beginPath();g.moveTo(PAD,10);g.lineTo(PAD,SZ[1]-PAD);g.lineTo(SZ[0]-10,SZ[1]-PAD);g.stroke();
+      g.fillStyle="#a9bce6";g.font="13px Lexend, sans-serif";g.textAlign="center";g.fillText("Transparência →",SZ[0]/2,SZ[1]-11);
+      g.save();g.translate(16,SZ[1]/2-12);g.rotate(-Math.PI/2);g.fillText("Velocidade →",0,0);g.restore();
+      pool.forEach(p=>{if(p.seen)return;const [x,y]=px(p);g.fillStyle="#eef6ff";g.globalAlpha=.85;g.beginPath();g.arc(x,y,5.5,0,6.3);g.fill();g.globalAlpha=1});
+      labeled.forEach(p=>{const [x,y]=px(p);p.k?drawJelly(g,x,y,JELLY):drawFish(g,x,y,FISH)});
+      tested.forEach(p=>{const [x,y]=px(p);g.fillStyle=p.ok?"#2ee6b0":"#ff5a78";g.beginPath();g.arc(x,y,4,0,6.3);g.fill()});
+    }
+    function ui(){
+      $("#bud").textContent=`Etiquetas: ${labeled.length} de ${budget}`;
+      $("#go").disabled=!(phase==="label"&&labeled.length>=budget);
+      $("#rnd").disabled=phase!=="label"||labeled.length>=budget;
+    }
+    function reveal(p){p.seen=true;labeled.push(p);sfx.tap();draw();ui()}
+    cv.onclick=e=>{
+      if(phase!=="label"||labeled.length>=budget)return;
+      const b=cv.getBoundingClientRect(),mx=(e.clientX-b.left)*SZ[0]/b.width,my=(e.clientY-b.top)*SZ[1]/b.height;
+      let hit=null,bd=26*26;pool.forEach(p=>{if(p.seen)return;const [x,y]=px(p),d=(x-mx)**2+(y-my)**2;if(d<bd){bd=d;hit=p}});
+      if(hit)reveal(hit);
+    };
+    $("#rnd").onclick=()=>{const rest=pool.filter(p=>!p.seen);if(rest.length)reveal(rest[Math.floor(Math.random()*rest.length)])};
+    $("#go").onclick=()=>{
+      phase="test";ui();const acc=accuracy(labeled,test);let n=0;
+      const id=setInterval(()=>{for(let q=0;q<4&&n<test.length;q++,n++){const p=test[n];tested.push({x:p.x,y:p.y,ok:nearest(labeled,p)===p.k})}draw();
+        if(n>=test.length){clearInterval(id);res[r]=acc;sfx[acc>=.8?"ok":"bad"]();
+          const f=[.35,.65],pts=res.reduce((a,v,k)=>a+f[k]*clamp((v-.5)/.42)*1000,0);setPts(pts);
+          const pct=Math.round(acc*100);
+          $("#out").innerHTML=fbBox(acc>=.8,`Acertou ${pct}%`,`em ${test.length} criaturas que o modelo nunca tinha visto.${r===0?" Com tão poucos exemplos é fácil falhar. Vais ter mais orçamento.":""}`,r===0?"Ronda seguinte":"Ver resultado");
+          $("#next").focus();
+          $("#next").onclick=()=>{if(r===0){r=1;start()}else done(pts,`Precisão ${Math.round(res[0]*100)}% com 4 etiquetas e ${Math.round(res[1]*100)}% com 10`)};
+        }},45);
+      timers.push(id);
+    };
+    draw();ui();
+  }
+  start();
+}
+
+/* ---------- Nível 3 ---------- */
+const CAMS=[{n:"Dia",cost:1,max:30},{n:"Noite",cost:2,max:16},{n:"Nevoeiro",cost:3,max:12}];
+const CENTER=[[.82,.72,.28],[.15,.28,.72],[.48,.62,.38]];
+function camPoint(g,boat){const c=CENTER[g];return{x:c[0]+gauss()*.04,y:(boat?c[1]:c[2])+gauss()*.1,k:boat?1:0}}
+function knn3(train,p){
+  const d=train.map(q=>[((q.x-p.x)*3)**2+(q.y-p.y)**2,q.k]).sort((a,b)=>a[0]-b[0]).slice(0,3);
+  if(!d.length)return Math.random()<.5?1:0;
+  return d.reduce((a,b)=>a+b[1],0)*2>d.length?1:0;
+}
+function camEvaluate(counts){
+  const train=[];counts.forEach((n,g)=>{for(let k=0;k<n;k++)train.push(camPoint(g,k%2))});
+  return counts.map((_,g)=>{let ok=0;for(let k=0;k<80;k++){const p=camPoint(g,k%2);if(knn3(train,p)===p.k)ok++}return ok/80});
+}
+function camArt(g){
+  const sky=["#7fd0ff","#141b52","#b9c2d2"][g],sea=["#2a7fd6","#0a1140","#8b97ac"][g];
+  const boat=g===1?'<circle cx="104" cy="62" r="4" fill="#ffc23d"/><circle cx="92" cy="65" r="2" fill="#ff5a78"/>':`<path d="M84 60h40l-7 10H91z" fill="${g===2?"#6d7789":"#1b2a7a"}"/><path d="M103 34v25H88z" fill="${g===2?"#a2abbc":"#fff"}"/>`;
+  const extra=g===0?'<circle cx="180" cy="20" r="11" fill="#ffc23d"/>':g===1?'<circle cx="30" cy="20" r="1.4" fill="#fff"/><circle cx="60" cy="12" r="1.2" fill="#fff"/><circle cx="170" cy="22" r="1.4" fill="#fff"/><circle cx="190" cy="10" r="1.1" fill="#fff"/>':'<rect width="220" height="90" fill="#dfe4ee" opacity=".42"/>';
+  return `<svg viewBox="0 0 220 90" aria-hidden="true"><rect width="220" height="56" fill="${sky}"/><rect y="56" width="220" height="34" fill="${sea}"/>${boat}${extra}</svg>`;
+}
+function L3(i,done){
+  let counts=[30,2,0],tests=0,best=0;
+  const BUD=40,cost=()=>counts.reduce((a,n,g)=>a+n*CAMS[g].cost,0);
+  view.innerHTML=shell(i,"O farol tem de encontrar barcos de dia, de noite e com nevoeiro. Imagens de noite e com nevoeiro são mais caras de recolher. O sucesso é medido pela <b>pior câmara</b>: um barco perdido no nevoeiro continua perdido. Dados simulados.",`
+   <div class="plate"><div class="row between"><h3 id="cost"></h3><span class="small muted">Até 4 testes. Cada teste extra custa 100 pontos.</span></div>
+   <div class="cams">${CAMS.map((c,g)=>`<div class="cam">${camArt(g)}<div class="row between"><b style="font-weight:600">${c.n}</b><span class="small muted">${c.cost} crédito${c.cost>1?"s":""} por imagem</span></div><label for="s${g}" class="small">Imagens: <span id="v${g}" style="font-family:var(--f-data)"></span></label><input type="range" id="s${g}" min="0" max="${c.max}" step="2" value="${counts[g]}"><div class="bar" aria-hidden="true"><i id="b${g}" style="width:0"></i></div><span class="small" id="r${g}">Sem teste</span></div>`).join("")}</div>
+   <div class="row"><button class="btn" id="test">Treinar e testar</button><button class="btn ghost" id="end" disabled>Concluir missão</button></div><div id="out"></div></div>`);
+  function ui(){
+    counts.forEach((n,g)=>$("#v"+g).textContent=n);
+    const over=cost()>BUD;
+    $("#cost").textContent=`Orçamento: ${cost()} de ${BUD} créditos`;$("#cost").style.color=over?"var(--coral)":"";
+    $("#test").disabled=over||tests>=4||counts.reduce((a,b)=>a+b)===0;
+  }
+  counts.forEach((_,g)=>$("#s"+g).oninput=e=>{counts[g]=+e.target.value;ui()});
+  $("#test").onclick=()=>{
+    const acc=camEvaluate(counts);tests++;
+    acc.forEach((a,g)=>{const p=Math.round(a*100);const b=$("#b"+g);b.style.width=p+"%";b.className=a<.7?"crit":a<.85?"warn":"";$("#r"+g).textContent=`Encontrou ${p}% corretamente`});
+    const worst=Math.min(...acc),avg=(acc[0]+acc[1]+acc[2])/3,w=acc.indexOf(worst);
+    const pts=Math.max(0,clamp((worst-.5)/.32)*1000-100*(tests-1));best=Math.max(best,pts);setPts(best);
+    sfx[worst>=.8?"ok":"bad"]();
+    const msg=worst>=.8?`Bom equilíbrio. Todas as câmaras funcionam acima de 80%.`:`A média é ${Math.round(avg*100)}%, mas com ${CAMS[w].n.toLowerCase()} só acerta ${Math.round(worst*100)}%. O modelo quase não conhece esse caso.`;
+    $("#out").innerHTML=fbBox(worst>=.8,`Teste ${tests} de 4.`,msg,"");
+    $("#end").disabled=false;ui();if(tests>=4)$("#end").focus();
+  };
+  $("#end").onclick=()=>done(best,`${tests} teste${tests>1?"s":""} realizado${tests>1?"s":""}`);
+  ui();
+}
+
+/* ---------- Nível 4 ---------- */
+const INPUTS=["Noite","Nevoeiro","Barco"];
+const PUZZLES=[
+ {d:"O sinal acende se for <b>de noite ou houver nevoeiro</b>. A presença de barcos não interessa.",f:(n,f,b)=>n||f},
+ {d:"O sinal acende <b>só se houver um barco</b> e, além disso, for de noite ou houver nevoeiro.",f:(n,f,b)=>b&&(n||f)},
+ {d:"O sinal acende quando <b>pelo menos duas</b> das três condições forem verdadeiras.",f:(n,f,b)=>n+f+b>=2}
+];
+const ROWS=[0,1,2,3,4,5,6,7].map(v=>[v>>2&1,v>>1&1,v&1]);
+const neuronSum=(w,r)=>w[0]*r[0]+w[1]*r[1]+w[2]*r[2];
+function L4(i,done){
+  let pz=0,pts=0,w,th,sel,tries,checked;
+  function reset(){w=[0,0,0];th=1;sel=7;tries=0;checked=false}
+  function svg(){
+    const r=ROWS[sel],sum=neuronSum(w,r),on=sum>=th,ys=[40,120,200];
+    const line=(k)=>{const c=w[k]>0?"var(--flare)":w[k]<0?"var(--coral)":"#ffffff30";return `<line x1="92" y1="${ys[k]}" x2="240" y2="120" stroke="${c}" stroke-width="${1.5+Math.abs(w[k])*2.4}" opacity="${r[k]?1:.45}"/><rect x="150" y="${(ys[k]+120)/2-22}" width="36" height="24" rx="4" fill="var(--hull-deep)"/><text x="168" y="${(ys[k]+120)/2-5}" text-anchor="middle" fill="var(--foam)" font-family="var(--f-data)" font-size="15">${w[k]>0?"+":""}${w[k]}</text>`};
+    const inp=(k)=>`<circle cx="62" cy="${ys[k]}" r="30" fill="${r[k]?"var(--flare)":"var(--hull-deep)"}" stroke="var(--foam)" stroke-width="2"/><text x="62" y="${ys[k]+5}" text-anchor="middle" font-size="12" font-family="var(--f-body)" font-weight="600" fill="${r[k]?"var(--hull-deep)":"var(--foam)"}">${INPUTS[k]}</text>`;
+    return `<svg viewBox="0 0 520 240" role="img" aria-label="Neurónio com soma ${sum} e limiar ${th}">${[0,1,2].map(line).join("")}<line x1="326" y1="120" x2="418" y2="120" stroke="${on?"var(--kelp)":"#ffffff30"}" stroke-width="5"/><circle cx="280" cy="120" r="48" fill="var(--hull-2)" stroke="var(--foam)" stroke-width="3"/><text x="280" y="113" text-anchor="middle" fill="var(--mist)" font-size="12" font-family="var(--f-body)">soma</text><text x="280" y="139" text-anchor="middle" fill="var(--foam)" font-size="28" font-family="var(--f-data)">${sum}</text>${[0,1,2].map(inp).join("")}<circle cx="456" cy="120" r="36" fill="${on?"var(--flare)":"var(--hull-deep)"}" stroke="${on?"#fff":"#ffffff40"}" stroke-width="3" ${on?'style="filter:drop-shadow(0 0 14px var(--flare))"':""}/><text x="456" y="125" text-anchor="middle" font-weight="800" font-size="14" font-family="var(--f-body)" fill="${on?"var(--hull-deep)":"var(--mist)"}">${on?"ACESO":"APAGADO"}</text></svg>`;
+  }
+  function table(){
+    const f=PUZZLES[pz].f;
+    return `<table><thead><tr><th>Noite</th><th>Nevoeiro</th><th>Barco</th><th>Acende?</th><th>Modelo</th></tr></thead><tbody>${ROWS.map((r,k)=>{const want=!!f(r[0],r[1],r[2]),got=neuronSum(w,r)>=th;return `<tr class="pick ${k===sel?"sel":""}" data-r="${k}" tabindex="0"><td>${r[0]?"sim":"não"}</td><td>${r[1]?"sim":"não"}</td><td>${r[2]?"sim":"não"}</td><td>${want?"sim":"não"}</td><td style="color:${checked?(want===got?"var(--kelp)":"var(--coral)"):"var(--mist)"}">${checked?(want===got?"✓":"✗"):"?"}</td></tr>`}).join("")}</tbody></table>`;
+  }
+  function refresh(){
+    $("#nsvg").innerHTML=svg();$("#tbl").innerHTML=table();
+    [0,1,2].forEach(k=>$("#o"+k).textContent=(w[k]>0?"+":"")+w[k]);$("#ot").textContent=th;
+    $$("#tbl tr.pick").forEach(tr=>{const go=()=>{sel=+tr.dataset.r;refresh();const t=$(`#tbl tr[data-r="${sel}"]`);if(t)t.focus()};tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
+  }
+  function step(k,d){if(k==="t")th=clamp(th+d,-3,6);else w[k]=clamp(w[k]+d,-3,3);checked=false;sfx.tap();$("#out").innerHTML="";refresh()}
+  function start(){
+    clearRun();reset();
+    const stepper=(id,lab)=>`<div class="stepper"><span class="opt-title">${lab}</span><div class="row" style="gap:6px"><button class="btn ghost mini" data-s="${id}" data-d="-1" aria-label="Diminuir ${lab}">−</button><output id="o${id}"></output><button class="btn ghost mini" data-s="${id}" data-d="1" aria-label="Aumentar ${lab}">+</button></div></div>`;
+    view.innerHTML=shell(i,"Cada entrada do neurónio tem um <b>peso</b>. Se a soma das entradas ativas atingir o <b>limiar</b>, o sinal acende. Clica numa linha da tabela para experimentares essa situação.",`
+    <div class="plate"><div class="row between"><span class="eyebrow">Desafio ${pz+1} de 3</span><span class="small muted">Cada verificação falhada custa 70 pontos.</span></div><h3 style="font-weight:400;font-size:20px">${PUZZLES[pz].d}</h3>
+    <div class="split"><div class="neuron" style="display:flex;flex-direction:column;gap:12px"><div id="nsvg"></div><div class="tablewrap" id="tbl"></div></div>
+    <div style="display:flex;flex-direction:column;gap:12px">${stepper(0,"Peso da noite")}${stepper(1,"Peso do nevoeiro")}${stepper(2,"Peso do barco")}<hr style="border:0;border-top:1px solid var(--line);width:100%;margin:0">${stepper("t","Limiar")}<button class="btn" id="chk">Verificar neurónio</button><div id="out"></div></div></div></div>`);
+    $$("[data-s]").forEach(b=>b.onclick=()=>step(b.dataset.s==="t"?"t":+b.dataset.s,+b.dataset.d));
+    $("#chk").onclick=()=>{
+      tries++;checked=true;
+      const f=PUZZLES[pz].f,bad=ROWS.filter(r=>!!f(r[0],r[1],r[2])!==(neuronSum(w,r)>=th)).length;
+      refresh();
+      if(bad){sfx.bad();$("#out").innerHTML=fbBox(false,`Faltam ${bad} situaç${bad>1?"ões":"ão"}.`,"Vê as linhas vermelhas e ajusta os pesos ou o limiar.","")}
+      else{
+        sfx.ok();const got=Math.max(90,(pz===0?334:333)-70*(tries-1));pts+=got;setPts(pts);
+        $("#out").innerHTML=fbBox(true,`Resolvido! +${got}`,"Todas as situações estão corretas.",pz<2?"Desafio seguinte":"Ver resultado");
+        $("#chk").disabled=true;$("#next").focus();
+        $("#next").onclick=()=>{if(pz<2){pz++;start()}else done(pts,"3 neurónios configurados")};
+      }
+    };
+    refresh();setPts(pts);
+  }
+  start();
+}
+
+/* ---------- Nível 5 ---------- */
+const GW=8,GH=5,GSTART=[0,4],GPORT=[7,0],ROCKS=new Set(["2,4","2,3","2,2","4,0","4,1","4,2","6,2","6,3"]);
+const ACT=[[0,-1],[1,0],[0,1],[-1,0]];
+const gk=(x,y)=>y*GW+x;
+function gMove(x,y,a,R){
+  let nx=x+ACT[a][0],ny=y+ACT[a][1];
+  if(nx<0||ny<0||nx>=GW||ny>=GH){nx=x;ny=y}
+  if(nx===GPORT[0]&&ny===GPORT[1])return{x:nx,y:ny,r:R.port,end:"port"};
+  if(ROCKS.has(nx+","+ny))return{x:nx,y:ny,r:R.rock,end:"rock"};
+  return{x:nx,y:ny,r:R.step,end:null};
+}
+function gShortest(){
+  const q=[[...GSTART,0]],seen=new Set([GSTART+""]);
+  while(q.length){const [x,y,d]=q.shift();if(x===GPORT[0]&&y===GPORT[1])return d;
+    for(const a of ACT){const nx=x+a[0],ny=y+a[1],k=nx+","+ny;if(nx<0||ny<0||nx>=GW||ny>=GH||seen.has(k)||ROCKS.has(k))continue;seen.add(k);q.push([nx,ny,d+1])}}
+  return -1;
+}
+function qEpisode(Q,R,eps,alpha=.5,gamma=.95,trail){
+  let [x,y]=GSTART,tot=0;
+  for(let s=0;s<80;s++){
+    const k=gk(x,y);let a;
+    if(Math.random()<eps)a=Math.floor(Math.random()*4);
+    else{const m=Math.max(...Q[k]);const c=[0,1,2,3].filter(i=>Q[k][i]===m);a=c[Math.floor(Math.random()*c.length)]}
+    const o=gMove(x,y,a,R);tot+=o.r;
+    const nk=gk(o.x,o.y),next=o.end?0:Math.max(...Q[nk]);
+    Q[k][a]+=alpha*(o.r+gamma*next-Q[k][a]);
+    x=o.x;y=o.y;if(trail)trail.push([x,y]);
+    if(o.end)break;
+  }
+  return tot;
+}
+const qNew=()=>Array.from({length:GW*GH},()=>[0,0,0,0]);
+function qGreedy(Q,R){
+  let [x,y]=GSTART;const path=[[x,y]],seen=new Set();
+  for(let s=0;s<60;s++){
+    const k=gk(x,y),key=k;if(seen.has(key))return{path,end:"loop"};seen.add(key);
+    const a=Q[k].indexOf(Math.max(...Q[k]));
+    const o=gMove(x,y,a,R);x=o.x;y=o.y;path.push([x,y]);
+    if(o.end)return{path,end:o.end};
+  }
+  return{path,end:"loop"};
+}
+const qOptions={
+  port:{l:"Prémio por chegar ao porto",v:[10,100]},
+  rock:{l:"Castigo por bater nas rochas",v:[0,-10,-100]},
+  step:{l:"Por cada movimento",v:[1,0,-1]},
+  eps:{l:"Exploração (fazer algo ao acaso)",v:[0,.2,.9],f:v=>Math.round(v*100)+"%"},
+  eps_n:{l:"Viagens de treino",v:[30,300,1500]}
+};
+function L5(i,done){
+  const opt=gShortest();let sel={},tries=0,best=0,Q=qNew(),boat=[...GSTART],trail=[],curve=[],busy=false;
+  const CELL=74,CW=GW*CELL,CH=GH*CELL;
+  const fmt=(k,v)=>qOptions[k].f?qOptions[k].f(v):(k==="eps_n"?v:(v>0?"+":"")+v);
+  view.innerHTML=shell(i,"Não dizes ao barco o caminho: só escolhes o que ele ganha ou perde. Depois, ele aprende sozinho em centenas de viagens. Atenção: o barco procura a recompensa que lhe deres, mesmo que não seja o que querias.",`
+   <div class="split"><div class="plate"><canvas class="game" id="grid" width="${CW*2}" height="${CH*2}" style="cursor:default" aria-label="Mar em grelha com rochas, partida e porto"></canvas>
+   <div class="row between"><span class="small muted">Curva de aprendizagem: pontos por viagem</span><span class="small" id="ep" style="font-family:var(--f-data)"></span></div><canvas class="game" id="cur" width="1200" height="180" style="cursor:default" aria-hidden="true"></canvas></div>
+   <div class="plate">${Object.entries(qOptions).map(([k,o])=>`<div style="display:flex;flex-direction:column;gap:6px"><span class="opt-title">${o.l}</span><div class="pills">${o.v.map(v=>`<button class="pill" data-k="${k}" data-v="${v}" aria-pressed="false">${fmt(k,v)}</button>`).join("")}</div></div>`).join("")}
+   <button class="btn" id="train" disabled>Treinar e testar</button><span class="small muted" id="hint">Escolhe uma opção em cada linha. Até 4 tentativas.</span><div id="out"></div></div></div>`);
+  const g=$("#grid").getContext("2d");g.scale(2,2);
+  const cg=$("#cur").getContext("2d");
+  function draw(){
+    g.clearRect(0,0,CW,CH);
+    const vals=Q.map(a=>Math.max(...a)),mx=Math.max(1e-6,...vals.map(Math.abs));
+    for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){
+      const v=vals[gk(x,y)]/mx;
+      g.fillStyle=v>0?`rgba(255,194,61,${v*.72})`:v<0?`rgba(255,90,120,${-v*.55})`:"rgba(255,255,255,.03)";
+      g.fillRect(x*CELL+1,y*CELL+1,CELL-2,CELL-2);
+      if(ROCKS.has(x+","+y)){g.fillStyle="#4a4f86";g.beginPath();g.moveTo(x*CELL+12,y*CELL+62);g.lineTo(x*CELL+26,y*CELL+20);g.lineTo(x*CELL+44,y*CELL+30);g.lineTo(x*CELL+62,y*CELL+62);g.closePath();g.fill();g.fillStyle="#8088c0";g.beginPath();g.moveTo(x*CELL+26,y*CELL+20);g.lineTo(x*CELL+36,y*CELL+42);g.lineTo(x*CELL+20,y*CELL+40);g.closePath();g.fill();continue}
+      const isPort=x===GPORT[0]&&y===GPORT[1];
+      if(!isPort&&(Q[gk(x,y)].some(q=>q!==0))){const a=Q[gk(x,y)].indexOf(Math.max(...Q[gk(x,y)])),cx=x*CELL+37,cy=y*CELL+37,dx=ACT[a][0]*15,dy=ACT[a][1]*15;g.strokeStyle="#eef6ffb0";g.lineWidth=2.5;g.beginPath();g.moveTo(cx-dx,cy-dy);g.lineTo(cx+dx,cy+dy);g.stroke();g.fillStyle="#eef6ffb0";g.beginPath();g.arc(cx+dx,cy+dy,4,0,6.3);g.fill()}
+    }
+    g.fillStyle="#2ee6b0";g.fillRect(GPORT[0]*CELL+8,GPORT[1]*CELL+8,CELL-16,CELL-16);g.fillStyle="#0a1140";g.font="800 15px Lexend, sans-serif";g.textAlign="center";g.fillText("PORTO",GPORT[0]*CELL+37,GPORT[1]*CELL+42);
+    if(trail.length){g.strokeStyle="#ffc23d";g.lineWidth=3;g.setLineDash([6,6]);g.beginPath();trail.forEach((p,k)=>{const X=p[0]*CELL+37,Y=p[1]*CELL+37;k?g.lineTo(X,Y):g.moveTo(X,Y)});g.stroke();g.setLineDash([])}
+    g.save();g.translate(boat[0]*CELL+37,boat[1]*CELL+42);g.fillStyle="#eef6ff";g.beginPath();g.moveTo(0,-26);g.lineTo(14,0);g.lineTo(0,0);g.closePath();g.fill();g.fillStyle="#ff5a78";g.beginPath();g.moveTo(-18,3);g.lineTo(18,3);g.lineTo(11,15);g.lineTo(-11,15);g.closePath();g.fill();g.restore();
+  }
+  function drawCurve(){
+    const W=1200,H=180;cg.clearRect(0,0,W,H);if(curve.length<2)return;
+    const w=Math.max(1,Math.floor(curve.length/25));const s=curve.map((_,k)=>{const a=curve.slice(Math.max(0,k-w),k+1);return a.reduce((p,c)=>p+c,0)/a.length});
+    const mn=Math.min(...s),mx=Math.max(...s),sp=mx-mn||1;
+    const px=k=>k/(s.length-1)*(W-8)+4,py=v=>H-10-(v-mn)/sp*(H-20);
+    cg.beginPath();s.forEach((v,k)=>k?cg.lineTo(px(k),py(v)):cg.moveTo(px(k),py(v)));
+    cg.strokeStyle="#ffc23d";cg.lineWidth=4;cg.stroke();
+    cg.lineTo(px(s.length-1),H);cg.lineTo(px(0),H);cg.closePath();cg.fillStyle="#ffc23d22";cg.fill();
+  }
+  $$(".pill").forEach(b=>b.onclick=()=>{if(busy)return;const k=b.dataset.k;sel[k]=+b.dataset.v;$$(`.pill[data-k="${k}"]`).forEach(p=>p.setAttribute("aria-pressed",p===b));sfx.tap();$("#train").disabled=Object.keys(qOptions).some(q=>!(q in sel))});
+  function lockUI(v){busy=v;$("#train").disabled=v;$$(".pill").forEach(b=>b.disabled=v)}
+  $("#train").onclick=()=>{
+    tries++;Q=qNew();curve=[];trail=[];boat=[...GSTART];lockUI(true);$("#out").innerHTML="";
+    const R={port:sel.port,rock:sel.rock,step:sel.step},E=sel.eps_n,batch=Math.max(1,Math.ceil(E/90)),tk=runToken;let n=0;
+    (function frame(){
+      if(tk!==runToken)return;
+      let t=[];for(let b=0;b<batch&&n<E;b++,n++){t=[];curve.push(qEpisode(Q,R,sel.eps,.5,.95,t))}
+      trail=[GSTART,...t];boat=t.length?t[t.length-1]:boat;
+      $("#ep").textContent=`Viagem ${n} de ${E}`;draw();drawCurve();
+      if(n<E){requestAnimationFrame(frame);return}
+      voyage(R);
+    })();
+  };
+  function voyage(R){
+    const v=qGreedy(Q,R);let k=0;trail=[];
+    const id=setInterval(()=>{boat=v.path[k];trail=v.path.slice(0,k+1);draw();k++;
+      if(k>=v.path.length){clearInterval(id);finishTry(v)}},reduced?20:140);
+    timers.push(id);
+  }
+  function finishTry(v){
+    const steps=v.path.length-1;let pts=0,ok=false,t,msg;
+    if(v.end==="port"){ok=true;pts=Math.max(250,1000*(opt/steps)-150*(tries-1));t=`Chegou ao porto em ${steps} movimentos.`;msg=steps===opt?"É a rota mais curta possível.":`A rota mais curta tem ${opt} movimentos.`}
+    else if(v.end==="rock"){t="O barco bateu nas rochas.";msg=sel.rock>=0?"Bater nas rochas não lhe custa nada, por isso, para ele, afundar pode ser uma boa forma de acabar a viagem.":sel.step<0&&sel.port<100?"Com o custo de cada movimento e um prémio pequeno, pode compensar acabar depressa, mesmo mal.":"Precisa de mais treino ou de mais exploração para conhecer o mapa."}
+    else{t="O barco ficou às voltas.";msg=sel.step>0?"Ganha pontos por cada movimento, por isso aprendeu a nunca chegar. Fez o que premiaste, não o que querias.":sel.eps===0?"Sem exploração, nunca descobriu o caminho para o porto.":sel.step===0?"Sem custo por movimento, não tem pressa de chegar. Ainda não aprendeu o caminho.":"Ainda não aprendeu o caminho. Experimenta mais viagens ou mais exploração."}
+    pts=Math.round(pts);best=Math.max(best,pts);setPts(best);sfx[ok?"ok":"bad"]();
+    const canRetry=tries<4;
+    $("#out").innerHTML=fbBox(ok,t,msg,"");
+    const hold=$("#out .fb");const row=document.createElement("div");row.className="row";
+    if(ok||!canRetry){const e=document.createElement("button");e.className="btn";e.textContent="Concluir missão";e.onclick=()=>done(Math.max(best,ok?0:120),`${tries} tentativa${tries>1?"s":""}`);row.append(e)}
+    if(canRetry){const r=document.createElement("button");r.className="btn ghost";r.textContent="Mudar as recompensas";r.onclick=()=>{lockUI(false);$("#train").disabled=false;$("#out").innerHTML="";$("#hint").textContent=`Tentativa ${tries+1} de 4. Cada tentativa extra custa 150 pontos.`};row.append(r)}
+    hold.append(row);
+  }
+  draw();
+}
+
+/* ---------- Nível 6 ---------- */
+const CORPUS=[
+ ...Array(5).fill(0).map((_,k)=>"o farol ilumina "+["o cais","a costa","as rochas","o cabo","a baía"][k]),
+ "o farol guia os pescadores","o farol guia a frota","o farol guia quem chega","o farol pisca devagar","o farol pisca sem parar","o farol dorme de dia",
+ "o mar está calmo","o mar está frio","o mar está agitado","o mar está azul","o mar está escuro","o mar está bravo","o mar bate nas rochas","o mar bate no cais","o mar bate forte","o mar cresce depressa","o mar cresce sem aviso","o mar canta baixinho",
+ "os barcos regressam ao cais","os barcos regressam cedo","os barcos regressam cheios","os barcos regressam juntos","os barcos regressam devagar","os barcos partem cedo","os barcos partem juntos","os barcos partem hoje","os barcos descansam no porto","os barcos descansam ao sol","os barcos dançam nas ondas",
+ "a noite cai depressa","a noite cai sobre o cabo","a noite cai em silêncio","a noite cai sem estrelas","a noite cai devagar","a noite chega fria","a noite chega cedo","a noite chega calada","a noite esconde as rochas","a noite esconde o cais","a noite termina cedo",
+ "a luz brilha ao longe","a luz brilha sobre a água","a luz brilha forte","a luz brilha no cabo","a luz brilha sempre","a luz atravessa o nevoeiro","a luz atravessa a chuva","a luz atravessa a noite","a luz guia os navios","a luz guia a frota","a luz apaga de manhã"
+];
+function bigrams(){const m={};CORPUS.forEach(s=>{const w=s.split(" ");for(let k=0;k<w.length-1;k++){(m[w[k]]=m[w[k]]||{})[w[k+1]]=(m[w[k]][w[k+1]]||0)+1}});return m}
+const WORD_ROUNDS=[["o farol","farol"],["o mar","mar"],["os barcos","barcos"],["a noite","noite"],["a luz","luz"]];
+const HALLUCINATIONS=[
+ {s:["Luís de Camões é o autor de Os Lusíadas.","A obra foi publicada em 1572.","Camões recebeu o Prémio Nobel da Literatura por esta obra."],f:2,w:"Camões morreu em 1580 e o Prémio Nobel só começou a ser atribuído em 1901."},
+ {s:["O gelo é mais denso do que a água líquida, por isso afunda.","A molécula de água tem hidrogénio e oxigénio.","Ao nível do mar, a água ferve a cerca de 100 °C."],f:0,w:"O gelo é menos denso do que a água líquida. É por isso que flutua."},
+ {s:["Portugal aderiu à Comunidade Económica Europeia em 1986.","O rio Tejo nasce em Portugal, perto de Coimbra.","O Cabo da Roca é o ponto mais ocidental da Europa continental."],f:1,w:"O Tejo nasce em Espanha, na Serra de Albarracín."},
+ {s:["O computador Deep Blue venceu Garry Kasparov num encontro de xadrez em 1997.","O programa AlphaGo venceu Lee Sedol em 2016, no jogo Go.","A expressão inteligência artificial surgiu apenas em 2010, com os smartphones."],f:2,w:"A expressão foi proposta por John McCarthy e colegas para o encontro de Dartmouth, realizado em 1956."},
+ {s:["Alan Turing propôs em 1950 um teste conhecido como jogo da imitação.","Turing fundou a empresa Google nos anos 90.","Durante a Segunda Guerra Mundial, Turing ajudou a decifrar mensagens cifradas alemãs."],f:1,w:"Turing morreu em 1954. A Google foi fundada em 1998 por Larry Page e Sergey Brin."}
+];
+function L6(i,done){
+  const bi=bigrams();let r=0,pts=0;
+  const fin=()=>done(pts,"5 previsões e 5 alucinações");
+  function word(){
+    clearRun();
+    const [pr,last]=WORD_ROUNDS[r],dist=Object.entries(bi[last]).sort((a,b)=>b[1]-a[1]),tot=dist.reduce((a,d)=>a+d[1],0);
+    const opts=shuffle(dist.slice(0,4).map(d=>d[0]));
+    view.innerHTML=shell(i,`Esta máquina leu ${CORPUS.length} frases sobre o mar e contou que palavra surge depois de cada palavra. Consegues pensar como ela? Escolhe a palavra <b>mais provável</b>.`,`
+     <div class="plate"><div class="row between"><span class="eyebrow">Previsão ${r+1} de 5</span><details class="small"><summary>Ver os textos de treino</summary><p class="muted" style="max-height:130px;overflow:auto;max-width:60ch">${CORPUS.join(". ")}.</p></details></div>
+     <div class="phrase">${esc(pr[0].toUpperCase()+pr.slice(1))} <u id="gap">?</u></div>
+     <div class="choices four" id="ch">${opts.map(o=>`<button class="btn ghost" data-w="${o}">${o}</button>`).join("")}</div><div class="wbars" id="bars"></div><div id="fb"></div></div>`);
+    setPts(pts);
+    $$("#ch button").forEach(b=>b.onclick=()=>{
+      const ok=b.dataset.w===dist[0][0];$$("#ch button").forEach(x=>x.disabled=true);$("#gap").textContent=dist[0][0];
+      if(ok){pts+=100;sfx.ok()}else sfx.bad();setPts(pts);
+      $("#bars").innerHTML=dist.slice(0,4).map(d=>`<div class="wbar"><span>${d[0]}</span><div class="bar"><i style="width:${Math.round(d[1]/tot*100)}%" class="${d[0]===dist[0][0]?"":"warn"}"></i></div><span>${Math.round(d[1]/tot*100)}%</span></div>`).join("");
+      $("#fb").innerHTML=fbBox(ok,ok?"Pensaste como a máquina.":"A máquina escolheria outra.",`Depois de "${last}", surgiu "${dist[0][0]}" em ${dist[0][1]} de ${tot} casos. Ela não sabe o que é o mar: apenas contou palavras.`,r<4?"Próxima frase":"Caçar alucinações");
+      $("#next").focus();$("#next").onclick=()=>{r++;if(r<5)word();else{r=0;hall()}};
+    });
+  }
+  const set=take(HALLUCINATIONS,5);
+  function hall(){
+    clearRun();
+    const h=set[r],order=shuffle(h.s.map((t,k)=>({t,k})));
+    view.innerHTML=shell(i,"Os chatbots podem escrever coisas falsas com toda a confiança. A isso chama-se <b>alucinação</b>. Em cada resposta há uma frase inventada. Encontra-a.",`
+     <div class="plate"><div class="row between"><span class="eyebrow">Alucinação ${r+1} de 5</span></div><div id="ss" style="display:flex;flex-direction:column;gap:10px">${order.map(o=>`<button class="sent" data-k="${o.k}">${esc(o.t)}</button>`).join("")}</div><div id="fb"></div></div>`);
+    setPts(pts);
+    $$(".sent").forEach(b=>b.onclick=()=>{
+      const ok=+b.dataset.k===h.f;$$(".sent").forEach(x=>{x.disabled=true;if(+x.dataset.k===h.f)x.classList.add("right")});if(!ok)b.classList.add("wrong");
+      if(ok){pts+=100;sfx.ok()}else sfx.bad();setPts(pts);
+      $("#fb").innerHTML=fbBox(ok,ok?"Apanhada!":"Esta era verdadeira.",h.w,r<4?"Próxima resposta":"Ver resultado");
+      $("#next").focus();$("#next").onclick=()=>{r++;if(r<5)hall();else fin()};
+    });
+  }
+  word();
+}
+
+/* ---------- Nível 7 ---------- */
+const TIERS=["Risco inaceitável (proibido)","Risco elevado (regras exigentes)","Transparência (tem de avisar)","Risco mínimo"];
+const LAW=[
+ ["Um sistema dá uma pontuação às pessoas pelo seu comportamento social, e quem tem nota baixa perde acesso a serviços sem justificação.",0,"A classificação social que leva a tratamento prejudicial é proibida pelo artigo 5.º."],
+ ["Uma escola usa câmaras com IA para detetar se os alunos estão aborrecidos ou zangados nas aulas.",0,"Inferir emoções em instituições de ensino é proibido, salvo por razões médicas ou de segurança."],
+ ["Uma empresa recolhe fotografias de rostos da internet, sem critério, para criar uma base de reconhecimento facial.",0,"A recolha não direcionada de imagens faciais para estas bases é proibida."],
+ ["Uma IA decide que candidatos a um emprego passam à entrevista.",1,"O recrutamento consta do anexo III como área de risco elevado."],
+ ["Uma IA avalia exames e condiciona a entrada dos alunos numa escola.",1,"A educação consta do anexo III: admissão e avaliação de resultados são risco elevado."],
+ ["Um chatbot responde aos clientes no site de uma loja.",2,"As pessoas têm de saber que estão a falar com uma IA, salvo se isso for óbvio."],
+ ["Um vídeo gerado por IA mostra uma pessoa real a dizer algo que nunca disse.",2,"Os deepfakes têm de ser identificados como conteúdo gerado ou manipulado."],
+ ["Um filtro de email separa as mensagens indesejadas.",3,"Não traz obrigações específicas neste regulamento."],
+ ["Inimigos controlados por IA num videojogo.",3,"Exemplo clássico de risco mínimo."]
+];
+function L7(i,done){
+  const deck=take(LAW.filter(c=>c[1]===0),2).concat(take(LAW.filter(c=>c[1]===1),2),take(LAW.filter(c=>c[1]===2),2),take(LAW.filter(c=>c[1]===3),2));
+  const cases=shuffle(deck);let n=0,pts=0;
+  view.innerHTML=shell(i,"O Regulamento Europeu da IA, (UE) 2024/1689, trata cada sistema segundo o risco que representa. És juiz: em que degrau da pirâmide fica cada caso?",`
+   <div class="split"><div class="plate"><span class="eyebrow" id="cn"></span><div class="card" id="case" style="font-size:clamp(18px,2.5vw,23px)" aria-live="polite"></div><div id="fb"></div></div>
+   <div class="plate"><div class="pyr">${TIERS.map((t,k)=>`<button class="tier t${k+1}" data-t="${k}">${t}</button>`).join("")}</div></div></div>`);
+  function show(){$("#cn").textContent=`Caso ${n+1} de 8`;$("#case").textContent=cases[n][0];$("#fb").innerHTML="";$$(".tier").forEach(b=>{b.disabled=false;b.style.opacity=1})}
+  $$(".tier").forEach(b=>b.onclick=()=>{
+    const c=cases[n],ok=+b.dataset.t===c[1];$$(".tier").forEach(x=>{x.disabled=true;x.style.opacity=+x.dataset.t===c[1]?1:.3});
+    if(ok){pts+=125;sfx.ok()}else sfx.bad();setPts(pts);
+    $("#fb").innerHTML=fbBox(ok,ok?"Decisão certa.":`Era: ${TIERS[c[1]]}.`,c[2],n<7?"Próximo caso":"Ver resultado");
+    $("#next").focus();$("#next").onclick=()=>{n++;if(n<8)show();else done(pts,"8 casos julgados")};
+  });
+  show();
+}
+
+/* ---------- Nível 8 ---------- */
+const QUIZ=[
+ ["Numa aprendizagem supervisionada, os dados de treino têm...",["etiquetas com a resposta certa","apenas números pares","sempre fotografias","a opinião do computador"]],
+ ["Para que serve o conjunto de teste?",["Avaliar o modelo com dados que nunca viu","Dar mais exemplos para decorar","Apagar os dados errados","Tornar o treino mais lento"]],
+ ["O que significa sobreajuste (overfitting)?",["O modelo decora o treino e falha em dados novos","O modelo ocupa demasiado disco","O modelo aprende depressa de mais","O computador aquece"]],
+ ["Um modelo treinado quase só com imagens de dia tende a...",["falhar à noite","ser perfeito em tudo","recusar imagens","aprender sozinho o que é a noite"]],
+ ["O que é enviesamento num sistema de IA?",["Erros sistemáticos que prejudicam certos casos ou grupos","Um vírus informático","Um tipo de ecrã","Uma falha de internet"]],
+ ["Num neurónio artificial, o peso indica...",["a importância de cada entrada","o tamanho do ficheiro","a massa do computador","o número de utilizadores"]],
+ ["Quando dispara um neurónio artificial simples?",["Quando a soma pesada atinge o limiar","Sempre que há eletricidade","Quando o utilizador clica","Apenas à noite"]],
+ ["Que problema não se resolve com um único neurónio simples?",["OU exclusivo (XOR)","E lógico (AND)","OU lógico (OR)","Negação (NOT)"]],
+ ["A aprendizagem por reforço baseia-se em...",["recompensas e castigos","copiar a internet","exemplos sempre etiquetados","regras escritas à mão"]],
+ ["Na aprendizagem por reforço, se premiares o comportamento errado...",["o agente aprende o comportamento errado","o agente corrige o prémio sozinho","o treino para","nada muda"]],
+ ["O que é uma alucinação de um chatbot?",["Uma resposta falsa apresentada com confiança","Uma imagem colorida","Um erro de eletricidade","Uma resposta demasiado curta"]],
+ ["Essencialmente, um modelo de linguagem...",["prevê o que vem a seguir num texto","consulta sempre um livro certo","entende emoções como um humano","copia uma resposta guardada"]],
+ ["Quem propôs em 1950 o jogo da imitação?",["Alan Turing","Ada Lovelace","Bill Gates","Isaac Newton"]],
+ ["Que computador venceu Garry Kasparov num encontro de xadrez, em 1997?",["Deep Blue","AlphaGo","ENIAC","Watson"]],
+ ["AlphaGo ficou famoso em 2016 por vencer Lee Sedol em que jogo?",["Go","Xadrez","Damas","Póquer"]],
+ ["No Regulamento Europeu da IA, a classificação social que prejudica pessoas é...",["proibida","obrigatória","recomendada nas escolas","permitida sem limites"]],
+ ["O que é um deepfake?",["Conteúdo sintético que imita pessoas ou factos reais","Um mergulho profundo","Uma palavra-passe falsa","Um antivírus"]],
+ ["Antes de usares uma resposta de um chatbot num trabalho, deves...",["confirmar em fontes fiáveis","mudar o tipo de letra","copiar sem ler","pedir para escrever mais"]],
+ ["Qual destes dados NÃO deves colocar num chatbot?",["A morada e o telefone de um colega","Uma dúvida de Matemática","O nome de um rio","Uma receita de bolo"]],
+ ["Um modelo acertou 90 em 100 casos de teste. A sua exatidão é...",["90%","10%","100%","9%"]],
+ ["A visão computacional é a área da IA que trabalha com...",["imagens e vídeo","temperatura do processador","teclados","cabos de rede"]],
+ ["Quando uma IA influencia decisões importantes sobre pessoas, deve haver...",["supervisão humana","menos informação","decisão secreta","apenas a máquina"]]
+];
+function L8(i,done){
+  const qs=take(QUIZ,12),SEC=15;let n=0,raw=0,marks=[];
+  Scene.setStorm(true);
+  view.innerHTML=shell(i,"A tempestade chegou e há 12 navios no mar. Cada resposta certa guia um navio até ao porto. Respondam em equipa e depressa.",`
+   <div class="plate"><div class="row between"><span class="eyebrow" id="qn"></span><div class="ships" id="sh" aria-hidden="true"></div></div><div class="timer"><i id="tb"></i></div><div class="card" id="q" aria-live="polite"></div><div class="choices four" id="ch"></div></div>`);
+  let stop;
+  const ships=()=>$("#sh").innerHTML=qs.map((_,k)=>shipSvg(marks[k])).join("");
+  function show(){
+    clearRun();ships();$("#qn").textContent=`Navio ${n+1} de 12`;
+    const [t,o]=qs[n];$("#q").textContent=t;
+    $("#ch").innerHTML=shuffle(o.map((x,k)=>({x,k}))).map(a=>`<button class="btn ghost" data-k="${a.k}">${esc(a.x)}</button>`).join("");
+    $$("#ch button").forEach(b=>b.onclick=()=>ans(b));
+    stop=countdown(SEC,f=>{$("#tb").style.width=f*100+"%"},()=>ans(null));
+  }
+  function ans(b){
+    const f=stop();const ok=b&&+b.dataset.k===0;
+    $$("#ch button").forEach(x=>{x.disabled=true;if(+x.dataset.k===0){x.className="btn good"}});
+    if(b&&!ok)b.className="btn bad";
+    if(ok){raw+=.6+.4*f;sfx.ok()}else sfx.bad();
+    marks[n]=!!ok;setPts(raw/12*1000);ships();
+    later(()=>{n++;if(n<12)show();else{Scene.setStorm(false);done(raw/12*1000,`${marks.filter(Boolean).length} navios salvos de 12`)}},ok?850:1800);
+  }
+  show();
+}
+
+/* ---------- ecrãs ---------- */
+let screen="start";
+function renderHud(){
+  const t=team();
+  hud.hidden=screen==="start"||!t&&!["ranking","teacher","teams"].includes(screen);
+  if(hud.hidden)return;
+  hud.innerHTML=`<div class="hud-team">${t?emblem(t,true)+`<b>${esc(t.name)}</b><span class="hud-pts">${total(t)} pts</span>`:'<b>Operação Farol</b>'}</div>
+  <nav class="hud-nav" aria-label="Navegação">
+   ${examOn()?'<span class="fexb">Avaliação</span>':""}${t?'<button class="btn ghost mini" id="h-map">Mapa</button><button class="btn ghost mini" id="h-share">Enviar ao professor</button><button class="btn ghost mini" id="h-exam">'+(examOn()?"Avaliação: ligada":"Avaliação")+'</button>':""}
+   <button class="btn ghost mini" id="h-rank">Classificação</button>
+   <button class="btn ghost mini" id="h-teams">Equipas</button>
+   <button class="btn ghost mini" id="h-prof">Professor</button>
+   <button class="btn ghost mini" id="h-snd" aria-pressed="${S.sound}">Som ${S.sound?"ligado":"desligado"}</button>
+  </nav>`;
+  const on=(id,f)=>{const e=$("#"+id);if(e)e.onclick=f};
+  on("h-map",goMap);on("h-share",goShare);on("h-exam",goExam);on("h-rank",goRank);on("h-teams",goTeams);on("h-prof",goTeacher);
+  on("h-snd",()=>{S.sound=!S.sound;save();renderHud()});
+}
+function go(name){screen=name;view.classList.toggle("dim",name!=="start");clearRun();Scene.setStorm(false);Scene.setLit(doneCount(team()));renderHud();view.scrollTop=0}
+
+function goStart(){
+  go("start");
+  view.innerHTML=`<div class="title"><div class="logo"><small>OPERAÇÃO</small><strong>FAROL</strong></div>
+  <p class="pitch">Uma tempestade apagou a memória do farol do Cabo da Roca. A vossa equipa tem de lhe ensinar tudo de novo, nível a nível, antes que os navios se percam.</p>
+  <div class="row"><button class="btn" id="play" style="font-size:20px;padding:15px 30px">Zarpar</button><button class="btn ghost" id="rk">Classificação</button><button class="btn ghost" id="pf">Professor</button></div>
+  <p class="small muted">8 níveis · 8000 pontos em jogo · para equipas do 9.º ano</p></div>`;
+  $("#play").onclick=()=>{sfx.tap();S.teams.length?goTeams():goNewTeam()};
+  $("#rk").onclick=goRank;$("#pf").onclick=goTeacher;
+}
+const turmasLocais=()=>[...new Set(S.teams.map(t=>t.turma||""))].sort((a,b)=>a.localeCompare(b,"pt",{numeric:true}));
+function goTeams(){
+  go("teams");
+  const ts=turmasLocais();if(ts.length===1)S.curTurma=ts[0];if(S.curTurma!=null&&!ts.includes(S.curTurma))S.curTurma=null;
+  const sel=S.curTurma,list=sel==null?[]:S.teams.filter(t=>(t.turma||"")===sel),tName=x=>x||"Sem turma";
+  view.innerHTML=`<div class="wrap"><div><span class="eyebrow">Tripulações neste computador</span><h2>Quem vai ao leme?</h2></div>
+  ${S.teams.length?`<div class="plate"><h3>Qual é a vossa turma?</h3><div class="chips">${ts.map(x=>`<button class="chip" data-tu="${esc(x)}" aria-pressed="${x===sel}">${esc(tName(x))}</button>`).join("")}<button class="chip" id="otra">Outra turma</button></div></div>`:""}
+  <div class="plate">${!S.teams.length?'<div class="empty">Ainda não há equipas. Cria a primeira para zarpar.</div>':sel==null?'<div class="empty">Escolham a vossa turma para verem as vossas equipas.</div>':`<h3>Equipas da turma ${esc(tName(sel))}</h3>${list.map(t=>`<div class="teamrow">${emblem(t)}<div class="grow"><b style="font-weight:800;overflow-wrap:anywhere">${esc(t.name)}</b><div class="small muted">${t.turma?esc(t.turma)+" · ":""}${doneCount(t)} de 8 níveis · ${total(t)} pontos · ${rankName(total(t))}</div>${members(t).length?`<div class="small">${members(t).map(m=>esc(memLabel(t,m))).join(" · ")}</div>`:""}</div><button class="btn ghost mini" data-ed="${t.id}">Elementos</button><button class="btn mini" style="box-shadow:0 3px 0 var(--flare-deep)" data-play="${t.id}">Jogar</button></div>`).join("")}`}</div>
+  <div class="row"><button class="btn" id="new">${sel?`Criar equipa na turma ${esc(sel)}`:"Criar equipa"}</button></div></div>`;
+  $$("[data-tu]").forEach(b=>b.onclick=()=>{S.curTurma=b.dataset.tu;save();sfx.tap();goTeams()});
+  if($("#otra"))$("#otra").onclick=()=>{S.curTurma=null;save();goNewTeam()};
+  $$("[data-play]").forEach(b=>b.onclick=()=>{S.current=b.dataset.play;save();goMap()});
+  $$("[data-ed]").forEach(b=>b.onclick=()=>goNewTeam(b.dataset.ed));
+  $("#new").onclick=()=>goNewTeam();
+}
+function goNewTeam(editId){
+  go("teams");
+  const ed=editId?S.teams.find(t=>t.id===editId):null;
+  let em=ed?ed.emblem:"ancora",col=ed?ed.color:0;
+  const rows=ed&&members(ed).length?members(ed).map(m=>({id:m.id,n:m.n,t:m.t})):[{n:"",t:""},{n:"",t:""},{n:"",t:""}];
+  view.innerHTML=`<div class="wrap" style="max-width:680px"><div><span class="eyebrow">${ed?"Editar tripulação":"Nova tripulação"}</span><h2>${ed?"Equipa e elementos":"Dá nome à equipa"}</h2></div>
+  <form class="plate" id="f" autocomplete="off"><label for="tn" class="opt-title">Nome da equipa</label><input type="text" id="tn" maxlength="22" placeholder="Por exemplo, Os Faroleiros" required value="${ed?esc(ed.name):""}">
+  <label for="tt" class="opt-title">Turma da equipa</label><input type="text" id="tt" maxlength="8" placeholder="Por exemplo, 9.º B" style="max-width:200px" value="${ed?esc(ed.turma||""):esc(S.curTurma||"")}">
+  <span class="opt-title">Elementos da equipa</span><p class="small muted">Escrevam o primeiro nome e a inicial do apelido de cada elemento, e a respetiva turma. Se a turma ficar vazia, conta a turma da equipa. Máximo de 6.</p>
+  <div id="ml" class="mlist2"></div><div class="row"><button type="button" class="btn ghost mini" id="addm">Acrescentar elemento</button></div>
+  <span class="opt-title">Emblema</span><div class="pick-grid" id="ems">${Object.keys(EMBLEMS).map(k=>`<button type="button" class="pick-it" data-e="${k}" aria-pressed="${k===em}" aria-label="Emblema ${k}">${emblem({emblem:k,color:col})}</button>`).join("")}</div>
+  <span class="opt-title">Cor</span><div class="pick-grid" id="cols">${COLORS.map((c,k)=>`<button type="button" class="pick-it" data-c="${k}" aria-pressed="${k===col}" aria-label="Cor ${k+1}"><span class="swatch" style="background:${c}"></span></button>`).join("")}</div>
+  <div class="row"><button class="btn" type="submit" id="sv">${ed?"Guardar":"Criar e zarpar"}</button><button class="btn ghost" type="button" id="back">Voltar</button></div><p id="err" class="small" style="color:var(--coral)"></p></form></div>`;
+  const read=()=>$$("#ml .mrow").forEach((r,i)=>{rows[i].n=$("[data-mn]",r).value;rows[i].t=$("[data-mt]",r).value});
+  const drawM=()=>{$("#ml").innerHTML=rows.map((m,i)=>`<div class="mrow"><span class="mi">${i+1}</span><input type="text" data-mn maxlength="24" placeholder="Nome" aria-label="Nome do elemento ${i+1}" value="${esc(m.n)}"><input type="text" data-mt maxlength="8" placeholder="Turma" aria-label="Turma do elemento ${i+1}" value="${esc(m.t||"")}"><button type="button" class="btn ghost mini" data-rm="${i}" aria-label="Remover elemento ${i+1}">Remover</button></div>`).join("");$("#addm").disabled=rows.length>=6;$$("[data-rm]").forEach(b=>b.onclick=()=>{read();rows.splice(+b.dataset.rm,1);if(!rows.length)rows.push({n:"",t:""});drawM()})};drawM();
+  $("#addm").onclick=()=>{read();if(rows.length<6){rows.push({n:"",t:""});drawM();$$("#ml [data-mn]").pop().focus()}};
+  function paint(){
+    $$("#ems .pick-it").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.e===em);b.innerHTML=emblem({emblem:b.dataset.e,color:col})});
+    $$("#cols .pick-it").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.c===col));
+  }
+  $$("#ems .pick-it").forEach(b=>b.onclick=()=>{em=b.dataset.e;paint();sfx.tap()});
+  $$("#cols .pick-it").forEach(b=>b.onclick=()=>{col=+b.dataset.c;paint();sfx.tap()});
+  $("#back").onclick=()=>S.teams.length?goTeams():goStart();
+  $("#f").onsubmit=e=>{
+    e.preventDefault();read();
+    const name=tidy($("#tn").value),turma=tidy($("#tt").value);
+    if(!name){$("#err").textContent="Escreve um nome para a equipa.";return}
+    if(S.teams.some(t=>t!==ed&&t.name.toLowerCase()===name.toLowerCase()&&(t.turma||"")===turma)){$("#err").textContent="Já existe uma equipa com esse nome nesta turma.";return}
+    const ms=rows.map(m=>({id:m.id,n:tidy(m.n),t:tidy(m.t)||turma})).filter(m=>m.n);
+    if(!ms.length){$("#err").textContent="Escreve pelo menos um elemento da equipa.";return}
+    const t=ed||fixTeam({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),scores:Array(8).fill(null),att:Array(8).fill(0)});
+    Object.assign(t,{name,turma,emblem:em,color:col});fixTeam(t);
+    const used=new Set(t.members.map(m=>m.id));let nx=0;const nid=()=>{while(used.has(nx.toString(36)))nx++;const v=nx.toString(36);used.add(v);return v};
+    const keep=new Set();ms.forEach(m=>{let o=m.id&&t.members.find(x=>x.id===m.id);if(o){o.n=m.n;o.t=m.t;o.out=false}else{o={id:nid(),n:m.n,t:m.t};t.members.push(o)}keep.add(o.id)});
+    t.members.forEach(m=>{if(!keep.has(m.id))m.out=true});for(const k in t.play)t.play[k]=t.play[k].filter(id=>keep.has(id));
+    if(!ed){S.teams.push(t);S.current=t.id;S.curTurma=turma;save();sfx.win();goMap()}else{save();sfx.ok();goTeams()}
+  };
+  if(!ed)$("#tn").focus();
+}
+function goMap(){
+  go("map");
+  const t=team();if(!t){goTeams();return}
+  const c=document.createElement("div");c.className="wrap";
+  const next=t.scores.findIndex(v=>v==null);
+  c.innerHTML=`<div class="row between"><div><span class="eyebrow">${rankName(total(t))} · ${doneCount(t)} de 8 lentes acesas</span><h2>Rota até ao farol</h2></div>${members(t).length?"":'<button class="btn" id="addw">Escrever os elementos da equipa</button>'}</div>${examOn()?`<div class="fexam">${examTxt()} ${LEVELS.map((L,i)=>examLeft(t,i)<=0?`Nível ${i+1}: avaliação feita (${metric(t,i,"exam")} pontos).`:"").filter(Boolean).join(" ")}</div>`:""}<div class="route" id="route"></div>`;
+  view.innerHTML="";view.append(c);
+  if($("#addw"))$("#addw").onclick=()=>goNewTeam(t.id);
+  drawRoute(t,next);
+}
+function drawRoute(t,next){
+  const rt=$("#route"),W=rt.clientWidth,wide=W>=900;
+  const H=wide?440:8*104+10;rt.style.height=H+"px";
+  const pts=LEVELS.map((_,i)=>wide?[W*(.06+i*.125),H*(.42+Math.sin(i*1.5+.4)*.28)]:[70+(Math.sin(i*1.25)+1)*Math.min(46,(W-260)/2+24),50+i*104]);
+  let d="",dDone="";
+  pts.forEach((p,i)=>{
+    if(!i){d=`M${p[0]} ${p[1]}`;dDone=d;return}
+    const a=pts[i-1],seg=wide?`C${(a[0]+p[0])/2} ${a[1]} ${(a[0]+p[0])/2} ${p[1]} ${p[0]} ${p[1]}`:`C${a[0]} ${(a[1]+p[1])/2} ${p[0]} ${(a[1]+p[1])/2} ${p[0]} ${p[1]}`;
+    d+=seg;if(t.scores[i-1]!=null&&t.scores[i]!=null)dDone+=seg;else if(t.scores[i-1]!=null&&i===next)dDone+=seg;
+  });
+  let out=`<svg class="path" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="#eef6ff66" stroke-width="4" stroke-dasharray="2 13" stroke-linecap="round"/><path d="${dDone}" fill="none" stroke="#ffc23d" stroke-width="5" stroke-dasharray="2 13" stroke-linecap="round"/></svg>`;
+  LEVELS.forEach((L,i)=>{
+    const p=pts[i],ok=canPlay(t,i),done=t.scores[i]!=null;
+    out+=`<button class="buoy ${done?"done":""} ${i===next&&ok?"next":""}" style="left:${p[0]}px;top:${p[1]}px" ${ok?"":"disabled"} data-l="${i}" aria-label="Nível ${i+1}: ${esc(L.t)}${ok?"":" (bloqueado)"}">${i+1}</button>`;
+    const inner=`<b>${esc(L.t)}</b><span class="c">${esc(L.c)}</span>${done?`<span class="c" style="color:var(--flare);font-family:var(--f-data)">${t.scores[i]} pts ${starRow(t.scores[i])}</span>`:""}`;
+    out+=wide?`<div class="tag" style="left:${p[0]-62}px;top:${p[1]+46}px;width:124px;text-align:center">${inner}</div>`:`<div class="tag" style="left:${p[0]+50}px;top:${p[1]-26}px;right:0">${inner}</div>`;
+  });
+  rt.innerHTML=out;
+  $$(".buoy",rt).forEach(b=>b.onclick=()=>{sfx.tap();goBrief(+b.dataset.l)});
+}
+addEventListener("resize",()=>{if(screen==="map"&&team())drawRoute(team(),team().scores.findIndex(v=>v==null))});
+function playersOf(t,i){const ms=members(t).map(m=>m.id),p=(t.play&&t.play[i])||t.lastPlay;const v=p?p.filter(x=>ms.includes(x)):[];return v.length?v:ms}
+function goBrief(i){
+  const t=team(),ms=members(t);if(examLeft(t,i)<=0){goMap();return}if(!ms.length){playLevel(i);return}
+  go("level");let cur=playersOf(t,i);
+  view.innerHTML=`<div class="wrap" style="max-width:680px"><div class="plate"><span class="eyebrow">Nível ${i+1} de 8 · ${esc(LEVELS[i].c)}</span><h2>${esc(LEVELS[i].t)}</h2>
+  <h3>Quem está a jogar este nível?</h3><p class="small muted">Marquem os elementos presentes. Fica registado no percurso que o professor recebe.</p>
+  <div class="chips">${ms.map(m=>`<button class="chip" data-m="${m.id}" aria-pressed="${cur.includes(m.id)}">${esc(m.n)}</button>`).join("")}</div>
+  <div class="row"><button class="btn" id="go">Começar o nível</button><button class="btn ghost" id="bk">Voltar ao mapa</button><button class="btn ghost mini" id="edm">Editar elementos</button></div></div></div>`;
+  $$(".chip").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(cur.includes(m)){if(cur.length===1){sfx.bad();return}cur=cur.filter(x=>x!==m)}else cur=[...cur,m];sfx.tap();b.setAttribute("aria-pressed",cur.includes(m))});
+  $("#go").onclick=()=>{t.play[i]=cur;t.lastPlay=cur;save();playLevel(i)};
+  $("#bk").onclick=goMap;$("#edm").onclick=()=>goNewTeam(t.id);
+}
+function playLevel(i){
+  const t=team();if(t&&examLeft(t,i)<=0){goMap();return}
+  go("level");
+  LEVELS[i].run(i,(raw,detail)=>finish(i,raw,detail));
+  if(attemptFactor(t,i)<1){const box=$(".lvtop .grow");const n=document.createElement("p");n.className="small";n.style.color="var(--flare)";n.textContent=`Nova tentativa: este nível vale até ${Math.round(attemptFactor(t,i)*1000)} pontos.`;box.append(n)}
+}
+function finish(i,raw,detail){
+  clearRun();
+  const t=team(),f=attemptFactor(t,i),pts=Math.round(clamp(raw,0,1000)*f),prev=t.scores[i];
+  t.att[i]=(t.att[i]||0)+1;fixTeam(t);t.log.push({l:i,p:pts,t:Date.now(),m:playersOf(t,i).join(""),...(exOf(t)?{x:exOf(t).id}:{})});if(t.log.length>200)t.log=t.log.slice(-200);
+  const kept=prev==null||pts>prev?pts:prev;t.scores[i]=kept;save();
+  go("result");
+  const st=starsOf(pts),last=i===7;
+  if(st>=2){sfx.win();Scene.burst()}else sfx.ok();
+  const all=doneCount(t)===8;
+  view.innerHTML=`<div class="wrap"><div class="plate" style="align-items:flex-start">
+   <span class="eyebrow">Nível ${i+1} concluído · ${esc(LEVELS[i].t)}</span>
+   <div class="row" style="gap:22px"><div class="big" id="cnt">0</div><div class="bigstars">${[0,1,2].map(k=>starSvg(k<st)).join("")}</div></div>
+   <p class="muted">${esc(detail)}${f<1?` · tentativa com fator ${Math.round(f*100)}%`:""}${prev!=null&&pts<=prev&&!examOn()?` · mantém-se a melhor marca: ${prev} pontos`:""}</p>${examOn()?`<div class="fexam">Esta tentativa conta para a avaliação.${examLeft(t,i)>0?` Ainda podem jogar este nível mais ${examLeft(t,i)===1?"uma vez":examLeft(t,i)+" vezes"}.`:" Este nível já está fechado."}</div>`:""}
+   ${members(t).length?`<p class="small">Jogaram: ${esc(idsNames(t,playersOf(t,i)))}</p>`:""}
+   <h3>O que a equipa aprendeu</h3><ul class="learn">${LEVELS[i].learn.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+   <div class="row">${last||all?`<button class="btn" id="rank">Ver a classificação</button>`:(canPlay(t,i+1)?`<button class="btn" id="nx">Nível seguinte</button>`:"")}<button class="btn ghost" id="map">Voltar ao mapa</button>${examLeft(t,i)>0?'<button class="btn ghost" id="rep">Repetir nível</button>':""}<button class="btn ghost" id="sh">Enviar ao professor</button></div></div>
+   ${all?`<div class="plate"><span class="eyebrow">Missão cumprida</span><h2>O farol voltou a brilhar</h2><p class="lead">A equipa ${esc(t.name)} termina com ${total(t)} pontos e o posto de ${rankName(total(t))}.</p></div>`:""}</div>`;
+  let n=0;const steps=28,cnt=$("#cnt");
+  if(reduced)cnt.textContent=pts;else{const id=setInterval(()=>{n++;cnt.textContent=Math.round(pts*n/steps);if(n>=steps)clearInterval(id)},30);timers.push(id)}
+  const on=(id,fn)=>{const e=$("#"+id);if(e)e.onclick=fn};
+  on("nx",()=>goBrief(i+1));on("map",goMap);on("rep",()=>goBrief(i));on("rank",goRank);on("sh",goShare);
+}
+function goExam(){const t=team();if(!t){goTeams();return}go("exam");const e=exOf(t);
+  view.innerHTML=`<div class="wrap" style="max-width:680px"><div><span class="eyebrow">Operação Farol</span><h2>Avaliação</h2></div><div class="plate">${e?`<div class="fexam">${examTxt()}</div><p>A equipa ${esc(t.name)} está em modo avaliação até ao fim do dia. Se saírem, podem voltar a treinar, mas as tentativas de avaliação já feitas continuam a contar.</p><div class="row" id="xb"><button class="btn ghost" id="xo">Sair do modo avaliação</button><button class="btn" id="xh">Voltar ao mapa</button></div>`:`<p>Quando o professor disser, escrevam aqui a chave de avaliação que está no quadro. A partir daí, cada nível só pode ser jogado o número de vezes que o professor escolheu.</p><form class="row" id="kf" autocomplete="off"><label for="key" class="opt-title">Chave de avaliação</label><input type="text" id="key" maxlength="10" placeholder="AV-....." style="max-width:220px;text-transform:uppercase;font-family:var(--f-data)" spellcheck="false"><button class="btn">Começar a avaliação</button></form><p id="er" class="small" style="color:var(--coral);font-weight:600"></p>`}</div></div>`;
+  if(e){$("#xh").onclick=goMap;$("#xo").onclick=()=>{$("#xb").innerHTML='<span class="small"><b>Sair do modo avaliação?</b></span> <button class="btn mini" id="y">Sim, sair</button> <button class="btn ghost mini" id="n">Não</button>';$("#y").onclick=()=>{delete t.ex;save();goMap()};$("#n").onclick=goExam};return}
+  $("#key").focus();$("#kf").onsubmit=ev=>{ev.preventDefault();const k=readKey($("#key").value);if(!k){$("#er").textContent="Esta chave não é válida. Confirmem as letras no quadro.";sfx.bad();return}if(k.day!==dayN()){$("#er").textContent="Esta chave não é de hoje. Peçam a chave nova ao professor.";sfx.bad();return}t.ex=k;save();sfx.win();goMap()}}
+function goShare(){
+  const t=team();if(!t){goTeams();return}go("share");const code=makeCode(t);
+  view.innerHTML=`<div class="wrap" style="max-width:720px"><div class="plate"><div class="teamrow">${emblem(t)}<div class="grow"><b style="font-weight:800">${esc(t.name)}</b><div class="small muted">${t.turma?esc(t.turma)+" · ":""}${doneCount(t)} de 8 níveis · ${total(t)} pontos</div>${members(t).length?`<div class="small">Elementos: ${members(t).map(m=>esc(memLabel(t,m))).join(", ")}</div>`:""}</div><button class="btn ghost mini" id="edm">Editar elementos</button></div>
+  <h2>Enviar ao professor</h2><p class="small">Copiem o código e enviem-no ao professor, por exemplo no Moodle, ou descarreguem o ficheiro. Inclui as pontuações, os elementos e quem jogou cada nível. Podem enviar sempre que quiserem: o professor junta tudo sem duplicar.</p>
+  <div class="code" id="code" style="max-height:150px;overflow:auto">${code}</div>
+  <div class="row"><button class="btn" id="cp">Copiar o código</button><button class="btn ghost" id="dl">Descarregar ficheiro</button></div><p class="small" id="ms" role="status"></p></div></div>`;
+  $("#cp").onclick=()=>copy(code,$("#cp"),$("#code"));$("#edm").onclick=()=>goNewTeam(t.id);
+  $("#dl").onclick=async()=>{const ok=await saveFile(`OperacaoFarol_${t.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"_")}.txt`,`Operação Farol\nEquipa: ${t.name}\nTurma: ${t.turma||""}\nElementos: ${members(t).map(m=>memLabel(t,m)).join(", ")}\nPontos: ${total(t)}\nData: ${fmtD(Date.now())} ${fmtH(Date.now())}\n\nCódigo para o professor:\n${code}\n`);$("#ms").textContent=ok?"Ficheiro pronto. Enviem-no ao professor.":"O ficheiro não foi guardado. Usem Copiar o código."};
+}
+
+function allTeams(){
+  const m=new Map();
+  S.prof.teams.forEach(t=>m.set(t.id,{...t,src:"recebida"}));
+  S.teams.forEach(t=>{const o=m.get(t.id);if(!o||total(t)>=total(o))m.set(t.id,{...t,src:"neste computador"})});
+  return [...m.values()].sort((a,b)=>total(b)-total(a)||b.scores.filter(v=>starsOf(v)===3).length-a.scores.filter(v=>starsOf(v)===3).length||a.name.localeCompare(b.name,"pt"));
+}
+function goRank(){
+  go("ranking");
+  const list=allTeams(),top=list.slice(0,3);
+  const order=[1,0,2];
+  const pod=top.length?`<div class="podium">${order.map(k=>{const t=top[k];return t?`<div class="ped p${k+1}">${emblem(t)}<div class="nm">${esc(t.name)}</div><div class="pts">${total(t)} pts</div><div class="col">${k+1}</div></div>`:"<div></div>"}).join("")}</div>`:"";
+  view.innerHTML=`<div class="wrap"><div class="row between"><div><span class="eyebrow">Classificação geral</span><h2>Quem manda no mar</h2></div><button class="btn" id="back">${team()?"Voltar ao mapa":"Começar"}</button></div>
+  ${list.length?`<div class="plate">${pod}</div><div class="plate"><div class="tablewrap"><table class="ranktab"><thead><tr><th>#</th><th>Equipa</th>${LEVELS.map((_,i)=>`<th title="${esc(LEVELS[i].t)}">N${i+1}</th>`).join("")}<th>Total</th><th>Posto</th></tr></thead><tbody>${list.map((t,k)=>`<tr><td>${k+1}</td><td><span class="row" style="gap:8px;flex-wrap:nowrap">${emblem(t,true)}<span>${esc(t.name)}<br><span class="src">${t.turma?esc(t.turma)+" · ":""}${t.src}</span></span></span></td>${t.scores.map(v=>`<td>${v==null?"·":v}</td>`).join("")}<td style="color:var(--flare);font-weight:500">${total(t)}</td><td style="font-family:var(--f-body);white-space:nowrap">${rankName(total(t))}</td></tr>`).join("")}</tbody></table></div></div>`
+  :`<div class="plate"><div class="empty">A classificação aparece aqui assim que uma equipa terminar o primeiro nível.</div></div>`}</div>`;
+  $("#back").onclick=()=>team()?goMap():goStart();
+}
+
+/* ---------- área do professor ---------- */
+let profOk=false;
+function goTeacher(){
+  go("teacher");
+  if(profOk){profMain();return}
+  const P=S.prof,first=!P.pin;
+  view.innerHTML=`<div class="wrap" style="max-width:620px"><div><span class="eyebrow">Ponte de comando</span><h2>Área do professor</h2></div><form class="plate" id="f" autocomplete="off">
+  <p>${first?"Crie um PIN de 4 a 8 algarismos para proteger esta área neste computador.":"Escreva o PIN."}</p>
+  <label class="opt-title" for="p1">PIN</label><input id="p1" type="password" inputmode="numeric" maxlength="8" style="max-width:220px">
+  ${first?'<label class="opt-title" for="p2">Repetir o PIN</label><input id="p2" type="password" inputmode="numeric" maxlength="8" style="max-width:220px">':""}
+  <p id="er" class="small" style="color:var(--coral)"></p><div class="row"><button class="btn">${first?"Criar PIN e entrar":"Entrar"}</button>${first?"":'<span id="fg"><button type="button" class="btn ghost mini" id="forg">Esqueci-me do PIN</button></span>'}</div></form></div>`;
+  $("#p1").focus();
+  $("#f").onsubmit=e=>{e.preventDefault();const a=$("#p1").value.trim();
+    if(first){if(!/^\d{4,8}$/.test(a)){$("#er").textContent="O PIN tem de ter entre 4 e 8 algarismos.";return}if(a!==$("#p2").value.trim()){$("#er").textContent="Os dois PIN não coincidem.";return}P.pin=hash("pin:"+a);save();profOk=true;profMain();return}
+    if(hash("pin:"+a)!==P.pin){$("#er").textContent="PIN errado.";sfx.bad();return}profOk=true;profMain()};
+  if($("#forg"))$("#forg").onclick=()=>{$("#fg").innerHTML='<span class="small">Para criar um PIN novo, os resultados recebidos neste computador são apagados.</span> <button type="button" class="btn bad mini" id="y">Apagar e criar PIN novo</button>';$("#y").onclick=()=>{S.prof={pin:null,teams:[]};save();goTeacher()}};
+}
+let PV={tab:"sum",turma:"",sel:null,met:"best"};
+const lastT=(t,i)=>{const l=t.log.filter(x=>i==null||x.l===i);return l.length?l[l.length-1].t:null};
+const shownTeams=()=>S.prof.teams.map(fixTeam).filter(t=>!PV.turma||(t.turma||"")===PV.turma).sort((a,b)=>(a.turma||"").localeCompare(b.turma||"","pt")||total(b)-total(a)||a.name.localeCompare(b.name,"pt"));
+function profMain(){
+  go("teacher");
+  const P=S.prof,turmas=[...new Set(P.teams.map(t=>t.turma||""))].filter(Boolean).sort((a,b)=>a.localeCompare(b,"pt"));
+  if(PV.turma&&!turmas.includes(PV.turma))PV.turma="";
+  const list=shownTeams(),tabs=[["sum","Resumo"],...LEVELS.map((L,i)=>[String(i),`${i+1}. ${L.t}`])];
+  let body="";
+  if(!P.teams.length)body='<div class="empty">Ainda não recebeu resultados. Cole os códigos das equipas ou abra os ficheiros que elas enviaram.</div>';
+  else if(PV.tab==="sum")body=`<div class="tablewrap"><table class="pt"><thead><tr><th>Equipa</th><th>Turma</th><th>Elementos</th>${LEVELS.map((L,i)=>`<th title="${esc(L.t)}">N${i+1}</th>`).join("")}<th>Total</th><th>Posto</th><th>Última atividade</th></tr></thead><tbody>${list.map(t=>{const L=lastT(t);return `<tr><td><span class="tn">${emblem(t,true)}${esc(t.name)}</span></td><td>${esc(t.turma||"")}</td><td class="wr">${esc(members(t).map(m=>memLabel(t,m)).join(", "))||"·"}</td>${t.scores.map((v,i)=>{const w=metric(t,i,PV.met);return `<td class="n">${w==null?"·":w} <small>${t.att[i]?`(${t.att[i]})`:""}</small></td>`}).join("")}<td class="n"><b>${mTotal(t,PV.met)}</b></td><td>${rankName(total(t))}</td><td>${L?fmtD(L)+" "+fmtH(L):"·"}</td></tr>`}).join("")}</tbody></table></div><p class="small muted">Mostra: ${MET[PV.met].toLowerCase()}. Entre parênteses: número de tentativas. O posto é calculado com a melhor pontuação.</p>`;
+  else{const i=+PV.tab,sel=list.find(t=>t.id===PV.sel);
+    body=`<p class="small muted">${esc(LEVELS[i].c)}. Toque numa equipa para ver o percurso neste nível.</p><div class="tablewrap"><table class="pt"><thead><tr><th>Equipa</th><th>Turma</th><th>Jogaram neste nível</th><th>Melhor</th><th>Estrelas</th><th>1.ª tentativa</th><th>Média</th><th>Avaliação</th><th>Tentativas</th><th>Última vez</th></tr></thead><tbody>${list.map(t=>{const L=lastT(t,i);return `<tr class="pick ${sel&&sel.id===t.id?"sel":""}" data-id="${t.id}" tabindex="0"><td><span class="tn">${emblem(t,true)}${esc(t.name)}</span></td><td>${esc(t.turma||"")}</td><td class="wr">${esc(idsNames(t,playedIn(t,i)))||"·"}</td><td class="n"><b>${t.scores[i]??"·"}</b></td><td>${t.scores[i]!=null?starRow(t.scores[i]):""}</td>${["first","mean","exam"].map(k=>`<td class="n">${metric(t,i,k)??"·"}</td>`).join("")}<td class="n">${t.att[i]||0}</td><td>${L?fmtD(L)+" "+fmtH(L):"·"}</td></tr>`}).join("")}</tbody></table></div>
+    ${sel?`<div class="path"><div class="teamrow">${emblem(sel)}<div class="grow"><b style="font-weight:800">Percurso de ${esc(sel.name)} no nível ${i+1}</b><div class="small muted">Melhor: ${sel.scores[i]??"sem pontuação"} · ${sel.att[i]||0} tentativa${sel.att[i]===1?"":"s"}</div></div></div>
+     ${members(sel).length?`<div class="mem3">${members(sel).map(m=>{const n=sel.log.filter(l=>l.l===i&&(l.m||"").includes(m.id)).length;return `<span class="${n?"":"off"}"><b>${esc(m.n)}</b> ${esc(m.t||sel.turma||"")} · ${n} tentativa${n===1?"":"s"}</span>`}).join("")}</div>`:""}
+     <ol class="tl2">${sel.log.filter(l=>l.l===i).map(l=>`<li><span class="when">${fmtD(l.t)} ${fmtH(l.t)}</span><span class="whom">${l.m?esc(idsNames(sel,l.m)):"Sem registo de elementos"}${l.x?' <b class="fexb s">Avaliação</b>':""}</span><span class="pbar"><i style="width:${l.p/10}%"></i></span><b>${l.p}</b></li>`).join("")||"<li>Esta equipa ainda não jogou este nível.</li>"}</ol>
+     <div class="row" id="rmb"><button class="btn ghost mini" id="rm">Remover esta equipa dos resultados</button></div></div>`:""}`}
+  view.innerHTML=`<div class="wrap" style="max-width:1180px"><div class="row between"><div><span class="eyebrow">Ponte de comando</span><h2>Área do professor</h2></div><button class="btn ghost" id="out">Sair da área</button></div>
+  <div class="plate"><div class="pgrid"><div style="display:flex;flex-direction:column;gap:8px"><label for="codes" class="opt-title">Colar códigos das equipas</label><textarea id="codes" rows="3" placeholder="FAROL2..."></textarea><div class="row"><button class="btn mini" id="add">Juntar códigos</button><label class="btn ghost mini" for="ff" style="cursor:pointer">Abrir ficheiros das equipas</label><input type="file" id="ff" accept=".txt,text/plain" multiple hidden></div></div>
+   <div style="display:flex;flex-direction:column;gap:8px"><span class="opt-title">Guardar e exportar</span><div class="row"><button class="btn mini" id="xl" ${P.teams.length?"":"disabled"}>Exportar para Excel</button><button class="btn ghost mini" id="bk" ${P.teams.length?"":"disabled"}>Guardar cópia de segurança</button><label class="btn ghost mini" for="rf" style="cursor:pointer">Abrir cópia</label><input type="file" id="rf" accept=".json,application/json" hidden></div></div></div><p id="msg" class="small" role="status"></p></div>
+  <div class="plate"><div class="row between"><div class="tabs">${tabs.map(([k,n])=>`<button class="tab" data-k="${k}" aria-pressed="${PV.tab===k}">${esc(n)}</button>`).join("")}</div><span class="row" style="gap:12px"><label class="small" style="display:flex;gap:8px;align-items:center"><b>Pontuação</b><select id="mt">${Object.entries(MET).map(([k,n])=>`<option value="${k}" ${PV.met===k?"selected":""}>${n}</option>`).join("")}</select></label><label class="small" style="display:flex;gap:8px;align-items:center"><b>Turma</b><select id="tu"><option value="">Todas</option>${turmas.map(x=>`<option ${x===PV.turma?"selected":""}>${esc(x)}</option>`).join("")}</select></label></span></div>${body}</div>
+  <div class="plate"><h3>Chave de avaliação</h3><p class="small">Para uma aula de avaliação, crie a chave de hoje e escreva-a no quadro. Cada equipa escreve a chave no seu computador, no botão Avaliação, e passa a ter um número limitado de tentativas em cada nível. As equipas que não escreverem a chave continuam em treino. A chave só vale hoje e só neste jogo. Em avaliação, os treinos feitos antes não descontam pontos.</p><div class="row"><label class="small" style="display:flex;gap:8px;align-items:center"><b>Tentativas por nível</b><select id="exm">${[1,2,3].map(n=>`<option ${S.keyMax===n?"selected":""}>${n}</option>`).join("")}</select></label><button class="btn mini" id="mk">Criar a chave de hoje</button></div><div id="kbox"></div><p class="small muted">Para ver só as tentativas feitas com chave, escolha Pontuação: Avaliação.</p></div>
+  <div class="plate"><h3>Equipas neste computador</h3>${S.teams.length?`<div class="row"><button class="btn mini" id="loc">Juntar as equipas deste computador</button></div>${turmasLocais().map(tu=>{const n=S.teams.filter(t=>(t.turma||"")===tu).length;return `<div class="row between" style="border-top:1px solid var(--line);padding-top:8px"><b style="font-weight:600">Turma ${esc(tu||"sem nome")} · ${n} equipa${n===1?"":"s"}</b><span><button class="btn ghost mini" data-delt="${esc(tu)}">Apagar as equipas desta turma</button></span></div>`}).join("")}${S.teams.slice().sort((a,b)=>(a.turma||"").localeCompare(b.turma||"","pt",{numeric:true})).map(t=>`<div class="teamrow">${emblem(t,true)}<div class="grow"><b style="font-weight:600">${esc(t.name)}</b><div class="small muted">${t.turma?esc(t.turma)+" · ":""}${total(t)} pontos${members(t).length?" · "+esc(members(t).map(m=>m.n).join(", ")):""}</div></div><span id="lt${t.id}"><button class="btn ghost mini" data-del="${t.id}">Apagar</button></span></div>`).join("")}`:'<p class="small muted">Não há equipas neste computador.</p>'}</div>
+  <div class="plate"><h3>Definições da aula</h3>
+   <div class="row between"><div class="grow"><b style="font-weight:600">Abrir todos os níveis</b><p class="small muted">Útil para trabalhar um nível específico numa aula.</p></div><button class="btn ghost mini" id="unl" aria-pressed="${S.unlock}">${S.unlock?"Abertos":"Por ordem"}</button></div>
+   <div class="row between"><div class="grow"><b style="font-weight:600">Apagar os resultados recebidos</b><p class="small muted">Guarde antes uma cópia de segurança.</p></div><div class="row" id="wb"><button class="btn bad mini" style="box-shadow:0 3px 0 var(--coral-deep)" id="wipe" ${P.teams.length?"":"disabled"}>Apagar</button></div></div>
+   <p class="small muted">Os resultados ficam guardados neste browser. Use a cópia de segurança para os passar para outro computador ou para não os perder ao limpar o browser.</p></div>
+  <div class="plate"><h3>Guia dos níveis</h3><p class="small muted">Os tempos são estimativas, incluindo debate. Cada nível vale até 1000 pontos. Repetir um nível reduz o máximo em 15% por tentativa, até 50%.</p>
+   <div class="guide">${LEVELS.map((L,i)=>`<article><span class="eyebrow">Nível ${i+1} · cerca de ${L.min} min</span><b style="font-weight:800">${esc(L.t)}: ${esc(L.c)}</b><span class="small"><span class="muted">Pergunta para debate:</span> ${esc(L.q)}</span></article>`).join("")}</div>
+   <p class="small muted">Os dados dos níveis 2, 3 e 5 são simulados, mas os modelos funcionam mesmo: vizinho mais próximo nos níveis 2 e 3, e Q-learning no nível 5. Os resultados são calculados em cada jogada.</p></div></div>`;
+  const msg=t=>$("#msg").textContent=t;
+  const take2=txt=>{const cs=txt.match(/FAROL2?\.[A-Za-z0-9_~]+\.[A-Z0-9]{5}/g)||[];let n=0,u=0,bad=0;cs.forEach(c=>{const t=readCode(c);if(!t){bad++;return}mergeTeam(P.teams,t)==="nova"?n++:u++});bad+=Math.max(0,(txt.match(/FAROL2?\.\S*/g)||[]).length-cs.length);save();return{n,u,bad,tot:cs.length}};
+  const report=r=>{if(!r.tot&&!r.bad){msg("Não foi encontrado nenhum código.");return}profMain();msg([r.n?`${r.n} equipa${r.n>1?"s":""} nova${r.n>1?"s":""}.`:"",r.u?`${r.u} equipa${r.u>1?"s":""} atualizada${r.u>1?"s":""}.`:"",r.bad?`${r.bad} código${r.bad>1?"s":""} com erro: peçam à equipa para o copiar outra vez.`:""].filter(Boolean).join(" "))};
+  $("#add").onclick=()=>report(take2($("#codes").value));
+  $("#ff").onchange=async e=>{let txt="";for(const f of e.target.files)txt+="\n"+await f.text();report(take2(txt))};
+  $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(d.app!=="operacao-farol-prof"||!Array.isArray(d.teams))throw 0;let n=0;d.teams.forEach(t=>{if(t&&t.id&&Array.isArray(t.scores)){mergeTeam(P.teams,t);n++}});save();profMain();msg(`Cópia aberta: ${n} equipa${n===1?"":"s"}.`)}catch(x){msg("Este ficheiro não é uma cópia de segurança da Operação Farol.")}};
+  const stamp=()=>new Date().toISOString().slice(0,10);
+  $("#bk").onclick=async()=>{const ok=await saveFile(`OperacaoFarol_copia_${stamp()}.json`,JSON.stringify({app:"operacao-farol-prof",v:1,saved:Date.now(),teams:P.teams}),"application/json");msg(ok?"Cópia de segurança guardada.":"A cópia não foi guardada.")};
+  $("#xl").onclick=async()=>{const l=shownTeams(),ok=await saveFile(`OperacaoFarol_resultados${PV.turma?"_"+PV.turma.replace(/[^A-Za-z0-9]+/g,""):""}_${stamp()}.xlsx`,buildXlsx(l));msg(ok?`Ficheiro Excel criado com ${l.length} equipa${l.length===1?"":"s"}.`:"O ficheiro não foi guardado.")};
+  $$(".tab").forEach(b=>b.onclick=()=>{PV.tab=b.dataset.k;PV.sel=null;profMain()});
+  $("#tu").onchange=e=>{PV.turma=e.target.value;PV.sel=null;profMain()};
+  $("#mt").onchange=e=>{PV.met=e.target.value;profMain()};
+  const showKey=()=>{$("#kbox").innerHTML=`<div class="fkey"><span>Chave de hoje, ${fmtD(Date.now())}, com ${S.keyMax===1?"1 tentativa":S.keyMax+" tentativas"} por nível</span><b id="kv">${makeKey(S.keyMax)}</b></div>`};
+  $("#exm").onchange=e=>{S.keyMax=+e.target.value;save();if($("#kv"))showKey()};
+  $("#mk").onclick=()=>{showKey();sfx.tap()};
+  $$("tr.pick").forEach(r=>{const f=()=>{PV.sel=PV.sel===r.dataset.id?null:r.dataset.id;profMain();const p=$(".path");if(p)p.scrollIntoView({block:"nearest"})};r.onclick=f;r.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();f()}}});
+  if($("#rm"))$("#rm").onclick=()=>{$("#rmb").innerHTML='<span class="small">Remover dos resultados recebidos?</span> <button class="btn bad mini" id="y">Sim, remover</button> <button class="btn ghost mini" id="n">Não</button>';$("#y").onclick=()=>{P.teams=P.teams.filter(t=>t.id!==PV.sel);PV.sel=null;save();profMain()};$("#n").onclick=profMain};
+  if($("#loc"))$("#loc").onclick=()=>{let n=0,u=0;S.teams.forEach(t=>mergeTeam(P.teams,t)==="nova"?n++:u++);save();profMain();msg(`${n} nova${n===1?"":"s"}, ${u} atualizada${u===1?"":"s"}.`)};
+  $$("[data-delt]").forEach(b=>b.onclick=()=>{const tu=b.dataset.delt,box=b.parentElement;box.innerHTML='<span class="small">Junte primeiro os resultados. Apagar mesmo?</span> <button class="btn bad mini" data-yt>Sim, apagar</button>';$("[data-yt]",box).onclick=()=>{S.teams=S.teams.filter(t=>(t.turma||"")!==tu);if(!team())S.current=null;if(S.curTurma===tu)S.curTurma=null;save();profMain()}});
+  $$("[data-del]").forEach(b=>b.onclick=()=>{const id=b.dataset.del;$("#lt"+id).innerHTML=`<button class="btn bad mini" data-y="${id}">Apagar mesmo</button>`;$(`[data-y="${id}"]`).onclick=()=>{S.teams=S.teams.filter(t=>t.id!==id);if(S.current===id)S.current=null;save();profMain()}});
+  $("#unl").onclick=()=>{S.unlock=!S.unlock;save();$("#unl").textContent=S.unlock?"Abertos":"Por ordem";$("#unl").setAttribute("aria-pressed",S.unlock)};
+  $("#wipe").onclick=()=>{$("#wb").innerHTML='<span class="small">Tem a certeza?</span><button class="btn bad mini" id="y">Sim, apagar</button><button class="btn ghost mini" id="n">Não</button>';$("#y").onclick=()=>{P.teams=[];PV.sel=null;save();profMain()};$("#n").onclick=profMain};
+  $("#out").onclick=()=>{profOk=false;team()?goMap():goStart()};
+}
+
+/* --- ficheiro Excel (.xlsx) criado no próprio browser --- */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+function zipStore(files){const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+ for(const f of files){const nm=enc.encode(f.name),d=enc.encode(f.data),crc=crc32(d),h=new DataView(new ArrayBuffer(30));
+  [[0,0x04034b50,4],[4,20,2],[6,0x0800,2],[8,0,2],[10,0,2],[12,0x21,2],[14,crc,4],[18,d.length,4],[22,d.length,4],[26,nm.length,2],[28,0,2]].forEach(([o,v,s])=>s===4?h.setUint32(o,v,true):h.setUint16(o,v,true));
+  parts.push(new Uint8Array(h.buffer),nm,d);const c=new DataView(new ArrayBuffer(46));
+  [[0,0x02014b50,4],[4,20,2],[6,20,2],[8,0x0800,2],[10,0,2],[12,0,2],[14,0x21,2],[16,crc,4],[20,d.length,4],[24,d.length,4],[28,nm.length,2],[30,0,2],[32,0,2],[34,0,2],[36,0,2],[38,0,4],[42,off,4]].forEach(([o,v,s])=>s===4?c.setUint32(o,v,true):c.setUint16(o,v,true));
+  cd.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+d.length}
+ const size=cd.reduce((a,b)=>a+b.length,0),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,size,true);e.setUint32(16,off,true);
+ return new Blob([...parts,...cd,new Uint8Array(e.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})}
+const xe=s=>String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const colL=n=>{let s="";n++;while(n){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
+function sheetXml(rows,widths){const r=rows.map((row,y)=>`<row r="${y+1}">${row.map((v,x)=>{const ref=colL(x)+(y+1),st=y===0?' s="1"':"";if(v===null||v===undefined||v==="")return `<c r="${ref}"${st}/>`;if(typeof v==="number")return `<c r="${ref}"${st}><v>${v}</v></c>`;return `<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${xe(v)}</t></is></c>`}).join("")}</row>`).join("");
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${r}</sheetData></worksheet>`}
+function buildXlsx(list){const sheets=[];
+ const L=(t,i)=>{const v=lastT(t,i);return v?fmtD(v)+" "+fmtH(v):""};
+ const MK=["best","first","mean","exam"];
+ sheets.push(["Resumo",[["Equipa","Turma","Elementos",...LEVELS.map((x,i)=>`N${i+1} ${x.t} (melhor)`),...MK.map(k=>"Total: "+MET[k].toLowerCase()),"Posto","Níveis concluídos","Tentativas","Tentativas em avaliação","Última atividade"],...list.map(t=>[t.name,t.turma||"",members(t).map(m=>memLabel(t,m)).join(", "),...t.scores.map(v=>v??""),...MK.map(k=>mTotal(t,k)),rankName(total(t)),doneCount(t),t.log.length,t.log.filter(l=>l.x).length,L(t)])],[22,10,36,...LEVELS.map(()=>14),16,16,16,16,16,10,11,12,18]]);
+ const er=[["Equipa","Turma da equipa","Elemento","Turma do elemento",...LEVELS.map((x,i)=>`N${i+1} ${x.t} (tentativas)`),"Total de tentativas"]];
+ list.forEach(t=>(t.members||[]).filter(m=>!m.out||t.log.some(l=>(l.m||"").includes(m.id))).forEach(m=>{const c=LEVELS.map((_,i)=>t.log.filter(l=>l.l===i&&(l.m||"").includes(m.id)).length);er.push([t.name,t.turma||"",m.n+(m.out?" (saiu da equipa)":""),m.t||t.turma||"",...c,c.reduce((a,b)=>a+b,0)])}));
+ sheets.push(["Elementos",er,[22,12,22,14,...LEVELS.map(()=>16),12]]);
+ LEVELS.forEach((x,i)=>sheets.push([`N${i+1} ${x.t}`.slice(0,31),[["Equipa","Turma","Elementos que jogaram","Melhor pontuação","Estrelas","1.ª tentativa","Média das tentativas","Avaliação","Tentativas","Tentativas em avaliação","Última vez"],...list.map(t=>[t.name,t.turma||"",idsNames(t,playedIn(t,i)),t.scores[i]??"",t.scores[i]!=null?starsOf(t.scores[i]):"",metric(t,i,"first")??"",metric(t,i,"mean")??"",metric(t,i,"exam")??"",t.att[i]||0,tries(t,i).filter(l=>l.x).length,L(t,i)])],[22,10,36,14,9,13,14,11,11,13,18]]));
+ const pr=[["Equipa","Turma","Nível","Tema","Elementos","Pontos","Modo","N.º da tentativa","Data","Hora"]];list.forEach(t=>{const nn={};t.log.forEach(l=>{nn[l.l]=(nn[l.l]||0)+1;pr.push([t.name,t.turma||"",l.l+1,LEVELS[l.l].t,l.m?idsNames(t,l.m):"",l.p,l.x?"Avaliação":"Treino",nn[l.l],fmtD(l.t),fmtH(l.t)])})});
+ sheets.push(["Percurso",pr,[22,10,7,22,36,9,11,10,12,8]]);
+ const files=[{name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`},
+ {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+ {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xe(s[0].replace(/[\[\]:*?\/\\]/g," "))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets></workbook>`},
+ {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+ {name:"xl/styles.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF121C5C"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`},
+ ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXml(s[1],s[2])}))];
+ return zipStore(files)}
+
+Scene.setLit(doneCount(team()));
+goStart();
+</script>
+</body></html>
