@@ -202,6 +202,69 @@ table.pins tr.grp td { padding-top: 10px; font-weight: 600; }
 #log { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--f-mono); color: #B9F3CF; overflow: auto; flex: 1; white-space: pre-wrap; word-break: break-word; max-height: 24vh; }
 #log .sys { color: #7D8CA9; } #log .err { color: #FF9AAA; } #log .okm { color: #8FE3BC; }
 
+/* ---------- Missões ---------- */
+.lv-top { display: flex; align-items: center; gap: 16px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.lv-summary { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 260px; }
+.lv-summary > div:first-child b { display: block; font: 600 15px/1.2 var(--f-display); margin-top: 3px; }
+.lv-summary .meter { flex: 1; margin: 0; }
+.lv-summary .bar span { background: var(--accent); }
+.lv-total { display: flex; align-items: center; gap: 4px; font: 700 20px/1 var(--f-display); }
+.lv-total small { font: 500 12px var(--f-mono); color: var(--ink-3); }
+.lv-total .st { width: 22px; height: 22px; }
+.prof { font-size: 12px; color: var(--ink-3); display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.lv-wrap { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); }
+.lv-map { overflow: auto; padding: 16px 18px 30px; display: grid; gap: 18px; align-content: start; border-right: 1px solid var(--line); }
+.et header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.et-n { width: 30px; height: 30px; border-radius: 8px; background: var(--c); color: #fff; display: grid; place-items: center; font: 700 15px/1 var(--f-display); flex: none; }
+.et h3 { font-size: 16px; font-weight: 600; }
+.et header p { margin: 0; font-size: 12px; color: var(--ink-3); }
+.et-s { margin-left: auto; font: 600 12px/1 var(--f-mono); color: var(--ink-3); }
+.lv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.lv { position: relative; border: 1.5px solid var(--line); background: var(--panel); border-radius: 10px; padding: 9px 10px 8px; text-align: left; display: grid; gap: 4px; transition: transform .12s, border-color .12s; }
+.lv:hover { transform: translateY(-1px); border-color: #AEB8C6; }
+.lv[aria-pressed="true"] { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); }
+.lv.done { background: color-mix(in srgb, var(--c) 7%, #fff); }
+.lv.active::after { content: "em curso"; position: absolute; top: 7px; right: 8px; font: 600 9.5px/1 var(--f-mono); color: var(--accent-ink); }
+.lv[data-locked] { opacity: .55; }
+.lv-num { font: 700 22px/1 var(--f-display); color: var(--c); height: 24px; display: flex; align-items: center; }
+.lv-name { font-size: 12.5px; font-weight: 600; line-height: 1.25; min-height: 2.5em; }
+.lv-stars { display: flex; gap: 2px; }
+.st { width: 14px; height: 14px; fill: #D7DDE6; }
+.st.on { fill: #FFB020; }
+.lock { width: 18px; height: 18px; fill: none; stroke: var(--ink-3); stroke-width: 2; }
+.lv-detail { overflow: auto; padding: 18px 20px 30px; display: grid; gap: 12px; align-content: start; }
+.lv-head { display: flex; gap: 6px; flex-wrap: wrap; }
+.lv-detail h2 { font-size: 24px; font-weight: 700; }
+.story { margin: 0; color: var(--ink-2); max-width: 62ch; }
+.obj { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 10px 10px 0; }
+.obj p { margin: 4px 0 0; font-weight: 600; }
+.crit { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.crit li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+.crit .st { width: 18px; height: 18px; flex: none; }
+.meta { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.hints { border: 1px dashed #C5CDD8; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; justify-items: start; }
+.hints p { margin: 0; font-size: 13px; }
+.lv-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.lv-actions .run { font-size: 14px; padding: 11px 18px; }
+.locked-msg { display: flex; gap: 6px; align-items: center; margin: 0; color: var(--ink-3); font-weight: 600; }
+#blk-count .st { width: 13px; height: 13px; }
+#blk-count.okc { border-color: #B5E3CB; background: #DDF3E8; color: #146B46; }
+#blk-count.over { border-color: #FFC7AE; background: var(--accent-soft); color: var(--accent-ink); }
+.lv-done { position: absolute; inset: 0; display: none; place-items: center; background: rgba(8,14,28,0.55); backdrop-filter: blur(2px); padding: 16px; }
+.lv-done.show { display: grid; }
+.done-card { background: #fff; color: var(--ink); border-radius: 16px; padding: 20px 22px; width: min(380px, 100%); display: grid; gap: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.4); text-align: center; justify-items: center; }
+.done-card h2 { font-size: 26px; }
+.done-card .crit { text-align: left; justify-self: stretch; }
+.done-stars { display: flex; gap: 6px; }
+.done-stars .st.big { width: 48px; height: 48px; animation: pop .45s cubic-bezier(.3,1.6,.5,1) both; }
+.done-stars .d2 { animation-delay: .18s !important; } .done-stars .d3 { animation-delay: .36s !important; }
+@keyframes pop { from { transform: scale(0) rotate(-40deg); opacity: 0; } }
+@media (max-width: 980px) {
+  .lv-wrap { grid-template-columns: 1fr; overflow: auto; }
+  .lv-map, .lv-detail { overflow: visible; border-right: 0; }
+  .lv-detail { border-top: 1px solid var(--line); }
+}
+
 /* ---------- Telemóvel ---------- */
 @media (max-width: 980px) {
   .app { height: auto; min-height: 100%; }
@@ -233,7 +296,8 @@ table.pins tr.grp td { padding-top: 10px; font-weight: 600; }
       <div><b>RoboLab</b><small>Oficina de robótica</small></div>
     </div>
     <nav class="steps" role="tablist" aria-label="Etapas">
-      <button class="step" role="tab" id="tab-montar" data-tab="montar" aria-selected="true"><span class="n">1</span>Montar</button>
+      <button class="step" role="tab" id="tab-missoes" data-tab="missoes" aria-selected="true"><span class="n"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5-4.8-4.5 6.5-.8z"/></svg></span>Missões</button>
+      <button class="step" role="tab" id="tab-montar" data-tab="montar" aria-selected="false"><span class="n">1</span>Montar</button>
       <button class="step" role="tab" id="tab-blocos" data-tab="blocos" aria-selected="false"><span class="n">2</span>Blocos</button>
       <button class="step" role="tab" id="tab-codigo" data-tab="codigo" aria-selected="false"><span class="n">3</span>Código</button>
     </nav>
@@ -242,8 +306,18 @@ table.pins tr.grp td { padding-top: 10px; font-weight: 600; }
 
   <main class="work">
     <section class="bench">
+      <!-- MISSÕES -->
+      <div class="panel on" id="p-missoes" role="tabpanel" aria-labelledby="tab-missoes">
+        <div class="lv-top"><div class="lv-summary" id="lv-summary"></div>
+          <label class="prof"><input type="checkbox" id="chk-prof"> Professor: desbloquear todos</label></div>
+        <div class="lv-wrap">
+          <div class="lv-map" id="lv-map"></div>
+          <div class="lv-detail" id="lv-detail"></div>
+        </div>
+      </div>
+
       <!-- MONTAR -->
-      <div class="panel on" id="p-montar" role="tabpanel" aria-labelledby="tab-montar">
+      <div class="panel" id="p-montar" role="tabpanel" aria-labelledby="tab-montar">
         <div class="m-scroll">
           <section class="m-sec">
             <header><span class="idx">01</span><h2>Placa controladora</h2><p>O cérebro do robô. A placa define os pinos disponíveis e a linguagem em que vais programar.</p></header>
@@ -283,6 +357,7 @@ table.pins tr.grp td { padding-top: 10px; font-weight: 600; }
         <div class="toolbar">
           <label class="label" for="examples">Exemplo</label>
           <select class="sel" id="examples"><option value="">Escolher…</option></select>
+          <span class="chip" id="blk-count">0 blocos</span>
           <span class="grow"></span>
           <button class="btn" id="btn-zoom-out" type="button" aria-label="Afastar" title="Afastar">−</button>
           <button class="btn" id="btn-zoom-in" type="button" aria-label="Aproximar" title="Aproximar">+</button>
@@ -328,6 +403,7 @@ table.pins tr.grp td { padding-top: 10px; font-weight: 600; }
       <div class="mat">
         <canvas id="mat" aria-label="Tapete de competição com o robô"></canvas>
         <div class="toast" id="toast" role="status"></div>
+        <div class="lv-done" id="lv-done"></div>
         <span class="hint" id="hint">Setas do teclado: conduzir à mão</span>
       </div>
       <div class="controls">
@@ -491,6 +567,7 @@ const SCENARIOS = {
       { x: 49, y: 0, w: 3, h: 92 }, { x: 99, y: 38, w: 3, h: 92 }, { x: 149, y: 0, w: 3, h: 92 }
     ],
     goal: { x: 175, y: 18, r: 13, cor: true },
+    metaVerde: { x: 155, y: 4, w: 40, h: 30 },
     floor: null
   },
   cores: {
@@ -599,6 +676,7 @@ function cppToJs(src) {
   code = code.replace(/^[ \t]*#include.*$/gm, '');
   code = code.replace(/^[ \t]*#define\s+(\w+)\s+(.+)$/gm, 'const $1 = $2;');
   code = code.replace(/^[ \t]*RoboLab\s+robo\s*;/gm, '');
+  code = code.replace(/\bvoid\s+loop\s*\(\s*\)\s*\{\s*\}/g, '');
   const fns = [];
   code = code.replace(new RegExp('\\b' + CPP_TYPES + '\\s+(\\w+)\\s*\\(([^)]*)\\)\\s*\\{', 'g'), (m, name, params) => {
     fns.push(name);
@@ -626,9 +704,8 @@ function cppToJs(src) {
   code = injectTicks(code);
   code = addAwaits(code, fns);
   code = restoreStrings(code, strings);
-  return code + `
-;if (typeof setup === 'function') await setup();
-if (typeof loop === 'function') { while (true) { await loop(); await robo.__tick(true); } }`;
+  return code + '\n;' + (fns.includes('setup') ? 'await setup();\n' : '') +
+    (fns.includes('loop') ? 'while (true) { await loop(); await robo.__tick(true); }' : '');
 }
 
 function splitArgs(s) {
@@ -793,8 +870,7 @@ function hasComp(id) {
 }
 
 /* ---------- Mundo ---------- */
-function buildFloor(key) {
-  const sc = SCENARIOS[key];
+function buildFloor(sc) {
   const cv = Sim.floorCv || (Sim.floorCv = document.createElement('canvas'));
   cv.width = WORLD.W * PX; cv.height = WORLD.H * PX;
   const g = cv.getContext('2d');
@@ -839,9 +915,10 @@ function buildFloor(key) {
       g.fillText(d + ' cm', x, 97);
     }
   }
-  if (key === 'labirinto') {
-    g.fillStyle = COLORS.verde; g.fillRect(155, 4, 40, 30);
+  if (sc.metaVerde) {
+    g.fillStyle = COLORS.verde; g.fillRect(sc.metaVerde.x, sc.metaVerde.y, sc.metaVerde.w, sc.metaVerde.h);
   }
+  if (sc.floorFn) sc.floorFn(g, sc);
   Sim.floorData = g.getImageData(0, 0, cv.width, cv.height).data;
 }
 
@@ -862,12 +939,13 @@ function classify([r, g, b]) {
 }
 
 function setScenario(key) {
-  Sim.scenKey = key; Sim.scen = SCENARIOS[key];
+  Sim.scenKey = typeof key === 'string' ? key : null;
+  Sim.scen = typeof key === 'string' ? SCENARIOS[key] : key;
   const T = 20;
   Sim.walls = [...Sim.scen.walls,
     { x: -T, y: -T, w: WORLD.W + 2 * T, h: T }, { x: -T, y: WORLD.H, w: WORLD.W + 2 * T, h: T },
     { x: -T, y: 0, w: T, h: WORLD.H }, { x: WORLD.W, y: 0, w: T, h: WORLD.H }];
-  buildFloor(key);
+  buildFloor(Sim.scen);
   resetRobot();
 }
 
@@ -880,6 +958,7 @@ function resetRobot() {
     fG: enc ? 1 : 0.95 + Math.random() * 0.05, tread: 0
   });
   Sim.trail = [[robot.x, robot.y]];
+  Sim.items = (Sim.scen.items || []).map(i => ({ x: i.x, y: i.y, got: false }));
   Sim.collisions = 0;
   Sim.mission = { done: false, t0: Sim.t, cp: 0, still: 0, msg: '' };
 }
@@ -935,7 +1014,9 @@ const Sensors = {
     const L = Sim.scen.lamp;
     if (!L) return Math.round(32 + Math.random() * 2);
     const d = Math.hypot(robot.x - L.x, robot.y - L.y);
-    return Math.max(0, Math.min(100, Math.round(10 + 90 * Math.exp(-d / 55) + Math.random() * 1.5)));
+    const ang = Math.atan2(L.y - robot.y, L.x - robot.x) - robot.th;
+    const dirF = 0.55 + 0.45 * Math.cos(ang);
+    return Math.max(0, Math.min(100, Math.round(8 + 92 * Math.exp(-d / 60) * dirF + Math.random() * 1.5)));
   },
   direcao() {
     let d = (robot.th - robot.th0) / DEG;
@@ -993,6 +1074,7 @@ function checkMission() {
   m.still = parado ? m.still + DT : 0;
   const moved = Sim.trail.length > 3;
   let ok = false;
+  for (const it of Sim.items) if (!it.got && Math.hypot(robot.x - it.x, robot.y - it.y) < 7.5) { it.got = true; beep(1320, 60); }
   if (sc.goal) ok = Math.hypot(robot.x - sc.goal.x, robot.y - sc.goal.y) < sc.goal.r;
   if (sc.laps) {
     const cps = [[170, 65], [100, 50], [30, 65], [100, 100]];
@@ -1005,6 +1087,10 @@ function checkMission() {
     const [ox, oy] = Sensors.usOrigin();
     const d = castRay(ox, oy, robot.th);
     ok = moved && m.still > 0.8 && d >= sc.park.min && d <= sc.park.max;
+  }
+  if (sc.win) {
+    const [ux, uy] = Sensors.usOrigin();
+    ok = sc.win({ robot, still: m.still, moved, items: Sim.items, trail: Sim.trail, dist: castRay(ux, uy, robot.th), Sensors, inGoal: (z) => Math.hypot(robot.x - z.x, robot.y - z.y) < z.r }, sc);
   }
   if (ok) { m.done = true; m.time = Sim.t - m.t0; Sim.onState && Sim.onState('mission'); }
 }
@@ -1024,7 +1110,7 @@ const macro = (() => {
 })();
 
 let lastFrame = performance.now(), acc = 0;
-async function loop() {
+async function simLoop() {
   while (true) {
     const now = performance.now();
     acc += Math.min(0.1, (now - lastFrame) / 1000) * Sim.speed;
@@ -1227,8 +1313,26 @@ function render() {
     g.beginPath(); g.arc(G.x, G.y, G.r, 0, 7); g.stroke(); g.setLineDash([]);
     g.fillStyle = '#1FA46A'; g.font = '700 3.2px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText('ALVO', G.x, G.y + 1.1);
   }
+  for (const z of (sc.zones || [])) {
+    const c = z.cor || '#1FA46A';
+    g.fillStyle = c + '1F'; g.beginPath(); g.arc(z.x, z.y, z.r, 0, 7); g.fill();
+    g.strokeStyle = c; g.lineWidth = 0.7; g.setLineDash([2.2, 1.6]); g.lineDashOffset = -Sim.t * 4;
+    g.beginPath(); g.arc(z.x, z.y, z.r, 0, 7); g.stroke(); g.setLineDash([]);
+    if (z.label) { g.fillStyle = c; g.font = '700 3px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText(z.label, z.x, z.y + 1); }
+  }
+  for (const it of (Sim.items || [])) {
+    if (it.got) { g.strokeStyle = 'rgba(31,164,106,0.5)'; g.lineWidth = 0.4; g.beginPath(); g.arc(it.x, it.y, 2.2, 0, 7); g.stroke(); continue; }
+    const p = 1 + Math.sin(Sim.t * 5 + it.x) * 0.12;
+    g.save(); g.translate(it.x, it.y); g.scale(p, p);
+    g.shadowColor = 'rgba(255,94,26,0.7)'; g.shadowBlur = 6;
+    g.fillStyle = '#FFB020'; g.strokeStyle = '#8A4A00'; g.lineWidth = 0.35;
+    rr(g, -1.8, -2.8, 3.6, 5.6, 0.6); g.fill(); g.stroke();
+    g.shadowBlur = 0; g.fillStyle = '#8A4A00'; g.fillRect(-0.8, -3.4, 1.6, 0.6);
+    g.fillStyle = '#fff'; g.fillRect(-0.9, -0.3, 1.8, 0.5); g.fillRect(-0.25, -0.95, 0.5, 1.8);
+    g.restore();
+  }
   if (sc.goal && sc.goal.cor) {
-    g.fillStyle = '#FFFFFF'; g.font = '700 4px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText('META', 175, 20.5);
+    g.fillStyle = '#FFFFFF'; g.font = '700 4px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText('META', sc.goal.x, sc.goal.y + 2.5);
   }
   // rasto
   if (Sim.showTrail && Sim.trail.length > 1) {
@@ -1692,6 +1796,499 @@ const EXAMPLES = {
 
 </script>
 <script>
+/* RoboLab: modo Missões (etapas, níveis, mundos e critérios de vitória) */
+'use strict';
+
+const ETAPAS = [
+  { id: 1, nome: 'Sequência', sub: 'Primeiros passos', cor: '#2C6BE0' },
+  { id: 2, nome: 'Repetição', sub: 'Padrões e ciclos', cor: '#C98A00' },
+  { id: 3, nome: 'Decisão', sub: 'Sensores e condições', cor: '#0E9384' },
+  { id: 4, nome: 'Estratégia', sub: 'Algoritmos', cor: '#7B4FD6' }
+];
+
+function rngFrom(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const parado = (c) => c.moved && c.still > 0.6;
+const todos = (c) => c.items.length > 0 && c.items.every(i => i.got);
+const D = Math.PI / 180;
+
+/* blocos iniciais */
+const hatIni = (body) => ({ type: 'robo_inicio', x: 20, y: 20, inputs: body ? { DO: { block: body } } : {} });
+
+function hexItems() {
+  const out = []; let x = 60, y = 35, th = 0;
+  for (let k = 0; k < 6; k++) {
+    const nx = x + 40 * Math.cos(th), ny = y + 40 * Math.sin(th);
+    out.push({ x: (x + nx) / 2, y: (y + ny) / 2 });
+    x = nx; y = ny; th += 60 * D;
+  }
+  return out;
+}
+
+const MAZE = [{ x: 49, y: 0, w: 3, h: 92 }, { x: 99, y: 38, w: 3, h: 92 }, { x: 149, y: 0, w: 3, h: 92 }];
+
+const LEVELS = [
+  /* ---------- Etapa 1: Sequência ---------- */
+  {
+    id: 'L1', etapa: 1, nome: 'Ignição', conceito: 'Sequência',
+    historia: 'O robô de exploração acabou de sair da fábrica. Antes de qualquer missão tem de provar que sabe andar em frente com precisão.',
+    objetivo: 'Pára o robô dentro da zona alvo.',
+    dicas: ['Cada quadrado da grelha mede 10 cm.', 'Conta os quadrados entre o centro do robô e o centro do alvo.', 'Basta um bloco: avançar … cm.'],
+    limite: 1, testes: 1, tempo: 30, comps: [],
+    mundo: () => ({ start: { x: 25, y: 65, th: 0 }, walls: [], zones: [{ x: 115, y: 65, r: 9, label: 'ALVO' }] }),
+    win: (c, w) => parado(c) && c.inGoal(w.zones[0])
+  },
+  {
+    id: 'L2', etapa: 1, nome: 'Primeira curva', conceito: 'Sequência',
+    historia: 'O caminho até ao laboratório faz uma esquina. Um robô que só anda em frente bate na parede.',
+    objetivo: 'Percorre o corredor e pára no alvo, sem bater.',
+    dicas: ['Divide o percurso em partes: em frente, virar, em frente.', 'Virar à esquerda faz o robô rodar no sentido contrário ao dos ponteiros do relógio.', 'O robô roda sobre o seu centro. Mede as distâncias a partir do centro.'],
+    limite: 3, testes: 1, tempo: 40, comps: [],
+    mundo: () => ({ start: { x: 25, y: 105, th: 0 }, walls: [{ x: 40, y: 0, w: 70, h: 80 }, { x: 150, y: 0, w: 50, h: 130 }], zones: [{ x: 125, y: 25, r: 9, label: 'ALVO' }] }),
+    win: (c, w) => parado(c) && c.inGoal(w.zones[0])
+  },
+  {
+    id: 'L3', etapa: 1, nome: 'Ziguezague', conceito: 'Sequência',
+    historia: 'A estrada da montanha tem duas curvas apertadas. Planeia tudo antes de carregar em Executar.',
+    objetivo: 'Atravessa o ziguezague e pára no alvo.',
+    dicas: ['Escreve primeiro o plano em papel: frente 80, direita, frente 90…', 'A segunda curva é para o lado contrário da primeira.', 'Se o robô bater, vê o rasto laranja: mostra onde o teu plano falhou.'],
+    limite: 5, testes: 1, tempo: 50, comps: [],
+    mundo: () => ({ start: { x: 20, y: 20, th: 0 }, walls: [{ x: 0, y: 40, w: 80, h: 90 }, { x: 120, y: 0, w: 80, h: 90 }], zones: [{ x: 175, y: 110, r: 9, label: 'ALVO' }] }),
+    win: (c, w) => parado(c) && c.inGoal(w.zones[0])
+  },
+  {
+    id: 'L4', etapa: 1, nome: 'Recolha de baterias', conceito: 'Sequência',
+    historia: 'Há três baterias perdidas no armazém. O robô tem de passar por cima de todas.',
+    objetivo: 'Apanha as 3 baterias.',
+    dicas: ['Não há uma única ordem certa: escolhe o caminho mais curto.', 'O robô apanha a bateria quando o centro dele passa por cima.', 'Começa pela bateria que está à frente do robô.'],
+    limite: 5, testes: 1, tempo: 50, comps: [],
+    mundo: () => ({ start: { x: 60, y: 100, th: -90 * D }, walls: [], items: [{ x: 60, y: 30 }, { x: 140, y: 30 }, { x: 140, y: 100 }] }),
+    win: (c) => todos(c)
+  },
+
+  /* ---------- Etapa 2: Repetição ---------- */
+  {
+    id: 'L5', etapa: 2, nome: 'Quadrado perfeito', conceito: 'Repetição',
+    historia: 'O robô de vigilância faz sempre a mesma ronda quadrada. Escrever a mesma coisa quatro vezes não é de engenheiro.',
+    objetivo: 'Apanha as 4 baterias com no máximo 3 blocos.',
+    dicas: ['Que instruções se repetem? Quantas vezes?', 'Usa o bloco repetir … vezes.', 'Dentro do repetir bastam dois blocos.'],
+    limite: 3, testes: 1, tempo: 50, comps: [],
+    mundo: () => ({ start: { x: 70, y: 90, th: -90 * D }, walls: [], items: [{ x: 70, y: 65 }, { x: 95, y: 40 }, { x: 120, y: 65 }, { x: 95, y: 90 }] }),
+    win: (c) => todos(c)
+  },
+  {
+    id: 'L6', etapa: 2, nome: 'Escadaria', conceito: 'Repetição',
+    historia: 'As baterias estão espalhadas como os degraus de uma escada. Descobre o padrão de um degrau e repete-o.',
+    objetivo: 'Sobe a escada e apanha as 4 baterias.',
+    dicas: ['Um degrau tem quatro movimentos.', 'Cada degrau tem 22 cm de comprimento e 22 cm de altura.', 'Repetir 4 vezes: avançar, virar à esquerda, avançar, virar à direita.'],
+    limite: 5, testes: 1, tempo: 60, comps: [],
+    mundo: () => ({ start: { x: 30, y: 115, th: 0 }, walls: [], items: [{ x: 52, y: 104 }, { x: 74, y: 82 }, { x: 96, y: 60 }, { x: 118, y: 38 }] }),
+    win: (c) => todos(c)
+  },
+  {
+    id: 'L7', etapa: 2, nome: 'Hexágono', conceito: 'Repetição e ângulos',
+    historia: 'A colmeia de painéis solares tem forma hexagonal. O robô tem de passar por todos os lados.',
+    objetivo: 'Percorre o hexágono (lado de 40 cm) e apanha as 6 baterias.',
+    dicas: ['Um hexágono tem 6 lados iguais.', 'Numa volta completa o robô roda 360°. Divide pelo número de cantos.', 'Em cada canto o robô vira 60°.'],
+    limite: 3, testes: 1, tempo: 60, comps: [],
+    mundo: () => ({ start: { x: 60, y: 35, th: 0 }, walls: [], items: hexItems() }),
+    win: (c) => todos(c)
+  },
+  {
+    id: 'L8', etapa: 2, nome: 'Conserta o robô', conceito: 'Depuração',
+    historia: 'Um colega escreveu este programa para apanhar as baterias, mas tem dois erros. Não apagues tudo: encontra e corrige só o que está mal.',
+    objetivo: 'Corrige o programa para apanhar as 4 baterias.',
+    dicas: ['Executa o programa e observa onde o robô se desvia do caminho.', 'Para que lado ficam as baterias?', 'Conta os lados de um quadrado.'],
+    limite: 3, testes: 1, tempo: 50, comps: [],
+    inicial: () => [hatIni({ type: 'robo_repetir', inputs: { N: N(3), DO: { block: chain({ type: 'robo_avancar', inputs: { CM: N(50) } }, { type: 'robo_virar', fields: { DIR: 'D' }, inputs: { G: N(90) } }) } } })],
+    mundo: () => ({ start: { x: 70, y: 90, th: -90 * D }, walls: [], items: [{ x: 70, y: 65 }, { x: 45, y: 40 }, { x: 20, y: 65 }, { x: 45, y: 90 }] }),
+    win: (c) => todos(c)
+  },
+
+  /* ---------- Etapa 3: Decisão ---------- */
+  {
+    id: 'L9', etapa: 3, nome: 'Parede misteriosa', conceito: 'Sensor e ciclo condicional',
+    historia: 'Nevoeiro no hangar: a parede muda de sítio em cada teste. O robô não pode adivinhar, tem de medir.',
+    objetivo: 'Pára com o sensor de ultrassons entre 8 e 12 cm da parede. O programa é testado em 3 hangares diferentes.',
+    dicas: ['Um avançar com número fixo só funciona num hangar.', 'Liga os motores e espera até a distância ficar pequena.', 'Usa repetir até distância < 11 e depois parar motores.'],
+    limite: 5, testes: 3, tempo: 40, comps: ['ultrassons'],
+    mundo: (rng) => ({ start: { x: 25, y: 65, th: 0 }, walls: [{ x: Math.round(90 + rng() * 80), y: 0, w: 10, h: 130 }] }),
+    win: (c) => parado(c) && c.dist >= 8 && c.dist <= 12
+  },
+  {
+    id: 'L10', etapa: 3, nome: 'Caminho certo', conceito: 'Condição se/senão',
+    historia: 'No cruzamento, um dos corredores está bloqueado por uma derrocada. O lado bloqueado muda de vez para vez.',
+    objetivo: 'Chega ao alvo pelo corredor livre. O programa é testado 3 vezes.',
+    dicas: ['Avança até ao cruzamento e vira para um dos lados.', 'Depois de virar, mede a distância: se for pequena, o caminho está bloqueado.', 'se distância < 50 então virar 180°. Depois avança até ao fim.'],
+    limite: 7, testes: 3, tempo: 50, comps: ['ultrassons'],
+    mundo: (rng, t) => {
+      const esq = (t + Math.floor(rng() * 2)) % 2 === 0;
+      return {
+        start: { x: 100, y: 115, th: -90 * D },
+        walls: [{ x: 0, y: 50, w: 80, h: 80 }, { x: 120, y: 50, w: 80, h: 80 }, esq ? { x: 50, y: 0, w: 6, h: 50 } : { x: 144, y: 0, w: 6, h: 50 }],
+        zones: [esq ? { x: 175, y: 30, r: 11, label: 'ALVO' } : { x: 25, y: 30, r: 11, label: 'ALVO' }]
+      };
+    },
+    win: (c, w) => parado(c) && c.inGoal(w.zones[0])
+  },
+  {
+    id: 'L11', etapa: 3, nome: 'Semáforo', conceito: 'Condição com cor',
+    historia: 'À saída da garagem há um semáforo pintado no chão. Verde: segue até à meta. Vermelho: volta para a garagem.',
+    objetivo: 'Lê a cor e decide. O programa é testado 3 vezes, com cores diferentes.',
+    dicas: ['Avança até o sensor de cor ficar em cima do semáforo.', 'O semáforo está a 50 cm do centro do robô.', 'se cor do chão é verde então avançar, senão recuar.'],
+    limite: 6, testes: 3, tempo: 40, comps: ['cor'],
+    mundo: (rng, t) => {
+      const cor = (t + Math.floor(rng() * 2)) % 2 === 0 ? 'verde' : 'vermelho';
+      return {
+        start: { x: 20, y: 65, th: 0 }, walls: [], cor,
+        floorFn: (g) => {
+          g.fillStyle = COLORS[cor]; g.fillRect(60, 45, 20, 40);
+          g.fillStyle = '#7A8493'; g.font = '600 3px "IBM Plex Sans", sans-serif'; g.textAlign = 'center'; g.fillText('SEMÁFORO', 70, 92);
+        },
+        zones: [{ x: 20, y: 65, r: 12, label: 'GARAGEM', cor: '#2C6BE0' }, { x: 170, y: 65, r: 12, label: 'META' }]
+      };
+    },
+    win: (c, w) => parado(c) && c.trail.some(p => p[0] > 62) && c.inGoal(w.cor === 'verde' ? w.zones[1] : w.zones[0])
+  },
+  {
+    id: 'L12', etapa: 3, nome: 'Linha negra', conceito: 'Decisões repetidas',
+    historia: 'O robô de entregas segue uma linha pintada no chão da fábrica. A linha tem curvas e um vale.',
+    objetivo: 'Dá uma volta completa à pista sem perder a linha.',
+    dicas: ['O robô tem dois sensores: um à esquerda e outro à direita da linha.', 'Se o sensor esquerdo vê preto, a linha fugiu para a esquerda: vira para lá.', 'Usa repetir sempre com se/senão encadeados e o bloco motores.'],
+    limite: 10, testes: 1, tempo: 90, comps: ['linha'],
+    mundo: () => ({ ...SCENARIOS.linha, missao: undefined }),
+    win: null
+  },
+
+  /* ---------- Etapa 4: Estratégia ---------- */
+  {
+    id: 'L13', etapa: 4, nome: 'Conta as faixas', conceito: 'Variáveis e contagem',
+    historia: 'A pista de testes tem faixas pretas a distâncias diferentes. O robô tem de parar exatamente em cima da terceira.',
+    objetivo: 'Pára com os sensores de linha na 3.ª faixa preta. Testado em 3 pistas diferentes.',
+    dicas: ['Cria uma variável chamada faixas, que começa em 0.', 'Quando o sensor vê preto, soma 1 e espera até voltar a ver branco. Senão contas a mesma faixa muitas vezes!', 'Repete até faixas = 3 … mas atenção: na terceira faixa não esperes pelo branco, pára logo.'],
+    limite: 14, testes: 3, tempo: 50, comps: ['linha'],
+    mundo: (rng) => {
+      const xs = []; let x = 45 + rng() * 10;
+      for (let i = 0; i < 5; i++) { xs.push(Math.round(x)); x += 22 + rng() * 9; }
+      return {
+        start: { x: 20, y: 65, th: 0 }, walls: [], faixas: xs,
+        floorFn: (g) => {
+          g.fillStyle = '#121212'; xs.forEach(v => g.fillRect(v, 35, 3, 60));
+          g.fillStyle = '#7A8493'; g.font = '600 3px "JetBrains Mono", monospace'; g.textAlign = 'center';
+          xs.forEach((v, i) => g.fillText(String(i + 1), v + 1.5, 100));
+        }
+      };
+    },
+    win: (c, w) => {
+      if (!parado(c)) return false;
+      const fx = c.robot.x + Math.cos(c.robot.th) * 6.5;
+      return fx >= w.faixas[2] - 1.5 && fx <= w.faixas[2] + 4.5;
+    }
+  },
+  {
+    id: 'L14', etapa: 4, nome: 'Labirinto', conceito: 'Algoritmo geral',
+    historia: 'O robô de resgate entra num labirinto que nunca viu. Em cada teste o labirinto é diferente.',
+    objetivo: 'Chega à zona verde. Testado em 2 labirintos diferentes.',
+    dicas: ['Não decores o caminho: cria uma regra que funcione em qualquer labirinto.', 'Anda em frente até a parede estar perto. Depois experimenta virar à esquerda.', 'Se depois de virar a parede continuar perto (< 40 cm), vira 180°.'],
+    limite: 10, testes: 2, tempo: 120, comps: ['ultrassons', 'giro'],
+    mundo: (rng, t) => {
+      const esp = (t + Math.floor(rng() * 2)) % 2 === 1;
+      if (!esp) return { start: { x: 25, y: 18, th: 90 * D }, walls: MAZE, goal: { x: 175, y: 18, r: 13, cor: true }, metaVerde: { x: 155, y: 4, w: 40, h: 30 } };
+      return { start: { x: 25, y: 112, th: -90 * D }, walls: MAZE.map(m => ({ ...m, y: 130 - m.y - m.h })), goal: { x: 175, y: 112, r: 13, cor: true }, metaVerde: { x: 155, y: 96, w: 40, h: 30 } };
+    },
+    win: (c, w) => c.inGoal(w.goal)
+  },
+  {
+    id: 'L15', etapa: 4, nome: 'Caça à luz', conceito: 'Procura e variáveis',
+    historia: 'Missão final. Falta energia à base e só a lâmpada solar a pode salvar. Ela está num canto diferente em cada teste e o robô só tem um sensor de luz virado para a frente.',
+    objetivo: 'Chega junto da lâmpada. Testado 2 vezes.',
+    dicas: ['O sensor de luz dá valores mais altos quando está virado para a lâmpada e perto dela.', 'Roda aos poucos (por exemplo 8 vezes 45°) e guarda numa variável a direção com mais luz.', 'Depois de encontrar a melhor direção, avança aos bocadinhos e volta a procurar até a luz passar de 85.'],
+    limite: 24, testes: 2, tempo: 150, comps: ['luz', 'giro'],
+    mundo: (rng, t) => {
+      const cantos = [[25, 22], [175, 22], [175, 108], [25, 108]];
+      const [x, y] = cantos[(Math.floor(rng() * 4) + t * 2) % 4];
+      return { start: { x: 100, y: 65, th: Math.floor(rng() * 8) * 45 * D }, walls: [], lamp: { x, y }, zones: [{ x, y, r: 20, label: '', cor: '#C98A00' }] };
+    },
+    win: (c, w) => c.inGoal(w.zones[0])
+  }
+];
+const LEVEL = Object.fromEntries(LEVELS.map(l => [l.id, l]));
+
+function buildLevelWorld(lv, seed, testIdx) {
+  const rng = rngFrom(seed);
+  const w = lv.mundo(rng, testIdx);
+  w.walls = w.walls || [];
+  w.nome = lv.nome;
+  if (lv.win) w.win = lv.win;
+  return w;
+}
+
+</script>
+<script>
+/* RoboLab: interface do modo Missões */
+'use strict';
+
+let lvRun = null;
+const lvIndex = (id) => LEVELS.findIndex(l => l.id === id);
+const starsOf = (id) => (state.prog[id] || {}).stars || 0;
+const unlocked = (i) => state.prof || i === 0 || starsOf(LEVELS[i - 1].id) > 0;
+const STAR = (on, cls = '') => `<svg class="st${on ? ' on' : ''} ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5-4.8-4.5 6.5-.8z"/></svg>`;
+const LOCK = '<svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none"/></svg>';
+
+function renderMissions() {
+  if (!state.sel || !LEVEL[state.sel]) {
+    const next = LEVELS.find((l, i) => unlocked(i) && !starsOf(l.id));
+    state.sel = (next || LEVELS[0]).id;
+  }
+  const total = LEVELS.reduce((a, l) => a + starsOf(l.id), 0);
+  const feitos = LEVELS.filter(l => starsOf(l.id)).length;
+  $('#lv-summary').innerHTML = `<div><span class="label">Progresso</span><b>${feitos} de ${LEVELS.length} níveis</b></div>
+    <div class="meter"><div class="bar"><span style="width:${feitos / LEVELS.length * 100}%"></span></div></div>
+    <div class="lv-total">${STAR(true)}<b>${total}</b><small>/ ${LEVELS.length * 3}</small></div>`;
+  $('#lv-map').innerHTML = ETAPAS.map(e => {
+    const ls = LEVELS.filter(l => l.etapa === e.id);
+    const s = ls.reduce((a, l) => a + starsOf(l.id), 0);
+    return `<section class="et" style="--c:${e.cor}">
+      <header><span class="et-n">${e.id}</span><div><h3>${e.nome}</h3><p>${e.sub}</p></div><span class="et-s">${s}/${ls.length * 3}</span></header>
+      <div class="lv-grid">${ls.map(l => {
+        const i = lvIndex(l.id), ok = unlocked(i), st = starsOf(l.id);
+        return `<button class="lv${st ? ' done' : ''}${state.level === l.id ? ' active' : ''}" type="button" data-lv="${l.id}" aria-pressed="${state.sel === l.id}"${ok ? '' : ' data-locked="1"'}>
+          <span class="lv-num">${ok ? i + 1 : LOCK}</span><span class="lv-name">${l.nome}</span>
+          <span class="lv-stars">${[1, 2, 3].map(k => STAR(k <= st)).join('')}</span></button>`;
+      }).join('')}</div></section>`;
+  }).join('');
+  renderLevelDetail();
+}
+
+function renderLevelDetail() {
+  const lv = LEVEL[state.sel], i = lvIndex(lv.id), ok = unlocked(i), et = ETAPAS[lv.etapa - 1];
+  const st = starsOf(lv.id), shown = (state.hints || {})[lv.id] || 0;
+  const comps = lv.comps.length ? lv.comps.map(c => COMP[c].nome).join(', ') : 'nenhum sensor';
+  const crit = [
+    `Cumprir a missão${lv.testes > 1 ? ` em ${lv.testes} pistas diferentes` : ''}`,
+    'Sem colisões',
+    `Usar no máximo ${lv.limite} ${lv.limite === 1 ? 'bloco' : 'blocos'}`
+  ];
+  $('#lv-detail').innerHTML = `
+    <div class="lv-head" style="--c:${et.cor}">
+      <span class="chip"><i style="background:${et.cor}"></i>Etapa ${et.id} · ${et.nome}</span><span class="chip">${lv.conceito}</span>
+    </div>
+    <h2>Nível ${i + 1} · ${lv.nome}</h2>
+    <p class="story">${lv.historia}</p>
+    <div class="obj"><span class="label">Objetivo</span><p>${lv.objetivo}</p></div>
+    <ul class="crit">${crit.map((c, k) => `<li>${STAR(k < st)}<span>${c}</span></li>`).join('')}</ul>
+    <p class="meta"><b>Robô da missão:</b> 2 rodas, motores com encoder, ${comps}. <b>Tempo:</b> ${lv.tempo} s. Podes escolher a placa na Oficina.</p>
+    <div class="hints"><span class="label">Dicas</span>
+      ${lv.dicas.slice(0, shown).map((d, k) => `<p><b>${k + 1}.</b> ${d}</p>`).join('')}
+      ${shown < lv.dicas.length ? `<button class="btn" type="button" id="btn-hint">Mostrar dica ${shown + 1} de ${lv.dicas.length}</button>` : ''}
+    </div>
+    <div class="lv-actions">
+      ${ok ? `<button class="run" type="button" id="btn-lv-start">${state.level === lv.id ? 'Continuar' : (state.work[lv.id] ? 'Retomar missão' : 'Começar missão')}</button>` : `<p class="locked-msg">${LOCK} Completa o nível ${i} para desbloquear.</p>`}
+      ${ok && state.work[lv.id] ? '<button class="btn" type="button" id="btn-lv-reset">Recomeçar do zero</button>' : ''}
+      ${state.level ? '<button class="btn" type="button" id="btn-lv-exit">Sair para o modo livre</button>' : ''}
+    </div>`;
+}
+
+function onMissionsClick(e) {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.lv) { state.sel = b.dataset.lv; renderMissions(); save(); return; }
+  if (b.id === 'btn-hint') { state.hints = state.hints || {}; state.hints[state.sel] = ((state.hints[state.sel]) || 0) + 1; renderLevelDetail(); save(); }
+  if (b.id === 'btn-lv-start') enterLevel(state.sel);
+  if (b.id === 'btn-lv-reset') resetLevel(state.sel);
+  if (b.id === 'btn-lv-exit') exitLevel();
+}
+
+function loadBlocksJson(json) {
+  ws.clear();
+  try { Blockly.serialization.workspaces.load(json, ws); } catch (e) { ws.clear(); }
+}
+function storeWork() {
+  if (!state.level) return;
+  state.work[state.level] = { blocks: Blockly.serialization.workspaces.save(ws), codes: { ...state.codes }, codeEdited: { ...state.codeEdited } };
+}
+function resetLevel(id) {
+  delete state.work[id];
+  if (state.level !== id) { renderMissions(); save(); return; }
+  stopProgram(true); lvRun = null;
+  const lv = LEVEL[id];
+  state.codes = { cpp: '', py: '' }; state.codeEdited = { cpp: false, py: false };
+  loadBlocksJson({ blocks: { languageVersion: 0, blocks: lv.inicial ? lv.inicial() : [hatIni(null)] } });
+  loadCodeForLang();
+  resetRobot();
+  afterLevelChange();
+  setTab('blocos');
+}
+
+function enterLevel(id) {
+  stopProgram(true); lvRun = null;
+  if (!state.level) state.free = { blocks: Blockly.serialization.workspaces.save(ws), codes: { ...state.codes }, codeEdited: { ...state.codeEdited }, cfg: JSON.parse(JSON.stringify(state.cfg)) };
+  else storeWork();
+  const lv = LEVEL[id];
+  state.level = id; state.sel = id;
+  Object.assign(state.cfg, { chassis: 'd2', motor: 'n20', comps: [...lv.comps] });
+  const w = state.work[id];
+  state.codes = w ? { ...w.codes } : { cpp: '', py: '' };
+  state.codeEdited = w ? { ...w.codeEdited } : { cpp: false, py: false };
+  applyLevelWorld(0, Math.random() * 1e9 | 0);
+  configChanged(false);
+  loadBlocksJson(w && w.blocks ? w.blocks : { blocks: { languageVersion: 0, blocks: lv.inicial ? lv.inicial() : [hatIni(null)] } });
+  if (!state.codes[lang()]) loadCodeForLang();
+  afterLevelChange();
+  setTab('blocos');
+  $('#log').innerHTML = '';
+  log(`Nível ${lvIndex(id) + 1} · ${lv.nome}: ${lv.objetivo}`, 'sys');
+}
+
+function exitLevel() {
+  stopProgram(true); lvRun = null;
+  storeWork();
+  state.level = null;
+  const f = state.free;
+  if (f) {
+    Object.assign(state.cfg, { chassis: f.cfg.chassis, motor: f.cfg.motor, comps: f.cfg.comps, scenario: f.cfg.scenario });
+    state.codes = f.codes; state.codeEdited = f.codeEdited;
+  }
+  setScenario(state.cfg.scenario);
+  configChanged(false);
+  if (f && f.blocks) loadBlocksJson(f.blocks);
+  state.free = null;
+  afterLevelChange();
+}
+
+function afterLevelChange() {
+  updateScenarioSelect(); renderMission(); renderMissions(); updateBlockCount(); setStatus('idle'); save();
+}
+
+function applyLevelWorld(idx, seed) {
+  setScenario(buildLevelWorld(LEVEL[state.level], seed, idx));
+}
+
+function updateScenarioSelect() {
+  const sel = $('#scenario');
+  const old = sel.querySelector('option[value="__lvl"]'); if (old) old.remove();
+  if (state.level) {
+    const o = document.createElement('option');
+    o.value = '__lvl'; o.textContent = `★ Nível ${lvIndex(state.level) + 1} · ${LEVEL[state.level].nome}`;
+    sel.prepend(o); sel.value = '__lvl';
+  } else sel.value = state.cfg.scenario;
+}
+
+function progSize() {
+  if (state.source === 'blocos') {
+    return ws.getAllBlocks(false).filter(b => !b.isShadow() && b.isEnabled() && b.type !== 'robo_inicio' && b.type !== 'robo_sempre_topo').length;
+  }
+  return codeSize(state.codes[lang()], lang());
+}
+
+/* Conta as instruções do código de forma comparável aos blocos */
+function codeSize(src, lg) {
+  let { code } = protectStrings(src, lg === 'cpp' ? 'c' : 'py');
+  code = code.split('\n').filter(l => !/^\s*(#include|#define|import |from |RoboLab\s+robo)/.test(l)).join('\n')
+    .replace(/Serial\.begin\s*\([^)]*\)/g, '').replace(/robo\.begin\s*\(\s*\)/g, '')
+    .replace(/\bfor\s*\([^)]*\)/g, 'for').replace(/\bfor\s+\w+\s+in\s+[^:]+:/g, 'for:')
+    .replace(/__S\d+__/g, '""');
+  const re = /robo\.\w+\s*\(|\b(?:delay|sleep|millis|running_time|print|tone)\s*\(|Serial\.print(?:ln)?\s*\(|\b(?:if|while|for|elif)\b|<=|>=|==|!=|<|>|&&|\|\||\b(?:and|or|not)\b|\+\+|--|\+=|-=|(?<![=!<>+\-*/])=(?!=)/g;
+  return (code.match(re) || []).length;
+}
+
+function updateBlockCount() {
+  const el = $('#blk-count'); if (!el || !ws) return;
+  const n = ws.getAllBlocks(false).filter(b => !b.isShadow() && b.isEnabled() && b.type !== 'robo_inicio' && b.type !== 'robo_sempre_topo').length;
+  if (state.level) {
+    const L = LEVEL[state.level].limite;
+    el.className = 'chip ' + (n <= L ? 'okc' : 'over');
+    el.innerHTML = `${n} ${n === 1 ? 'bloco' : 'blocos'} · ${STAR(true)} até ${L}`;
+  } else { el.className = 'chip'; el.textContent = `${n} ${n === 1 ? 'bloco' : 'blocos'}`; }
+}
+
+/* ---------- Execução de um nível ---------- */
+function startLevelRun(src, lg) {
+  lvRun = { lv: LEVEL[state.level], idx: 0, seed0: Math.random() * 1e9 | 0, col: 0, src, lang: lg, size: progSize() };
+  runLevelTest();
+}
+async function runLevelTest() {
+  const my = lvRun;
+  applyLevelWorld(my.idx, my.seed0 + my.idx * 7919);
+  try { await runProgram(my.src, my.lang); }
+  catch (e) { if (lvRun === my) lvRun = null; showError(e instanceof CodeError ? e : new CodeError(String(e.message || e))); }
+}
+
+function levelMission() {
+  const my = lvRun;
+  if (!my) { toast('<span class="big">Boa condução!</span><span>Agora programa o robô para o fazer sozinho.</span>', 3500); return; }
+  my.col += Sim.collisions;
+  const n = my.lv.testes;
+  log(`✓ ${n > 1 ? `Teste ${my.idx + 1} de ${n} superado` : 'Missão cumprida'} (${Sim.mission.time.toFixed(1).replace('.', ',')} s)`, 'okm');
+  beep(880, 90);
+  if (my.idx < n - 1) {
+    toast(`<span class="big">Teste ${my.idx + 1}/${n} ✓</span><span>A preparar uma pista diferente…</span>`, 1400);
+    setTimeout(() => { if (lvRun === my) { my.idx++; runLevelTest(); } }, 1100);
+    return;
+  }
+  setTimeout(() => { if (lvRun === my) completeLevel(my); }, 500);
+}
+
+function completeLevel(my) {
+  stopProgram(true);
+  lvRun = null;
+  setRunButton(false);
+  const s2 = my.col === 0, s3 = my.size <= my.lv.limite;
+  const stars = 1 + (s2 ? 1 : 0) + (s3 ? 1 : 0);
+  const prev = state.prog[my.lv.id] || {};
+  state.prog[my.lv.id] = { stars: Math.max(prev.stars || 0, stars), best: Math.min(prev.best || 999, my.size) };
+  save(); renderMissions();
+  setStatus('mission', `${stars} ${stars === 1 ? 'estrela' : 'estrelas'}`);
+  const i = lvIndex(my.lv.id), next = LEVELS[i + 1];
+  const unid = state.source === 'blocos' ? (my.size === 1 ? 'bloco' : 'blocos') : (my.size === 1 ? 'linha' : 'linhas');
+  $('#lv-done').innerHTML = `<div class="done-card" role="dialog" aria-labelledby="done-t">
+    <div class="done-stars">${[1, 2, 3].map(k => STAR(k <= stars, 'big d' + k)).join('')}</div>
+    <h2 id="done-t">${stars === 3 ? 'Perfeito!' : 'Nível concluído'}</h2>
+    <ul class="crit">
+      <li>${STAR(true)}<span>Missão cumprida${my.lv.testes > 1 ? ` nas ${my.lv.testes} pistas` : ''}</span></li>
+      <li>${STAR(s2)}<span>${s2 ? 'Sem colisões' : `${my.col} ${my.col === 1 ? 'colisão' : 'colisões'}: tenta não bater`}</span></li>
+      <li>${STAR(s3)}<span>${my.size} ${unid}${s3 ? '' : `: consegues com ${my.lv.limite}?`}</span></li>
+    </ul>
+    <div class="lv-actions">
+      <button class="btn" type="button" id="btn-done-close">${stars < 3 ? 'Melhorar' : 'Fechar'}</button>
+      ${next ? '<button class="run" type="button" id="btn-done-next">Próximo nível</button>' : '<button class="run" type="button" id="btn-done-map">Ver missões</button>'}
+    </div></div>`;
+  $('#lv-done').classList.add('show');
+  beep(660, 120); setTimeout(() => beep(880, 120), 150); setTimeout(() => beep(1175, 220), 300);
+}
+
+function levelFail(msg) {
+  const my = lvRun; if (!my) return;
+  lvRun = null;
+  const n = my.lv.testes;
+  const onde = n > 1 ? ` (teste ${my.idx + 1} de ${n})` : '';
+  let extra = '';
+  if (my.idx > 0) extra = ' O programa funcionou numa pista mas não noutra: tem de funcionar em qualquer pista.';
+  log('✖ ' + msg + onde + '.' + extra, 'err');
+  toast(`<span style="color:var(--err)">✖</span><span>${msg}${onde}.${extra}</span>`, 5000);
+  setStatus('error', 'Falhou'); setRunButton(false);
+}
+
+function levelOnState(s) {
+  if (!state.level) return false;
+  if (s === 'mission') { levelMission(); return true; }
+  if (s === 'run' && lvRun && lvRun.lv.testes > 1) setTimeout(() => setStatus('run', `Teste ${lvRun ? lvRun.idx + 1 : 1}/${lvRun ? lvRun.lv.testes : 1}`), 0);
+  if (s === 'end' && lvRun) {
+    const my = lvRun, k = lvRun.idx;
+    setTimeout(() => { if (lvRun === my && my.idx === k && !Sim.mission.done) levelFail('O programa terminou sem cumprir a missão'); }, 1500);
+  }
+  if (s === 'error' || s === 'stopped') lvRun = null;
+  return false;
+}
+
+function levelTick() {
+  if (!lvRun || !Sim.running || Sim.mission.done) return;
+  if (Sim.t - Sim.mission.t0 > lvRun.lv.tempo) { stopProgram(true); levelFail(`Tempo esgotado (${lvRun.lv.tempo} s)`); }
+}
+
+</script>
+<script>
 /* RoboLab: interface (oficina, editores, palco, telemetria, gravação) */
 'use strict';
 
@@ -1702,14 +2299,15 @@ const STORE = 'robolab.v1';
 const state = {
   cfg: JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
   codes: { cpp: '', py: '' }, codeEdited: { cpp: false, py: false },
-  source: 'blocos', tab: 'montar', blocks: null, gen: true, errLine: null
+  source: 'blocos', tab: 'missoes', blocks: null, gen: true, errLine: null,
+  prog: {}, work: {}, level: null, free: null, prof: false, sel: null, hints: {}
 };
 let ws = null;
 
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE) || 'null');
-    if (s && s.cfg && BOARDS[s.cfg.board]) Object.assign(state, s, { errLine: null, tab: s.tab || 'montar' });
+    if (s && s.cfg && BOARDS[s.cfg.board]) Object.assign(state, s, { errLine: null, tab: s.tab || 'missoes' });
   } catch (e) { /* sem armazenamento */ }
 }
 let saveTimer = 0;
@@ -1718,7 +2316,7 @@ function save() {
   saveTimer = setTimeout(() => {
     try {
       if (ws) state.blocks = Blockly.serialization.workspaces.save(ws);
-      localStorage.setItem(STORE, JSON.stringify({ cfg: state.cfg, codes: state.codes, codeEdited: state.codeEdited, source: state.source, tab: state.tab, blocks: state.blocks, gen: state.gen }));
+      localStorage.setItem(STORE, JSON.stringify({ cfg: state.cfg, codes: state.codes, codeEdited: state.codeEdited, source: state.source, tab: state.tab, blocks: state.blocks, gen: state.gen, prog: state.prog, work: state.work, level: state.level, free: state.free, prof: state.prof, sel: state.sel, hints: state.hints }));
     } catch (e) { /* sem armazenamento */ }
   }, 300);
 }
@@ -1902,7 +2500,7 @@ function initBlockly() {
   if (!ok) loadExampleBlocks('obstaculos');
   ws.addChangeListener((e) => {
     if (e.isUiEvent) return;
-    updateGen(); save();
+    updateGen(); save(); updateBlockCount();
     if (e.type !== Blockly.Events.FINISHED_LOADING && !Sim.running) setSource('blocos', true);
   });
   new ResizeObserver(() => Blockly.svgResize(ws)).observe($('#blockly'));
@@ -2050,6 +2648,7 @@ function updateReadouts() {
 }
 
 function renderMission() {
+  if (state.level && LEVEL[state.level]) { $('#mission').innerHTML = `<b>Nível ${lvIndex(state.level) + 1}</b> · ${LEVEL[state.level].objetivo}`; return; }
   const sc = SCENARIOS[state.cfg.scenario];
   $('#mission').innerHTML = `<b>Missão</b> · ${sc.missao}`;
 }
@@ -2089,6 +2688,7 @@ function setSource(v, quiet) {
 
 Sim.onLog = (m) => log(m);
 Sim.onState = (s, err) => {
+  if (levelOnState(s, err)) return;
   if (s === 'run') { setRunButton(true); setStatus('run'); log(`▶ ${fileName()} · ${board().curto} · ${state.source === 'blocos' ? 'blocos' : 'código'}`, 'sys'); }
   if (s === 'end') { log('■ Programa terminado', 'sys'); setStatus(Sim.mission.done ? 'mission' : 'end'); }
   if (s === 'stopped') { log('■ Parado', 'sys'); setRunButton(false); setStatus(Sim.mission.done ? 'mission' : 'stopped'); }
@@ -2119,6 +2719,8 @@ async function run() {
   else src = state.codes[lang()];
   if (state.source === 'codigo') syncEditor();
   $('#toast').classList.remove('show');
+  $('#lv-done').classList.remove('show');
+  if (state.level) { startLevelRun(src, lang()); return; }
   try { await runProgram(src, lang()); }
   catch (e) { showError(e instanceof CodeError ? e : new CodeError(String(e.message || e))); }
 }
@@ -2129,6 +2731,7 @@ function setTab(t) {
   $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + t));
   if (t === 'blocos' && ws) { Blockly.svgResize(ws); setSource('blocos', true); }
   if (t === 'codigo') { syncEditor(); setSource('codigo', true); }
+  if (t === 'missoes') renderMissions();
   save();
 }
 
@@ -2155,7 +2758,10 @@ function init() {
   $('#p-montar').addEventListener('click', onWorkshopClick);
   $('#btn-run').addEventListener('click', run);
   $('#btn-reset').addEventListener('click', () => { stopProgram(true); resetRobot(); setStatus('idle'); });
-  $('#scenario').addEventListener('change', (e) => { stopProgram(true); state.cfg.scenario = e.target.value; setScenario(e.target.value); renderMission(); setStatus('idle'); save(); });
+  $('#scenario').addEventListener('change', (e) => {
+    if (e.target.value === '__lvl') return;
+    if (state.level) { const v = e.target.value; exitLevel(); state.cfg.scenario = v; setScenario(v); updateScenarioSelect(); renderMission(); save(); return; }
+    stopProgram(true); state.cfg.scenario = e.target.value; setScenario(e.target.value); renderMission(); setStatus('idle'); save(); });
   $('#seg-src').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSource(b.dataset.v); });
   $('#seg-speed').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -2216,9 +2822,20 @@ function init() {
   window.addEventListener('blur', () => { Sim.keys = {}; });
   if (matchMedia('(pointer: coarse)').matches) $('#hint').style.display = 'none';
 
-  Sim.onFrame = updateReadouts;
+  Sim.onFrame = () => { updateReadouts(); levelTick(); };
+  $('#p-missoes').addEventListener('click', onMissionsClick);
+  $('#chk-prof').checked = !!state.prof;
+  $('#chk-prof').addEventListener('change', (e) => { state.prof = e.target.checked; renderMissions(); save(); });
+  $('#lv-done').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    $('#lv-done').classList.remove('show');
+    if (b.id === 'btn-done-next') { const i = lvIndex(state.level); enterLevel(LEVELS[i + 1].id); }
+    if (b.id === 'btn-done-map') setTab('missoes');
+  });
+  if (state.level && LEVEL[state.level]) { applyLevelWorld(0, Math.random() * 1e9 | 0); } else state.level = null;
+  updateScenarioSelect(); renderMission(); renderMissions(); updateBlockCount();
   log('RoboLab pronto. Monta o robô, programa-o e carrega em Executar.', 'sys');
-  loop();
+  simLoop();
 }
 
 if (window.Blockly) init();
