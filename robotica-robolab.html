@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoboLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Bancada clara para montar e programar; palco escuro com o tapete de competição em destaque */
+  --ink: #14213D; --ink-2: #4A5672; --ink-3: #7A849A;
+  --bg: #E9EDF2; --panel: #FFFFFF; --panel-2: #F5F7FA; --line: #D7DDE6;
+  --accent: #FF5E1A; --accent-ink: #C2410C; --accent-soft: #FFE6DA;
+  --pit: #0E1729; --pit-2: #16223A; --pit-line: #263553; --pit-text: #C9D3E6;
+  --ok: #1FA46A; --warn: #C98A00; --err: #D7263D;
+  --f-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  --r: 10px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--f-body); -webkit-font-smoothing: antialiased; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; }
+
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
+
+/* ---------- Barra superior ---------- */
+.topbar { display: flex; align-items: center; gap: 20px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); min-width: 0; }
+.brand { display: flex; align-items: center; gap: 10px; flex: none; }
+.brand svg { width: 34px; height: 34px; }
+.brand b { font: 700 21px/1 var(--f-display); letter-spacing: 0.02em; }
+.brand small { display: block; font: 500 11px/1.2 var(--f-body); color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase; }
+.steps { display: flex; gap: 4px; background: var(--panel-2); border: 1px solid var(--line); padding: 4px; border-radius: 12px; }
+.step { display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 7px 14px 7px 8px; border-radius: 8px; font-weight: 600; color: var(--ink-2); }
+.step .n { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font: 700 12px/1 var(--f-display); background: var(--line); color: var(--ink-2); }
+.step[aria-selected="true"] { background: var(--ink); color: #fff; }
+.step[aria-selected="true"] .n { background: var(--accent); color: #fff; }
+.step:not([aria-selected="true"]):hover { background: #E3E8EF; }
+.spec { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); font-size: 12px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.chip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+/* ---------- Área de trabalho ---------- */
+.work { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr); min-height: 0; }
+.bench { min-width: 0; min-height: 0; position: relative; border-right: 1px solid var(--line); }
+.panel { position: absolute; inset: 0; display: none; flex-direction: column; min-height: 0; }
+.panel.on { display: flex; }
+.toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.toolbar .grow { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel); padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 13px; }
+.btn:hover { border-color: #B8C1CE; background: var(--panel-2); }
+.btn svg { width: 16px; height: 16px; }
+.btn.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn.dark:hover { background: #22325A; }
+.sel { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 30px 6px 10px; font-weight: 600; font-size: 13px; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234A5672' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+.label { font: 600 11px/1 var(--f-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+
+/* ---------- Montar ---------- */
+.m-scroll { overflow: auto; padding: 18px 20px 40px; display: grid; gap: 26px; align-content: start; }
+.m-sec > header { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: baseline; margin-bottom: 12px; }
+.m-sec .idx { font: 700 13px/1 var(--f-mono); color: var(--accent); grid-row: span 2; padding-top: 3px; }
+.m-sec h2 { font-size: 19px; font-weight: 600; }
+.m-sec header p { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; max-width: 62ch; }
+.cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.card { position: relative; text-align: left; border: 1.5px solid var(--line); background: var(--panel); border-radius: var(--r); padding: 12px; display: grid; gap: 6px; align-content: start; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.card:hover { border-color: #AEB8C6; transform: translateY(-1px); }
+.card[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(20,33,61,0.08), inset 0 -3px 0 var(--accent); }
+.card[aria-pressed="true"]::after { content: ""; position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/12px no-repeat; }
+.card h3 { font-size: 15px; font-weight: 600; padding-right: 22px; }
+.card p { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.card .art { height: 74px; border-radius: 7px; background: var(--panel-2); display: grid; place-items: center; overflow: hidden; }
+.card .art svg { height: 64px; width: auto; }
+.tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.tag { font: 500 10.5px/1 var(--f-mono); padding: 4px 6px; border-radius: 5px; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink-2); }
+.tag.hot { background: var(--accent-soft); border-color: #FFC7AE; color: var(--accent-ink); }
+.tag.ok { background: #DDF3E8; border-color: #B5E3CB; color: #146B46; }
+.comp { grid-template-columns: 40px 1fr; column-gap: 10px; }
+.comp .ico { width: 40px; height: 40px; border-radius: 9px; background: var(--panel-2); display: grid; place-items: center; grid-row: span 3; }
+.comp .ico svg { width: 24px; height: 24px; fill: none; stroke: var(--ink); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.comp[aria-pressed="true"] .ico { background: var(--ink); }
+.comp[aria-pressed="true"] .ico svg { stroke: #fff; }
+.comp.builtin { border-style: dashed; cursor: default; }
+.comp.builtin:hover { transform: none; }
+
+.wiring { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; }
+.wbox { border: 1px solid var(--line); background: var(--panel); border-radius: var(--r); padding: 14px; min-width: 0; }
+.meter { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.meter .bar { flex: 1; height: 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.meter .bar span { display: block; height: 100%; background: var(--ink); border-radius: 99px; transition: width .3s; }
+.meter .bar.full span { background: var(--err); }
+.meter b { font: 600 13px/1 var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.pins { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.pins th { text-align: left; font: 600 10.5px/1 var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); padding: 6px 6px 8px; border-bottom: 1px solid var(--line); }
+table.pins td { padding: 6px; border-bottom: 1px solid #EDF0F4; vertical-align: top; }
+table.pins td.pin { font: 600 12px/1.3 var(--f-mono); white-space: nowrap; }
+table.pins td.pin.miss { color: var(--err); }
+table.pins tr.grp td { padding-top: 10px; font-weight: 600; }
+.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.notes li { padding-left: 14px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: 7px; width: 6px; height: 6px; border-radius: 2px; background: var(--ink-3); }
+.notes li.warn { color: #8A4A00; }
+.notes li.warn::before { background: var(--warn); }
+.notes li.err { color: var(--err); }
+.notes li.err::before { background: var(--err); }
+
+/* ---------- Blocos ---------- */
+.blk-area { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr; position: relative; }
+.blk-area.gen-on { grid-template-columns: minmax(0, 1fr) minmax(220px, 38%); }
+#blockly { min-height: 0; min-width: 0; height: 100%; }
+.gen { display: none; border-left: 1px solid var(--line); background: #0F1A2E; color: #D5DEEE; min-height: 0; flex-direction: column; }
+.blk-area.gen-on .gen { display: flex; }
+.gen header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #22314D; }
+.gen header .label { color: #8C9AB5; }
+.gen-btn { border: 1px solid #2D3E60; background: #17233A; color: #E6ECF7; border-radius: 7px; padding: 5px 9px; font-weight: 600; font-size: 12px; white-space: nowrap; }
+.gen-btn:hover { border-color: #FF5E1A; }
+.gen pre { margin: 0; padding: 12px; overflow: auto; flex: 1; font: 12px/1.55 var(--f-mono); white-space: pre; }
+.blocklyToolboxDiv { border-right: 1px solid var(--line) !important; padding-top: 6px !important; }
+.blocklyTreeRow { border-radius: 8px !important; margin: 2px 6px !important; height: 34px !important; line-height: 34px !important; }
+.blocklyTreeLabel { font: 600 13px var(--f-body) !important; color: var(--ink) !important; }
+.blocklyToolboxCategory .blocklyTreeRowContentContainer { display: flex; align-items: center; }
+
+/* ---------- Código ---------- */
+.code-area { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 260px; }
+.code-area.no-ref { grid-template-columns: minmax(0, 1fr); }
+.code-area.no-ref .ref { display: none; }
+.editor { display: grid; grid-template-columns: 46px 1fr; min-height: 0; overflow: auto; background: #0F1A2E; position: relative; }
+.gutter { font: 13px/1.6 var(--f-mono); color: #4D5E80; text-align: right; padding: 14px 10px 14px 0; user-select: none; background: #0C1526; border-right: 1px solid #1C2A45; white-space: pre; }
+.gutter .e { color: #fff; background: var(--err); border-radius: 3px; }
+.ed-wrap { position: relative; width: max-content; min-width: 100%; min-height: 100%; }
+.ed-wrap pre, .ed-wrap textarea { margin: 0; padding: 14px 40px 60px 16px; font: 13px/1.6 var(--f-mono); white-space: pre; tab-size: 4; border: 0; letter-spacing: 0; }
+.ed-wrap pre { color: #D5DEEE; pointer-events: none; position: relative; min-height: 100%; }
+.ed-wrap textarea { position: absolute; inset: 0; width: 100%; height: 100%; resize: none; background: transparent; color: transparent; caret-color: #FFB38F; outline: none; overflow: hidden; display: block; }
+.ed-wrap textarea::selection { background: rgba(255,94,26,0.35); color: transparent; }
+.t-c { color: #6B7C9E; font-style: italic; } .t-s { color: #9BD38A; } .t-p { color: #E58FD6; } .t-n { color: #FFB86B; }
+.t-k { color: #7FB2FF; font-weight: 600; } .t-o { color: #FF8A57; font-weight: 600; } .t-f { color: #6FE0D2; }
+.ref { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 12px 14px 30px; }
+.ref h3 { font-size: 14px; margin: 14px 0 6px; }
+.ref h3:first-child { margin-top: 0; }
+.ref button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 5px 6px; border-radius: 6px; }
+.ref button:hover { background: var(--panel-2); }
+.ref code { font: 500 12px/1.35 var(--f-mono); color: var(--ink); display: block; word-break: break-word; }
+.ref span { font-size: 11.5px; color: var(--ink-3); display: block; }
+.lang-tag { font: 600 12px/1 var(--f-mono); padding: 7px 10px; border-radius: 8px; background: var(--ink); color: #fff; }
+.lang-tag em { font-style: normal; color: #FFB38F; }
+
+/* ---------- Palco ---------- */
+.stage { background: var(--pit); color: var(--pit-text); display: grid; grid-template-rows: auto minmax(220px, 1fr) auto auto; min-height: 0; min-width: 0; }
+.stage-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px 4px; flex-wrap: wrap; }
+.stage-head .sel { background-color: var(--pit-2); border-color: var(--pit-line); color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23C9D3E6' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+.mission { flex: 1; min-width: 180px; font-size: 12.5px; color: #AAB6CD; }
+.mission b { color: #fff; font-weight: 600; }
+.pill { font: 600 11.5px/1 var(--f-mono); padding: 6px 9px; border-radius: 999px; border: 1px solid var(--pit-line); color: #AAB6CD; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: #5B6A88; }
+.pill.is-run i { background: var(--accent); box-shadow: 0 0 0 3px rgba(255,94,26,0.25); animation: pulse 1s infinite; }
+.pill.ok { border-color: #1E6B4C; color: #8FE3BC; } .pill.ok i { background: var(--ok); }
+.pill.err { border-color: #7A2233; color: #FF9AAA; } .pill.err i { background: var(--err); }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(255,94,26,0); } }
+.mat { position: relative; min-height: 0; }
+.mat canvas { position: absolute; inset: 0; display: block; }
+.toast { position: absolute; left: 50%; top: 18px; transform: translate(-50%, -8px); background: #fff; color: var(--ink); border-radius: 12px; padding: 10px 16px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.35); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; display: flex; gap: 10px; align-items: center; max-width: 90%; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast .big { font: 700 18px/1 var(--f-display); color: var(--ok); }
+.hint { position: absolute; right: 12px; bottom: 10px; font: 500 11px/1 var(--f-mono); color: #5D6D8C; pointer-events: none; }
+.controls { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--pit-line); flex-wrap: wrap; }
+.run { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 10px; padding: 10px 18px; font: 700 15px/1 var(--f-display); letter-spacing: .03em; background: var(--accent); color: #fff; box-shadow: 0 3px 0 var(--accent-ink); text-transform: uppercase; }
+.run:hover { background: #FF6E32; }
+.run:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--accent-ink); }
+.run svg { width: 16px; height: 16px; }
+.run.stop { background: #fff; color: var(--ink); box-shadow: 0 3px 0 #AEB8C6; }
+.ghost { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--pit-line); background: var(--pit-2); color: #DDE4F2; padding: 8px 11px; border-radius: 9px; font-weight: 600; font-size: 13px; }
+.ghost:hover { border-color: #3A4C72; }
+.ghost svg { width: 15px; height: 15px; }
+.seg { display: inline-flex; border: 1px solid var(--pit-line); border-radius: 9px; overflow: hidden; background: var(--pit-2); }
+.seg button { border: 0; background: none; color: #9AA8C2; padding: 7px 10px; font: 600 12px/1 var(--f-mono); }
+.seg button[aria-pressed="true"] { background: #2B3B5E; color: #fff; }
+.seg-label { font: 600 10.5px/1 var(--f-body); letter-spacing: .07em; text-transform: uppercase; color: #6D7D9C; }
+.ctl-group { display: inline-flex; align-items: center; gap: 6px; }
+.telemetry { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 0 14px 14px; max-height: 34vh; min-height: 0; }
+.readouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; align-content: start; overflow: auto; }
+.ro { background: var(--pit-2); border: 1px solid var(--pit-line); border-radius: 9px; padding: 7px 9px; min-width: 0; }
+.ro .k { font: 600 10px/1 var(--f-body); letter-spacing: .07em; text-transform: uppercase; color: #6D7D9C; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro .v { font: 600 15px/1.1 var(--f-mono); color: #fff; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro .v small { font-size: 11px; color: #8796B3; font-weight: 500; }
+.dot { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #5B6A88; flex: none; }
+.dot.on { background: #fff; border-color: #fff; }
+.mbar { flex: 1; height: 6px; border-radius: 9px; background: #0B1323; position: relative; overflow: hidden; }
+.mbar span { position: absolute; top: 0; bottom: 0; left: 50%; background: var(--accent); }
+.console { background: #08101F; border: 1px solid var(--pit-line); border-radius: 9px; display: flex; flex-direction: column; min-height: 120px; min-width: 0; }
+.console header { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 6px 10px; border-bottom: 1px solid var(--pit-line); }
+.console header .seg-label { color: #8796B3; }
+.console header button { border: 0; background: none; color: #8796B3; font: 600 11px/1 var(--f-body); padding: 4px 6px; border-radius: 5px; }
+.console header button:hover { color: #fff; background: var(--pit-2); }
+#log { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--f-mono); color: #B9F3CF; overflow: auto; flex: 1; white-space: pre-wrap; word-break: break-word; max-height: 24vh; }
+#log .sys { color: #7D8CA9; } #log .err { color: #FF9AAA; } #log .okm { color: #8FE3BC; }
+
+/* ---------- Telemóvel ---------- */
+@media (max-width: 980px) {
+  .app { height: auto; min-height: 100%; }
+  .work { grid-template-columns: 1fr; }
+  .stage { order: -1; grid-template-rows: auto 300px auto auto; }
+  .bench { height: 78vh; border-right: 0; }
+  .telemetry { grid-template-columns: 1fr; max-height: none; }
+  .topbar { flex-wrap: wrap; gap: 10px; }
+  .spec { display: none; }
+  .code-area { grid-template-columns: 1fr; }
+  .ref { display: none; }
+  .wiring { grid-template-columns: 1fr; }
+  .blk-area.gen-on { grid-template-columns: 1fr; grid-template-rows: 1fr 40%; }
+  .blk-area.gen-on .gen { border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (max-width: 520px) {
+  .step { padding: 6px 9px 6px 6px; font-size: 13px; }
+  .brand small { display: none; }
+  .m-scroll { padding: 14px 14px 30px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="8" width="34" height="26" rx="7" fill="#14213D"/><rect x="0" y="14" width="4" height="12" rx="1.5" fill="#14213D"/><rect x="36" y="14" width="4" height="12" rx="1.5" fill="#14213D"/><circle cx="14" cy="20" r="5" fill="#FF5E1A"/><circle cx="26" cy="20" r="5" fill="#FF5E1A"/><circle cx="14" cy="20" r="2" fill="#fff"/><circle cx="26" cy="20" r="2" fill="#fff"/><path d="M20 8V3" stroke="#14213D" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="3" r="2.5" fill="#FF5E1A"/></svg>
+      <div><b>RoboLab</b><small>Oficina de robótica</small></div>
+    </div>
+    <nav class="steps" role="tablist" aria-label="Etapas">
+      <button class="step" role="tab" id="tab-montar" data-tab="montar" aria-selected="true"><span class="n">1</span>Montar</button>
+      <button class="step" role="tab" id="tab-blocos" data-tab="blocos" aria-selected="false"><span class="n">2</span>Blocos</button>
+      <button class="step" role="tab" id="tab-codigo" data-tab="codigo" aria-selected="false"><span class="n">3</span>Código</button>
+    </nav>
+    <div class="spec" id="spec"></div>
+  </header>
+
+  <main class="work">
+    <section class="bench">
+      <!-- MONTAR -->
+      <div class="panel on" id="p-montar" role="tabpanel" aria-labelledby="tab-montar">
+        <div class="m-scroll">
+          <section class="m-sec">
+            <header><span class="idx">01</span><h2>Placa controladora</h2><p>O cérebro do robô. A placa define os pinos disponíveis e a linguagem em que vais programar.</p></header>
+            <div class="cards" id="boards"></div>
+          </section>
+          <section class="m-sec">
+            <header><span class="idx">02</span><h2>Chassi</h2><p>A estrutura e a forma de locomoção mudam a velocidade, a tração e a precisão das curvas.</p></header>
+            <div class="cards" id="chassis"></div>
+          </section>
+          <section class="m-sec">
+            <header><span class="idx">03</span><h2>Motores de tração</h2><p>Com encoder, o robô sabe quanto andou. Sem encoder, estima pelo tempo e acumula erros.</p></header>
+            <div class="cards" id="motors"></div>
+          </section>
+          <section class="m-sec">
+            <header><span class="idx">04</span><h2>Sensores</h2><p>Tudo o que o robô consegue perceber do mundo. Cada sensor acrescenta blocos e funções novas.</p></header>
+            <div class="cards" id="sensors"></div>
+          </section>
+          <section class="m-sec">
+            <header><span class="idx">05</span><h2>Atuadores e saídas</h2><p>Para o robô se mexer, sinalizar e comunicar.</p></header>
+            <div class="cards" id="outputs"></div>
+          </section>
+          <section class="m-sec">
+            <header><span class="idx">06</span><h2>Ligações</h2><p>Os pinos atribuídos a cada componente nesta placa. Usa esta tabela para montar o robô real.</p></header>
+            <div class="wiring">
+              <div class="wbox">
+                <div class="meter"><span class="label">Pinos</span><div class="bar" id="pinbar"><span></span></div><b id="pincount">0 / 0</b></div>
+                <table class="pins"><thead><tr><th>Componente</th><th>Sinal</th><th>Pino</th></tr></thead><tbody id="pintable"></tbody></table>
+              </div>
+              <div class="wbox"><span class="label">Notas da placa</span><ul class="notes" id="notes" style="margin-top:10px"></ul></div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- BLOCOS -->
+      <div class="panel" id="p-blocos" role="tabpanel" aria-labelledby="tab-blocos">
+        <div class="toolbar">
+          <label class="label" for="examples">Exemplo</label>
+          <select class="sel" id="examples"><option value="">Escolher…</option></select>
+          <span class="grow"></span>
+          <button class="btn" id="btn-zoom-out" type="button" aria-label="Afastar" title="Afastar">−</button>
+          <button class="btn" id="btn-zoom-in" type="button" aria-label="Aproximar" title="Aproximar">+</button>
+          <button class="btn" id="btn-tidy" type="button">Arrumar</button>
+          <button class="btn" id="btn-clear-blocks" type="button">Limpar</button>
+          <button class="btn dark" id="btn-gen" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Código gerado</button>
+        </div>
+        <div class="blk-area gen-on" id="blk-area">
+          <div id="blockly"></div>
+          <aside class="gen" aria-label="Código gerado pelos blocos">
+            <header><span class="label" id="gen-lang">C++</span><button class="gen-btn" id="btn-to-code" type="button">Editar como código</button></header>
+            <pre id="gen-code"></pre>
+          </aside>
+        </div>
+      </div>
+
+      <!-- CÓDIGO -->
+      <div class="panel" id="p-codigo" role="tabpanel" aria-labelledby="tab-codigo">
+        <div class="toolbar">
+          <span class="lang-tag" id="code-lang">C++ <em>robo.ino</em></span>
+          <span class="grow"></span>
+          <button class="btn" id="btn-from-blocks" type="button">Trazer dos blocos</button>
+          <button class="btn" id="btn-copy" type="button">Copiar</button>
+          <button class="btn" id="btn-ref" type="button" aria-pressed="true">Referência</button>
+        </div>
+        <div class="code-area" id="code-area">
+          <div class="editor" id="editor">
+            <div class="gutter" id="gutter">1</div>
+            <div class="ed-wrap"><pre id="code-hl" aria-hidden="true"></pre><textarea id="code" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Editor de código"></textarea></div>
+          </div>
+          <aside class="ref" id="ref" aria-label="Referência da biblioteca"></aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- PALCO -->
+    <section class="stage" aria-label="Palco de simulação">
+      <div class="stage-head">
+        <select class="sel" id="scenario" aria-label="Pista"></select>
+        <div class="mission" id="mission"></div>
+        <span class="pill" id="status"><i></i>Pronto</span>
+      </div>
+      <div class="mat">
+        <canvas id="mat" aria-label="Tapete de competição com o robô"></canvas>
+        <div class="toast" id="toast" role="status"></div>
+        <span class="hint" id="hint">Setas do teclado: conduzir à mão</span>
+      </div>
+      <div class="controls">
+        <button class="run" id="btn-run" type="button"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span>Executar</span></button>
+        <button class="ghost" id="btn-reset" type="button" title="Voltar à posição inicial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v5h5"/></svg>Repor</button>
+        <div class="ctl-group"><span class="seg-label">Programa</span>
+          <div class="seg" id="seg-src"><button type="button" data-v="blocos" aria-pressed="true">Blocos</button><button type="button" data-v="codigo" aria-pressed="false">Código</button></div>
+        </div>
+        <div class="ctl-group"><span class="seg-label">Ritmo</span>
+          <div class="seg" id="seg-speed"><button type="button" data-v="0.5" aria-pressed="false">½×</button><button type="button" data-v="1" aria-pressed="true">1×</button><button type="button" data-v="2" aria-pressed="false">2×</button><button type="button" data-v="4" aria-pressed="false">4×</button></div>
+        </div>
+        <button class="ghost" id="btn-trail" type="button" aria-pressed="true">Rasto</button>
+      </div>
+      <div class="telemetry">
+        <div class="readouts" id="readouts"></div>
+        <div class="console">
+          <header><span class="seg-label">Monitor série</span><button type="button" id="btn-clear-log">Limpar</button></header>
+          <pre id="log"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://unpkg.com/blockly@11.2.1/blockly.min.js"></script>
+<script src="https://unpkg.com/blockly@11.2.1/msg/pt.js"></script>
+<script>
+/* RoboLab: catálogo de placas, chassis, motores, componentes e pistas */
+'use strict';
+
+const BOARDS = {
+  arduino: {
+    nome: 'Arduino Uno R3', curto: 'Arduino Uno', chip: 'ATmega328P · 16 MHz', tensao: '5 V',
+    lang: 'cpp', langNome: 'C++ (Arduino)', ext: '.ino', cor: '#0B7C84',
+    analog: ['A0', 'A1', 'A2', 'A3', 'A4', 'A5'], analogDig: true,
+    pwm: ['D3', 'D5', 'D6', 'D9', 'D10', 'D11'], pwmAny: false,
+    dig: ['D2', 'D4', 'D7', 'D8', 'D12', 'D13'],
+    i2c: ['A4', 'A5'], motoresI2C: false, builtin: [],
+    destaque: ['14 pinos digitais (6 com PWM)', '6 entradas analógicas', 'Lógica a 5 V'],
+    notas: [
+      'Os motores DC ligam a um driver L298N. Os pinos da placa não dão corrente suficiente para um motor.',
+      'D0 e D1 ficam livres porque são usados pela porta série (Monitor série).',
+      'A4 e A5 são também o barramento I2C: quando há componentes I2C deixam de servir como entradas analógicas.'
+    ]
+  },
+  microbit: {
+    nome: 'BBC micro:bit V2', curto: 'micro:bit', chip: 'nRF52833 · 64 MHz', tensao: '3,3 V',
+    lang: 'py', pyFlavor: 'microbit', langNome: 'MicroPython', ext: '.py', cor: '#1C1C1C',
+    analog: ['P0', 'P1', 'P2'], analogDig: true,
+    pwm: ['P8', 'P12', 'P13', 'P14', 'P15', 'P16'], pwmAny: true,
+    dig: [],
+    i2c: ['P19', 'P20'], motoresI2C: true, builtin: ['giro', 'buzzer', 'ecra'],
+    destaque: ['Matriz de LED 5×5 e botões A/B', 'Bússola, acelerómetro e altifalante', 'Lógica a 3,3 V'],
+    notas: [
+      'Os motores ligam através de uma placa de expansão com driver de motores, controlada por I2C (P19 e P20).',
+      'Os pinos P3, P4, P6, P7, P9 e P10 são partilhados com a matriz de LED, por isso não são usados aqui.',
+      'Sensores de 5 V, como o HC-SR04, precisam de um divisor de tensão no pino ECHO.'
+    ]
+  },
+  esp32: {
+    nome: 'ESP32 DevKit V1', curto: 'ESP32', chip: 'Xtensa dual-core · 240 MHz', tensao: '3,3 V',
+    lang: 'cpp', langNome: 'C++ (Arduino core)', ext: '.ino', cor: '#2B2D42',
+    analog: ['GPIO36', 'GPIO39', 'GPIO34', 'GPIO35', 'GPIO32', 'GPIO33'], analogDig: false,
+    pwm: ['GPIO25', 'GPIO26', 'GPIO27', 'GPIO14', 'GPIO12', 'GPIO13', 'GPIO4', 'GPIO16', 'GPIO17', 'GPIO5', 'GPIO18', 'GPIO19', 'GPIO23', 'GPIO15'], pwmAny: false,
+    dig: [],
+    i2c: ['GPIO21', 'GPIO22'], motoresI2C: false, builtin: [],
+    destaque: ['Wi-Fi e Bluetooth integrados', 'PWM em quase todos os pinos', 'Lógica a 3,3 V'],
+    notas: [
+      'As entradas analógicas usam o ADC1 (GPIO32 a GPIO39) porque o ADC2 deixa de funcionar com o Wi-Fi ligado.',
+      'GPIO34 a GPIO39 são só de entrada: servem para sensores, nunca para motores ou LED.',
+      'O HC-SR04 trabalha a 5 V: usa um divisor de tensão no pino ECHO para proteger a entrada de 3,3 V.'
+    ]
+  },
+  rpi: {
+    nome: 'Raspberry Pi 5', curto: 'Raspberry Pi', chip: 'BCM2712 · 2,4 GHz · Linux', tensao: '3,3 V',
+    lang: 'py', pyFlavor: 'rpi', langNome: 'Python 3 (gpiozero)', ext: '.py', cor: '#1E7B4F',
+    analog: [], analogDig: false, adc: true,
+    pwm: ['GPIO12', 'GPIO13', 'GPIO18', 'GPIO19'], pwmAny: true,
+    dig: ['GPIO17', 'GPIO27', 'GPIO22', 'GPIO23', 'GPIO24', 'GPIO25', 'GPIO5', 'GPIO6', 'GPIO16', 'GPIO26', 'GPIO20', 'GPIO21', 'GPIO4'],
+    i2c: ['GPIO2', 'GPIO3'], motoresI2C: false, builtin: [],
+    destaque: ['Computador completo com Linux', '26 GPIO, sem entradas analógicas', 'Lógica a 3,3 V'],
+    notas: [
+      'O Raspberry Pi não tem entradas analógicas: sensores analógicos ligam a um conversor MCP3008 pelo barramento SPI.',
+      'Os pinos GPIO toleram apenas 3,3 V. O ECHO do HC-SR04 precisa de um divisor de tensão.',
+      'A placa precisa de uma alimentação estável (5 V, 5 A); os motores devem ter bateria própria.'
+    ]
+  }
+};
+
+const CHASSIS = {
+  d2: { nome: '2 rodas + roda livre', desc: 'Leve e ágil. Roda sobre si mesmo com precisão.', max: 40, track: 13, skid: 1.0, L: 17, W: 14, motores: 2 },
+  d4: { nome: '4 rodas (4×4)', desc: 'Mais tração, mas as rodas derrapam nas curvas.', max: 36, track: 15, skid: 0.8, L: 19, W: 16, motores: 4 },
+  lag: { nome: 'Lagartas', desc: 'Lento e robusto. Ideal para terrenos difíceis.', max: 26, track: 15, skid: 0.9, L: 19, W: 16, motores: 2 }
+};
+
+const MOTORS = {
+  tt: { nome: 'Motor DC TT com redutor', desc: 'Sem sensor de rotação: as distâncias são estimadas pelo tempo e o robô desvia-se um pouco.', enc: false },
+  n20: { nome: 'Motor N20 com encoder', desc: 'Conta as rotações da roda: distâncias rigorosas e trajetória reta.', enc: true }
+};
+
+const COMPS = [
+  { id: 'ultrassons', grupo: 'sensor', nome: 'Ultrassons HC-SR04', desc: 'Mede a distância a obstáculos (2 a 400 cm).', pinos: [['TRIG', 'dig'], ['ECHO', 'dig']], v5: true, fn: 'distância' },
+  { id: 'linha', grupo: 'sensor', nome: 'Seguidor de linha', desc: 'Dois sensores de infravermelhos TCRT5000 que distinguem preto de branco.', pinos: [['ESQ', 'dig'], ['DIR', 'dig']], fn: 'linha' },
+  { id: 'cor', grupo: 'sensor', nome: 'Sensor de cor TCS34725', desc: 'Reconhece a cor do chão por baixo do robô.', i2c: '0x29', fn: 'cor' },
+  { id: 'toque', grupo: 'sensor', nome: 'Para-choques', desc: 'Microinterruptor que deteta quando o robô bate.', pinos: [['SINAL', 'dig']], fn: 'toque' },
+  { id: 'luz', grupo: 'sensor', nome: 'Sensor de luz LDR', desc: 'Mede a intensidade da luz (0 a 100).', pinos: [['SINAL', 'analog']], fn: 'luz' },
+  { id: 'giro', grupo: 'sensor', nome: 'Giroscópio MPU-6050', desc: 'Mede a rotação do robô. Torna as viragens rigorosas.', i2c: '0x68', fn: 'direção', builtinNome: 'Bússola integrada' },
+  { id: 'servo', grupo: 'motor', nome: 'Servo SG90', desc: 'Roda a cabeça com o sensor de ultrassons (0 a 180°).', pinos: [['SINAL', 'dig']], fn: 'servo' },
+  { id: 'led', grupo: 'saida', nome: 'LED RGB', desc: 'Acende em várias cores para mostrar estados.', pinos: [['R', 'pwm'], ['G', 'pwm'], ['B', 'pwm']], fn: 'LED' },
+  { id: 'buzzer', grupo: 'saida', nome: 'Buzzer piezo', desc: 'Toca sons e notas musicais.', pinos: [['SINAL', 'dig']], fn: 'som', builtinNome: 'Altifalante integrado' },
+  { id: 'ecra', grupo: 'saida', nome: 'Ecrã OLED 128×64', desc: 'Mostra texto e valores.', i2c: '0x3C', fn: 'ecrã', builtinNome: 'Matriz de LED 5×5' }
+];
+const COMP = Object.fromEntries(COMPS.map(c => [c.id, c]));
+
+/* Ícones de traço (24×24) */
+const ICONS = {
+  ultrassons: '<circle cx="7.5" cy="12" r="4.5"/><circle cx="16.5" cy="12" r="4.5"/><circle cx="7.5" cy="12" r="1.5"/><circle cx="16.5" cy="12" r="1.5"/>',
+  linha: '<path d="M3 20c4-2 6-14 10-14s5 8 8 8"/><circle cx="8" cy="5" r="2"/><circle cx="16" cy="5" r="2"/>',
+  cor: '<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/>',
+  toque: '<path d="M4 15h16M6 15v4M18 15v4M9 15l3-8 3 8"/>',
+  luz: '<circle cx="12" cy="11" r="4"/><path d="M12 2v2M12 18v2M3 11h2M19 11h2M5.6 4.6l1.4 1.4M17 16l1.4 1.4M5.6 17.4L7 16M17 6l1.4-1.4"/>',
+  giro: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 3 0 0 1 0 16M12 4a8 3 0 0 0 0 16"/><path d="M4 12h16"/>',
+  servo: '<rect x="4" y="8" width="12" height="9" rx="1.5"/><circle cx="12" cy="12.5" r="1.6"/><path d="M12 12.5L20 6"/>',
+  led: '<path d="M8 13a4 4 0 1 1 8 0v4H8z"/><path d="M10 17v4M14 17v4M12 3v2M5 6l1.5 1.5M19 6l-1.5 1.5"/>',
+  buzzer: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
+  ecra: '<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M7 9h6M7 12.5h10M9 21h6"/>'
+};
+
+const COLORS = {
+  vermelho: '#E23B3B', verde: '#1FA46A', azul: '#2C6BE0', amarelo: '#F2C230', preto: '#151515', branco: '#FFFFFF'
+};
+
+/* Pistas: mundo em centímetros (200 × 130) */
+const WORLD = { W: 200, H: 130 };
+
+const SCENARIOS = {
+  livre: {
+    nome: 'Arena livre',
+    missao: 'Chega à zona alvo sem bater nos obstáculos.',
+    start: { x: 22, y: 65, th: 0 },
+    walls: [
+      { x: 60, y: 40, w: 14, h: 30 }, { x: 105, y: 0, w: 12, h: 38 }, { x: 105, y: 88, w: 12, h: 42 }, { x: 145, y: 58, w: 20, h: 14 }
+    ],
+    lamp: { x: 182, y: 18 },
+    goal: { x: 180, y: 108, r: 11 },
+    floor: null
+  },
+  linha: {
+    nome: 'Seguidor de linha',
+    missao: 'Dá uma volta completa à pista seguindo a linha preta.',
+    start: { x: 92, y: 104, th: 0 },
+    walls: [],
+    laps: true,
+    floor: 'linha'
+  },
+  labirinto: {
+    nome: 'Labirinto',
+    missao: 'Atravessa o labirinto até à zona verde.',
+    start: { x: 25, y: 18, th: Math.PI / 2 },
+    walls: [
+      { x: 49, y: 0, w: 3, h: 92 }, { x: 99, y: 38, w: 3, h: 92 }, { x: 149, y: 0, w: 3, h: 92 }
+    ],
+    goal: { x: 175, y: 18, r: 13, cor: true },
+    floor: null
+  },
+  cores: {
+    nome: 'Zonas de cor',
+    missao: 'Pára o robô em cima da zona vermelha.',
+    start: { x: 18, y: 65, th: 0 },
+    walls: [],
+    floor: 'cores',
+    targetColor: 'vermelho'
+  },
+  estacionar: {
+    nome: 'Estacionar',
+    missao: 'Pára o robô quando o sensor de ultrassons estiver entre 8 e 12 cm da parede.',
+    start: { x: 30, y: 65, th: 0 },
+    walls: [{ x: 178, y: 20, w: 8, h: 90 }],
+    floor: 'garagem',
+    park: { min: 8, max: 12 }
+  }
+};
+
+const DEFAULT_CONFIG = {
+  board: 'arduino', chassis: 'd2', motor: 'tt',
+  comps: ['ultrassons', 'linha', 'led', 'buzzer'],
+  scenario: 'livre'
+};
+
+</script>
+<script>
+/* RoboLab: tradução de C++ (Arduino) e Python para o motor do simulador */
+'use strict';
+
+const BLOCKING_RE = /(^|[^\w.$])(robo\.(?:avancar|recuar|virarEsquerda|virarDireita|esperar|esperarSeg)\s*\()/g;
+
+class CodeError extends Error {
+  constructor(msg, line) { super(msg); this.linha = line; }
+}
+
+function protectStrings(src, style) {
+  const strings = []; let out = ''; let i = 0;
+  while (i < src.length) {
+    const c = src[i], n = src[i + 1];
+    if (style === 'c' && c === '/' && n === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    if (style === 'c' && c === '/' && n === '*') {
+      i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) { if (src[i] === '\n') out += '\n'; i++; }
+      i += 2; continue;
+    }
+    if (style === 'py' && c === '#') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < src.length && src[j] !== c && src[j] !== '\n') { if (src[j] === '\\') j++; j++; }
+      strings.push(src.slice(i, j + 1).replace(/\n$/, '"'));
+      out += '__S' + (strings.length - 1) + '__';
+      i = j + 1; continue;
+    }
+    out += c; i++;
+  }
+  return { code: out, strings };
+}
+const restoreStrings = (code, strings) => code.replace(/__S(\d+)__/g, (m, k) => strings[+k]);
+
+function roboCamel(code) {
+  return code.replace(/\brobo\.([a-z][a-z0-9_]*)/g, (m, n) => 'robo.' + n.replace(/_([a-z])/g, (x, c) => c.toUpperCase()));
+}
+
+function addAwaits(js, fns) {
+  js = js.replace(BLOCKING_RE, '$1await $2');
+  for (const f of fns) {
+    js = js.replace(new RegExp('(^|[^\\w.$])(' + f + '\\s*\\()', 'g'), '$1await $2');
+  }
+  return js.replace(/__DEF__/g, '');
+}
+
+function injectTicks(js) {
+  const re = /\b(while|for)\s*\(/g;
+  let out = '', i = 0, m;
+  while (true) {
+    re.lastIndex = i; m = re.exec(js); if (!m) break;
+    let j = m.index + m[0].length - 1, depth = 0;
+    for (; j < js.length; j++) {
+      if (js[j] === '(') depth++;
+      else if (js[j] === ')') { depth--; if (depth === 0) break; }
+    }
+    let k = j + 1;
+    while (k < js.length && /\s/.test(js[k])) k++;
+    out += js.slice(i, k);
+    if (js[k] === '{') { out += '{ await robo.__tick();'; i = k + 1; }
+    else if (js[k] === ';') { out += ';'; i = k + 1; }
+    else {
+      let d = 0, e = k;
+      for (; e < js.length; e++) {
+        const ch = js[e];
+        if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch)) d--; else if (ch === ';' && d === 0) break;
+      }
+      out += '{ await robo.__tick(); ' + js.slice(k, e + 1) + ' }'; i = e + 1;
+    }
+  }
+  out += js.slice(i);
+  return out.replace(/\bdo\s*\{/g, 'do { await robo.__tick();');
+}
+
+const CPP_TYPES = '(?:unsigned\\s+long|unsigned\\s+int|unsigned\\s+char|void|int|float|double|bool|boolean|long|String|byte|char|uint8_t|int16_t|uint16_t|int32_t|uint32_t|size_t)';
+
+function cppToJs(src) {
+  let { code, strings } = protectStrings(src, 'c');
+  code = code.replace(/^[ \t]*#include.*$/gm, '');
+  code = code.replace(/^[ \t]*#define\s+(\w+)\s+(.+)$/gm, 'const $1 = $2;');
+  code = code.replace(/^[ \t]*RoboLab\s+robo\s*;/gm, '');
+  const fns = [];
+  code = code.replace(new RegExp('\\b' + CPP_TYPES + '\\s+(\\w+)\\s*\\(([^)]*)\\)\\s*\\{', 'g'), (m, name, params) => {
+    fns.push(name);
+    const p = params.trim();
+    const ps = (p === '' || p === 'void') ? '' : p.split(',').map(x => x.trim().split(/[\s*&]+/).pop()).join(', ');
+    return 'async function __DEF__' + name + '(' + ps + ') {';
+  });
+  code = code.replace(new RegExp('\\b' + CPP_TYPES + '\\s+\\w+\\s*\\([^)]*\\)\\s*;', 'g'), '');
+  code = code.replace(/\((?:int|float|long|double|byte)\)\s*/g, '');
+  code = code.replace(new RegExp('\\b(?:const\\s+|static\\s+|volatile\\s+)*' + CPP_TYPES + '\\s*\\*?\\s+(?=[A-Za-z_])', 'g'), 'let ');
+  code = code.replace(/let\s+(\w+)\s*\[\s*\w*\s*\]\s*=\s*\{([^}]*)\}/g, 'let $1 = [$2]');
+  code = code.replace(/let\s+(\w+)\s*\[\s*(\w+)\s*\]\s*;/g, 'let $1 = new Array($2).fill(0);');
+  code = code.replace(/Serial\d?\.begin\s*\([^)]*\)\s*;?/g, '');
+  code = code.replace(/Serial\d?\.println\s*\(/g, 'robo.escrever(');
+  code = code.replace(/Serial\d?\.print\s*\(/g, 'robo.escreverSem(');
+  code = code.replace(/\bdelayMicroseconds\s*\(/g, 'robo.esperar(0.001*');
+  code = code.replace(/\bdelay\s*\(/g, 'robo.esperar(');
+  code = code.replace(/\bmillis\s*\(\s*\)/g, 'robo.tempo()');
+  code = code.replace(/\bnoTone\s*\([^)]*\)\s*;?/g, '');
+  code = code.replace(/\btone\s*\(\s*\w+\s*,/g, 'robo.som(');
+  code = code.replace(/\brandomSeed\s*\([^)]*\)\s*;?/g, '');
+  code = code.replace(/(^|[^\w.])random\s*\(/g, '$1robo.aleatorio(');
+  code = code.replace(/\bpinMode\s*\([^)]*\)\s*;?/g, '');
+  code = roboCamel(code);
+  code = injectTicks(code);
+  code = addAwaits(code, fns);
+  code = restoreStrings(code, strings);
+  return code + `
+;if (typeof setup === 'function') await setup();
+if (typeof loop === 'function') { while (true) { await loop(); await robo.__tick(true); } }`;
+}
+
+function splitArgs(s) {
+  const out = []; let d = 0, cur = '';
+  for (const ch of s) {
+    if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch)) d--;
+    if (ch === ',' && d === 0) { out.push(cur); cur = ''; } else cur += ch;
+  }
+  if (cur.trim() !== '') out.push(cur);
+  return out.map(x => x.trim());
+}
+
+function pyExpr(e) {
+  return e
+    .replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/\bNone\b/g, 'null')
+    .replace(/\bnot\s+/g, '!').replace(/\band\b/g, '&&').replace(/\bor\b/g, '||')
+    .replace(/([\w.]+(?:\([^()]*\))?|\))\s*\/\/\s*([\w.]+(?:\([^()]*\))?)/g, 'Math.floor($1 / $2)')
+    .replace(/\/\//g, '/')
+    .replace(/\btime\.sleep\s*\(/g, 'robo.esperarSeg(')
+    .replace(/\btime\.(?:time|monotonic)\s*\(\s*\)/g, '(robo.tempo() / 1000)')
+    .replace(/(^|[^\w.])sleep\s*\(/g, '$1robo.esperar(')
+    .replace(/\brunning_time\s*\(\s*\)/g, 'robo.tempo()')
+    .replace(/\bdisplay\.(?:scroll|show)\s*\(/g, 'robo.mostrar(')
+    .replace(/\bdisplay\.clear\s*\(\s*\)/g, 'robo.mostrar("")')
+    .replace(/\bmusic\.pitch\s*\(/g, 'robo.som(')
+    .replace(/\bcompass\.heading\s*\(\s*\)/g, 'robo.direcao()')
+    .replace(/\brandom\.randint\s*\(/g, 'robo.aleatorioIncl(')
+    .replace(/\brandom\.random\s*\(\s*\)/g, 'Math.random()')
+    .replace(/(^|[^\w.])print\s*\(/g, '$1robo.escrever(')
+    .replace(/(^|[^\w.])str\s*\(/g, '$1String(')
+    .replace(/(^|[^\w.])int\s*\(/g, '$1__int(')
+    .replace(/(^|[^\w.])float\s*\(/g, '$1Number(')
+    .replace(/(^|[^\w.])abs\s*\(/g, '$1Math.abs(')
+    .replace(/(^|[^\w.])round\s*\(/g, '$1Math.round(')
+    .replace(/(^|[^\w.])min\s*\(/g, '$1Math.min(')
+    .replace(/(^|[^\w.])max\s*\(/g, '$1Math.max(')
+    .replace(/(^|[^\w.])len\s*\(/g, '$1__len(');
+}
+
+function pyToJs(src) {
+  const { code, strings } = protectStrings(src, 'py');
+  const lines = code.split('\n');
+  const out = [], stack = [0], names = new Set(), fns = [];
+  let pending = false, pendingLine = 0;
+  for (let n = 0; n < lines.length; n++) {
+    const raw = lines[n].replace(/\t/g, '    ').replace(/\s+$/, '');
+    if (raw.trim() === '') { out.push(''); continue; }
+    const ind = raw.match(/^ */)[0].length;
+    const s = raw.trim();
+    let prefix = '';
+    if (pending) {
+      if (ind <= stack[stack.length - 1]) throw new CodeError('Esta linha devia estar indentada, porque a linha ' + (pendingLine + 1) + ' termina com «:»', n + 1);
+      stack.push(ind); pending = false;
+    }
+    while (ind < stack[stack.length - 1]) { stack.pop(); prefix += '} '; }
+    if (ind !== stack[stack.length - 1]) throw new CodeError('A indentação não coincide com nenhum bloco anterior.', n + 1);
+    let m, js;
+    const open = () => { pending = true; pendingLine = n; };
+    if (/^(import|from)\s/.test(s) || /^global\s/.test(s)) js = '';
+    else if (s === 'pass') js = ';';
+    else if ((m = s.match(/^def\s+(\w+)\s*\((.*)\)\s*:$/))) { fns.push(m[1]); js = 'async function __DEF__' + m[1] + '(' + m[2] + ') {'; open(); }
+    else if ((m = s.match(/^if\s+(.*):$/))) { js = 'if (' + pyExpr(m[1]) + ') {'; open(); }
+    else if ((m = s.match(/^elif\s+(.*):$/))) { js = 'else if (' + pyExpr(m[1]) + ') {'; open(); }
+    else if (/^else\s*:$/.test(s)) { js = 'else {'; open(); }
+    else if ((m = s.match(/^while\s+(.*):$/))) { js = 'while (' + pyExpr(m[1]) + ') { await robo.__tick();'; open(); }
+    else if ((m = s.match(/^for\s+(\w+)\s+in\s+range\s*\((.*)\)\s*:$/))) {
+      const a = splitArgs(m[2]).map(pyExpr);
+      const [st, en, stp] = a.length === 1 ? ['0', a[0], '1'] : a.length === 2 ? [a[0], a[1], '1'] : a;
+      const neg = /^\s*-/.test(stp);
+      js = `for (let ${m[1]} = ${st}; ${m[1]} ${neg ? '>' : '<'} ${en}; ${m[1]} += ${stp}) { await robo.__tick();`; open();
+    }
+    else if ((m = s.match(/^for\s+(\w+)\s+in\s+(.*):$/))) { js = `for (let ${m[1]} of ${pyExpr(m[2])}) { await robo.__tick();`; open(); }
+    else if ((m = s.match(/^([A-Za-z_]\w*)\s*(\+=|-=|\*=|\/=|=)(?!=)\s*(.*)$/))) {
+      if (m[2] === '=') names.add(m[1]);
+      js = m[1] + ' ' + m[2] + ' ' + pyExpr(m[3]) + ';';
+    }
+    else if (/^(break|continue)$/.test(s)) js = s + ';';
+    else if ((m = s.match(/^return\b(.*)$/))) js = 'return ' + pyExpr(m[1]) + ';';
+    else if (s.endsWith(':')) throw new CodeError('Instrução não reconhecida: ' + s, n + 1);
+    else js = pyExpr(s) + ';';
+    out.push(' '.repeat(ind) + prefix + js);
+  }
+  if (pending) throw new CodeError('O bloco depois de ":" está vazio. Usa pass se não quiseres instruções.', pendingLine + 1);
+  out.push('}'.repeat(stack.length - 1));
+  fns.forEach(f => names.delete(f));
+  let js = (names.size ? 'let ' + [...names].join(', ') + ';' : '') + out.join('\n');
+  js = roboCamel(js);
+  js = addAwaits(js, fns);
+  return restoreStrings(js, strings);
+}
+
+const PRELUDE = `const abs = Math.abs, min = Math.min, max = Math.max, sqrt = Math.sqrt, pow = Math.pow, PI = Math.PI, HIGH = 1, LOW = 0;
+const constrain = (v, a, b) => Math.min(Math.max(v, a), b);
+const map = (v, a, b, c, d) => (v - a) * (d - c) / (b - a) + c;
+const __int = (x) => Math.trunc(Number(x)), __len = (x) => x.length;
+`;
+
+function compileProgram(src, lang) {
+  const body = lang === 'cpp' ? cppToJs(src) : pyToJs(src);
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  try {
+    return new AsyncFunction('robo', PRELUDE + 'return (async () => {\n' + body + '\n})();');
+  } catch (e) {
+    throw new CodeError('Erro de sintaxe: ' + traduzErro(e.message) + '. Verifica parênteses, chavetas e pontos e vírgulas.', null);
+  }
+}
+
+function traduzErro(msg) {
+  let m;
+  if ((m = msg.match(/^(\w+) is not defined/))) return '«' + m[1] + '» não existe. Confirma o nome ou usa as funções da biblioteca robo';
+  if ((m = msg.match(/Unexpected token '?(.+?)'?$/))) return 'símbolo inesperado «' + m[1] + '»';
+  if (/Unexpected end of input/.test(msg)) return 'o código termina antes do tempo (falta fechar uma chaveta ou parêntese)';
+  if ((m = msg.match(/(\S+) is not a function/))) return '«' + m[1] + '» não é uma função';
+  if (/Unexpected identifier/.test(msg)) return 'nome inesperado (falta um operador ou ponto e vírgula?)';
+  return msg;
+}
+
+/* Realce de sintaxe */
+const HL_RE = {
+  cpp: /(\/\/.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(#\w+)|\b(\d+(?:\.\d+)?)\b|\b(void|int|float|double|bool|boolean|long|unsigned|char|byte|String|const|if|else|while|for|do|return|break|continue|true|false|HIGH|LOW|static|switch|case|default)\b|\b(robo|Serial)\b|\b([A-Za-z_]\w*)(?=\s*\()/g,
+  py: /(#.*)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(@\w+)|\b(\d+(?:\.\d+)?)\b|\b(def|if|elif|else|while|for|in|range|return|break|continue|pass|import|from|as|global|True|False|None|and|or|not|is|lambda)\b|\b(robo|display|music|time|random)\b|\b([A-Za-z_]\w*)(?=\s*\()/g
+};
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function highlight(code, lang) {
+  const re = HL_RE[lang]; re.lastIndex = 0;
+  let out = '', last = 0, m;
+  const cls = ['', 'c', 's', 'p', 'n', 'k', 'o', 'f'];
+  while ((m = re.exec(code))) {
+    if (m[0] === '') { re.lastIndex++; continue; }
+    out += esc(code.slice(last, m.index));
+    const g = m.findIndex((x, i) => i > 0 && x !== undefined);
+    out += '<span class="t-' + cls[g] + '">' + esc(m[0]) + '</span>';
+    last = m.index + m[0].length;
+  }
+  return out + esc(code.slice(last));
+}
+
+</script>
+<script>
+/* RoboLab: simulador físico, sensores, desenho do palco e execução dos programas */
+'use strict';
+
+const DT = 0.01;           // passo da física (s)
+const PX = 5;              // resolução do chão (px por cm)
+const STOP = { stop: true };
+const DEG = Math.PI / 180;
+
+const Sim = {
+  cfg: null, scen: null, scenKey: null, pins: {},
+  t: 0, speed: 1, showTrail: true, trail: [],
+  waiters: [], running: false, runId: 0, tickCount: 0,
+  collisions: 0, mission: null, hl: null, onHighlight: null, onLog: null, onState: null,
+  floorCv: null, floorData: null, walls: [], flash: 0, keys: {}
+};
+
+const robot = {};
+
+function chassis() { return CHASSIS[Sim.cfg.chassis]; }
+function hasComp(id) {
+  const b = BOARDS[Sim.cfg.board];
+  return Sim.cfg.comps.includes(id) || b.builtin.includes(id);
+}
+
+/* ---------- Mundo ---------- */
+function buildFloor(key) {
+  const sc = SCENARIOS[key];
+  const cv = Sim.floorCv || (Sim.floorCv = document.createElement('canvas'));
+  cv.width = WORLD.W * PX; cv.height = WORLD.H * PX;
+  const g = cv.getContext('2d');
+  g.setTransform(PX, 0, 0, PX, 0, 0);
+  g.fillStyle = '#FAFBF8'; g.fillRect(0, 0, WORLD.W, WORLD.H);
+  // grelha de 10 cm
+  g.lineWidth = 0.12;
+  for (let x = 10; x < WORLD.W; x += 10) { g.strokeStyle = x % 50 ? '#E7EAEE' : '#D6DBE2'; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, WORLD.H); g.stroke(); }
+  for (let y = 10; y < WORLD.H; y += 10) { g.strokeStyle = y % 50 ? '#E7EAEE' : '#D6DBE2'; g.beginPath(); g.moveTo(0, y); g.lineTo(WORLD.W, y); g.stroke(); }
+
+  if (sc.floor === 'linha') {
+    g.strokeStyle = '#121212'; g.lineWidth = 2.4; g.lineJoin = 'round'; g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(65, 100); g.lineTo(135, 100);
+    g.arc(135, 65, 35, Math.PI / 2, -Math.PI / 2, true);
+    g.bezierCurveTo(115, 30, 112, 50, 100, 50);
+    g.bezierCurveTo(88, 50, 85, 30, 65, 30);
+    g.arc(65, 65, 35, -Math.PI / 2, Math.PI / 2, true);
+    g.stroke();
+    g.strokeStyle = '#1FA46A'; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(100, 95); g.lineTo(100, 98.2); g.moveTo(100, 101.8); g.lineTo(100, 105); g.stroke();
+  }
+  if (sc.floor === 'cores') {
+    const tiles = [['verde', 45], ['azul', 80], ['amarelo', 115], ['vermelho', 150]];
+    g.font = '600 3.4px "IBM Plex Sans", sans-serif'; g.textAlign = 'center';
+    for (const [c, x] of tiles) {
+      g.fillStyle = COLORS[c]; g.fillRect(x, 42, 22, 46);
+      g.fillStyle = '#7A8493'; g.fillText(c.toUpperCase(), x + 11, 96);
+    }
+    g.strokeStyle = '#C9CFD8'; g.lineWidth = 0.5; g.setLineDash([2, 2]);
+    g.beginPath(); g.moveTo(10, 65); g.lineTo(190, 65); g.stroke(); g.setLineDash([]);
+  }
+  if (sc.floor === 'garagem') {
+    g.fillStyle = 'rgba(31,164,106,0.16)'; g.fillRect(166, 40, 4, 50);
+    g.strokeStyle = '#F2C230'; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(110, 40); g.lineTo(178, 40); g.moveTo(110, 90); g.lineTo(178, 90); g.stroke();
+    g.fillStyle = '#7A8493'; g.font = '500 2.6px "JetBrains Mono", monospace'; g.textAlign = 'center';
+    for (let d = 10; d <= 60; d += 10) {
+      const x = 178 - d;
+      g.strokeStyle = '#B5BDC8'; g.lineWidth = 0.4;
+      g.beginPath(); g.moveTo(x, 90); g.lineTo(x, 93); g.stroke();
+      g.fillText(d + ' cm', x, 97);
+    }
+  }
+  if (key === 'labirinto') {
+    g.fillStyle = COLORS.verde; g.fillRect(155, 4, 40, 30);
+  }
+  Sim.floorData = g.getImageData(0, 0, cv.width, cv.height).data;
+}
+
+function floorRGB(x, y) {
+  const px = Math.max(0, Math.min(WORLD.W * PX - 1, Math.round(x * PX)));
+  const py = Math.max(0, Math.min(WORLD.H * PX - 1, Math.round(y * PX)));
+  const i = (py * WORLD.W * PX + px) * 4, d = Sim.floorData;
+  return [d[i], d[i + 1], d[i + 2]];
+}
+function classify([r, g, b]) {
+  let best = 'branco', bd = Infinity;
+  for (const [nome, hex] of Object.entries(COLORS)) {
+    const R = parseInt(hex.slice(1, 3), 16), G = parseInt(hex.slice(3, 5), 16), B = parseInt(hex.slice(5, 7), 16);
+    const d = (r - R) ** 2 + (g - G) ** 2 + (b - B) ** 2;
+    if (d < bd) { bd = d; best = nome; }
+  }
+  return best;
+}
+
+function setScenario(key) {
+  Sim.scenKey = key; Sim.scen = SCENARIOS[key];
+  const T = 20;
+  Sim.walls = [...Sim.scen.walls,
+    { x: -T, y: -T, w: WORLD.W + 2 * T, h: T }, { x: -T, y: WORLD.H, w: WORLD.W + 2 * T, h: T },
+    { x: -T, y: 0, w: T, h: WORLD.H }, { x: WORLD.W, y: 0, w: T, h: WORLD.H }];
+  buildFloor(key);
+  resetRobot();
+}
+
+function resetRobot() {
+  const s = Sim.scen.start, enc = MOTORS[Sim.cfg.motor].enc;
+  Object.assign(robot, {
+    x: s.x, y: s.y, th: s.th, th0: s.th, vl: 0, vr: 0, tl: 0, tr: 0, dl: 0, dr: 0,
+    speedPct: 50, servo: 90, servoVis: 90, led: null, display: '', bump: false, colliding: false, cmd: null,
+    fL: enc ? 1 : 1 - Math.random() * 0.015, fR: enc ? 1 : 1 - Math.random() * 0.015,
+    fG: enc ? 1 : 0.95 + Math.random() * 0.05, tread: 0
+  });
+  Sim.trail = [[robot.x, robot.y]];
+  Sim.collisions = 0;
+  Sim.mission = { done: false, t0: Sim.t, cp: 0, still: 0, msg: '' };
+}
+
+/* ---------- Geometria ---------- */
+function circleHitsRect(cx, cy, r, w) {
+  const nx = Math.max(w.x, Math.min(cx, w.x + w.w)), ny = Math.max(w.y, Math.min(cy, w.y + w.h));
+  return (cx - nx) ** 2 + (cy - ny) ** 2 < r * r ? [nx, ny] : null;
+}
+function rayRect(ox, oy, dx, dy, w) {
+  let t0 = -Infinity, t1 = Infinity;
+  for (const [o, d, lo, hi] of [[ox, dx, w.x, w.x + w.w], [oy, dy, w.y, w.y + w.h]]) {
+    if (Math.abs(d) < 1e-9) { if (o < lo || o > hi) return Infinity; }
+    else {
+      let a = (lo - o) / d, b = (hi - o) / d;
+      if (a > b) [a, b] = [b, a];
+      t0 = Math.max(t0, a); t1 = Math.min(t1, b);
+    }
+  }
+  if (t1 < t0 || t1 < 0) return Infinity;
+  return t0 >= 0 ? t0 : 0;
+}
+function castRay(ox, oy, a) {
+  const dx = Math.cos(a), dy = Math.sin(a);
+  let best = 400;
+  for (const w of Sim.walls) best = Math.min(best, rayRect(ox, oy, dx, dy, w));
+  return best;
+}
+function local(fx, fy) { // frente, lado (positivo = direita)
+  const c = Math.cos(robot.th), s = Math.sin(robot.th);
+  return [robot.x + c * fx - s * fy, robot.y + s * fx + c * fy];
+}
+function radius() { const c = chassis(); return Math.max(c.L, c.W) / 2 * 0.86; }
+
+/* ---------- Sensores ---------- */
+const Sensors = {
+  usOrigin() { return local(chassis().L / 2 - 1, 0); },
+  usAngle() { return robot.th - (robot.servo - 90) * DEG; },
+  distancia() {
+    const [ox, oy] = Sensors.usOrigin(), a = Sensors.usAngle();
+    const d = Math.min(castRay(ox, oy, a), castRay(ox, oy, a - 7 * DEG), castRay(ox, oy, a + 7 * DEG));
+    const v = d + (Math.random() - 0.5) * 0.6;
+    return Math.max(2, Math.min(400, Math.round(v * 10) / 10));
+  },
+  linha(lado) {
+    const [x, y] = local(chassis().L / 2 - 2, lado * 3);
+    const [r, g, b] = floorRGB(x, y);
+    return 0.3 * r + 0.59 * g + 0.11 * b < 90;
+  },
+  corPos() { return local(chassis().L / 2 - 4, 0); },
+  cor() { return classify(floorRGB(...Sensors.corPos())); },
+  luz() {
+    const L = Sim.scen.lamp;
+    if (!L) return Math.round(32 + Math.random() * 2);
+    const d = Math.hypot(robot.x - L.x, robot.y - L.y);
+    return Math.max(0, Math.min(100, Math.round(10 + 90 * Math.exp(-d / 55) + Math.random() * 1.5)));
+  },
+  direcao() {
+    let d = (robot.th - robot.th0) / DEG;
+    d = ((d % 360) + 360) % 360;
+    return Math.round(d);
+  }
+};
+
+/* ---------- Física ---------- */
+function physicsStep() {
+  const c = chassis(), k = 1 - Math.exp(-DT / 0.07);
+  robot.vl += (robot.tl * robot.fL * robot.fG - robot.vl) * k;
+  robot.vr += (robot.tr * robot.fR * robot.fG - robot.vr) * k;
+  const VL = robot.vl * c.max, VR = robot.vr * c.max;
+  const v = (VL + VR) / 2, w = (VL - VR) / c.track * c.skid;
+  robot.dl += VL * DT; robot.dr += VR * DT; robot.tread += v * DT;
+  const nth = robot.th + w * DT;
+  const nx = robot.x + Math.cos(nth) * v * DT, ny = robot.y + Math.sin(nth) * v * DT;
+  robot.th = nth;
+  let hit = null;
+  for (const wl of Sim.walls) { hit = circleHitsRect(nx, ny, radius(), wl); if (hit) break; }
+  if (hit) {
+    const ahead = Math.cos(robot.th) * (hit[0] - robot.x) + Math.sin(robot.th) * (hit[1] - robot.y);
+    robot.bump = ahead > 0;
+    if (!robot.colliding) { Sim.collisions++; Sim.flash = 1; }
+    robot.colliding = true;
+  } else {
+    robot.x = nx; robot.y = ny; robot.colliding = false; robot.bump = false;
+  }
+  robot.servoVis += (robot.servo - robot.servoVis) * Math.min(1, DT * 12);
+  const last = Sim.trail[Sim.trail.length - 1];
+  if (Math.hypot(robot.x - last[0], robot.y - last[1]) > 1.2) { Sim.trail.push([robot.x, robot.y]); if (Sim.trail.length > 1500) Sim.trail.shift(); }
+
+  // comando bloqueante em curso
+  const cmd = robot.cmd;
+  if (cmd && !cmd.done) {
+    let fim = false;
+    if (cmd.type === 'move') {
+      fim = cmd.enc ? (Math.abs(robot.dl - cmd.dl0) + Math.abs(robot.dr - cmd.dr0)) / 2 >= cmd.dist : Sim.t >= cmd.tEnd;
+    } else if (cmd.type === 'turn') {
+      if (cmd.gyro) fim = Math.abs(robot.th - cmd.th0) >= cmd.ang;
+      else if (cmd.enc) fim = (Math.abs(robot.dl - cmd.dl0) + Math.abs(robot.dr - cmd.dr0)) / 2 >= cmd.ang * c.track / 2;
+      else fim = Sim.t >= cmd.tEnd;
+    }
+    if (fim) { robot.tl = robot.tr = 0; robot.vl = robot.vr = 0; cmd.done = true; }
+  }
+  Sim.t += DT;
+  checkMission();
+}
+
+function checkMission() {
+  const m = Sim.mission, sc = Sim.scen;
+  if (!m || m.done) return;
+  const parado = Math.abs(robot.vl) < 0.02 && Math.abs(robot.vr) < 0.02;
+  m.still = parado ? m.still + DT : 0;
+  const moved = Sim.trail.length > 3;
+  let ok = false;
+  if (sc.goal) ok = Math.hypot(robot.x - sc.goal.x, robot.y - sc.goal.y) < sc.goal.r;
+  if (sc.laps) {
+    const cps = [[170, 65], [100, 50], [30, 65], [100, 100]];
+    const [cx, cy] = cps[m.cp];
+    if (Math.hypot(robot.x - cx, robot.y - cy) < 14) m.cp++;
+    ok = m.cp >= cps.length;
+  }
+  if (sc.targetColor) ok = moved && m.still > 0.8 && classify(floorRGB(...Sensors.corPos())) === sc.targetColor;
+  if (sc.park) {
+    const [ox, oy] = Sensors.usOrigin();
+    const d = castRay(ox, oy, robot.th);
+    ok = moved && m.still > 0.8 && d >= sc.park.min && d <= sc.park.max;
+  }
+  if (ok) { m.done = true; m.time = Sim.t - m.t0; Sim.onState && Sim.onState('mission'); }
+}
+
+/* ---------- Agendador ---------- */
+function waitUntil(pred) { return new Promise(res => Sim.waiters.push({ pred, res })); }
+function wakeWaiters() {
+  if (!Sim.waiters.length) return;
+  const keep = [];
+  for (const w of Sim.waiters) { if (w.pred()) w.res(); else keep.push(w); }
+  Sim.waiters = keep;
+}
+const macro = (() => {
+  const ch = new MessageChannel(), q = [];
+  ch.port1.onmessage = () => { const r = q.shift(); r && r(); };
+  return () => new Promise(r => { q.push(r); ch.port2.postMessage(0); });
+})();
+
+let lastFrame = performance.now(), acc = 0;
+async function loop() {
+  while (true) {
+    const now = performance.now();
+    acc += Math.min(0.1, (now - lastFrame) / 1000) * Sim.speed;
+    lastFrame = now;
+    manualDrive();
+    let steps = 0;
+    while (acc >= DT && steps < 60) {
+      acc -= DT; steps++;
+      physicsStep();
+      wakeWaiters();
+      if (Sim.running) await macro();
+    }
+    render();
+    Sim.onFrame && Sim.onFrame();
+    await new Promise(r => requestAnimationFrame(r));
+  }
+}
+
+function manualDrive() {
+  if (Sim.running) return;
+  const k = Sim.keys;
+  if (!(k.ArrowUp || k.ArrowDown || k.ArrowLeft || k.ArrowRight)) { if (Sim.manual) { robot.tl = robot.tr = 0; Sim.manual = false; } return; }
+  Sim.manual = true;
+  const f = (k.ArrowUp ? 1 : 0) - (k.ArrowDown ? 1 : 0), t = (k.ArrowRight ? 1 : 0) - (k.ArrowLeft ? 1 : 0);
+  robot.tl = Math.max(-1, Math.min(1, f * 0.6 + t * 0.35));
+  robot.tr = Math.max(-1, Math.min(1, f * 0.6 - t * 0.35));
+}
+
+/* ---------- API do robô ---------- */
+let audioCtx = null;
+function beep(freq, ms) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'square'; o.frequency.value = freq; g.gain.value = 0.04;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + Math.min(ms, 3000) / 1000 / Sim.speed);
+  } catch (e) { /* sem áudio */ }
+}
+
+function fmt(v) {
+  if (typeof v === 'boolean') return Sim.lang === 'py' ? (v ? 'True' : 'False') : (v ? '1' : '0');
+  if (typeof v === 'number' && !Number.isInteger(v)) return String(Math.round(v * 100) / 100);
+  return String(v);
+}
+function makeAPI(runId) {
+  const alive = () => { if (Sim.runId !== runId || !Sim.running) throw STOP; };
+  const need = (id) => {
+    const c = COMP[id];
+    if (!hasComp(id)) throw new CodeError(`O robô não tem ${c.nome}. Adiciona-o na Oficina para usar ${c.fn}.`);
+    if (Sim.pins[id] && Sim.pins[id].falta) throw new CodeError(`${c.nome} não está ligado: a placa ficou sem pinos livres. Retira um componente na Oficina.`);
+  };
+  const num = (v, nome) => { const n = Number(v); if (!isFinite(n)) throw new CodeError(`O valor de ${nome} tem de ser um número (recebeu «${v}»).`); return n; };
+  const blocking = async (cmd) => { robot.cmd = cmd; await waitUntil(() => cmd.done || Sim.runId !== runId); alive(); };
+  const enc = () => MOTORS[Sim.cfg.motor].enc;
+  const move = async (cm) => {
+    alive(); cm = num(cm, 'distância');
+    const sgn = Math.sign(cm) || 1, sp = Math.max(5, robot.speedPct) / 100;
+    robot.tl = robot.tr = sgn * sp;
+    await blocking({ type: 'move', enc: enc(), dist: Math.abs(cm), dl0: robot.dl, dr0: robot.dr, tEnd: Sim.t + 0.07 + Math.abs(cm) / (sp * chassis().max) });
+  };
+  const turn = async (dir, g) => {
+    alive(); g = num(g, 'ângulo');
+    if (g < 0) { dir = -dir; g = -g; }
+    const sp = Math.max(0.18, robot.speedPct / 100 * 0.55), c = chassis(), ang = g * DEG;
+    robot.tl = dir * sp; robot.tr = -dir * sp;
+    await blocking({ type: 'turn', gyro: hasComp('giro'), enc: enc(), ang, th0: robot.th, dl0: robot.dl, dr0: robot.dr, tEnd: Sim.t + 0.07 + ang / (2 * sp * c.max / c.track) });
+  };
+  return {
+    begin() {},
+    avancar: (cm) => move(Math.abs(cm)),
+    recuar: (cm) => move(-Math.abs(cm)),
+    virarDireita: (g) => turn(1, g),
+    virarEsquerda: (g) => turn(-1, g),
+    motores(e, d) {
+      alive(); robot.cmd = null;
+      robot.tl = Math.max(-100, Math.min(100, num(e, 'motor esquerdo'))) / 100;
+      robot.tr = Math.max(-100, Math.min(100, num(d, 'motor direito'))) / 100;
+    },
+    parar() { alive(); robot.cmd = null; robot.tl = robot.tr = 0; },
+    velocidade(p) { alive(); robot.speedPct = Math.max(0, Math.min(100, num(p, 'velocidade'))); },
+    async esperar(ms) { alive(); const end = Sim.t + Math.max(0, num(ms, 'tempo')) / 1000; await waitUntil(() => Sim.t >= end - 1e-9 || Sim.runId !== runId); alive(); },
+    async esperarSeg(s) { return this.esperar(num(s, 'tempo') * 1000); },
+    distancia() { alive(); need('ultrassons'); return Sensors.distancia(); },
+    linhaEsquerda() { alive(); need('linha'); return Sensors.linha(-1); },
+    linhaDireita() { alive(); need('linha'); return Sensors.linha(1); },
+    cor() { alive(); need('cor'); return Sensors.cor(); },
+    toque() { alive(); need('toque'); return robot.bump; },
+    luz() { alive(); need('luz'); return Sensors.luz(); },
+    direcao() { alive(); need('giro'); return Sensors.direcao(); },
+    servo(a) { alive(); need('servo'); robot.servo = Math.max(0, Math.min(180, num(a, 'ângulo'))); },
+    led(c) {
+      alive(); need('led');
+      const k = String(c).toLowerCase();
+      robot.led = (k === 'desligado' || k === 'apagado' || k === 'preto') ? null : (COLORS[k] ? k : null);
+    },
+    som(f, ms) { alive(); need('buzzer'); beep(num(f, 'frequência'), ms == null ? 200 : num(ms, 'duração')); },
+    mostrar(t) { alive(); need('ecra'); robot.display = String(t); },
+    escrever(...a) { alive(); const t = Sim.serialBuf + a.map(fmt).join(' '); Sim.serialBuf = ''; Sim.onLog && Sim.onLog(t); },
+    escreverSem(...a) { alive(); Sim.serialBuf += a.map(fmt).join(' '); },
+    tempo() { return Math.round((Sim.t - Sim.mission.t0) * 1000); },
+    aleatorio(a, b) { if (b === undefined) { b = a; a = 0; } return Math.floor(a + Math.random() * (b - a)); },
+    aleatorioIncl(a, b) { return Math.floor(a + Math.random() * (b - a + 1)); },
+    async __tick(force) {
+      alive();
+      Sim.tickCount++;
+      if (force || Sim.tickCount % 25 === 0) { await waitUntil(() => true); alive(); }
+    },
+    __hl(id) { if (Sim.runId === runId) { Sim.hl = id; Sim.onHighlight && Sim.onHighlight(id); } }
+  };
+}
+
+async function runProgram(src, lang) {
+  stopProgram(true);
+  const fn = compileProgram(src, lang);   // lança CodeError se houver erro de sintaxe
+  resetRobot();
+  Sim.lang = lang; Sim.serialBuf = '';
+  const id = ++Sim.runId;
+  Sim.running = true;
+  Sim.onState && Sim.onState('run');
+  try {
+    await fn(makeAPI(id));
+    if (Sim.runId === id) Sim.onState && Sim.onState('end');
+  } catch (e) {
+    if (e !== STOP && Sim.runId === id) {
+      const err = e instanceof CodeError ? e : new CodeError(traduzErro(e.message || String(e)));
+      Sim.onState && Sim.onState('error', err);
+    }
+  } finally {
+    if (Sim.runId === id) {
+      Sim.running = false; robot.tl = robot.tr = 0; robot.cmd = null;
+      Sim.onHighlight && Sim.onHighlight(null);
+      Sim.onState && Sim.onState('idle');
+    }
+  }
+}
+
+function stopProgram(silent) {
+  if (!Sim.running) return;
+  Sim.runId++;
+  Sim.running = false;
+  robot.tl = robot.tr = 0; robot.cmd = null;
+  const ws = Sim.waiters; Sim.waiters = []; ws.forEach(w => w.res());
+  Sim.onHighlight && Sim.onHighlight(null);
+  if (!silent) Sim.onState && Sim.onState('stopped');
+}
+
+/* ---------- Desenho ---------- */
+let cv, ctx, view = { s: 4, ox: 0, oy: 0 };
+function initCanvas(el) {
+  cv = el; ctx = cv.getContext('2d');
+  const ro = new ResizeObserver(() => fitCanvas());
+  ro.observe(cv.parentElement);
+  fitCanvas();
+}
+function fitCanvas() {
+  const r = cv.parentElement.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cv.width = Math.max(1, r.width * dpr); cv.height = Math.max(1, r.height * dpr);
+  cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px';
+  const m = 14;
+  const s = Math.min((r.width - 2 * m) / WORLD.W, (r.height - 2 * m) / WORLD.H);
+  view = { s: s * dpr, ox: (r.width - WORLD.W * s) / 2 * dpr, oy: (r.height - WORLD.H * s) / 2 * dpr };
+}
+
+function rr(g, x, y, w, h, r) {
+  g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+
+function render() {
+  if (!ctx) return;
+  const g = ctx, sc = Sim.scen;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, cv.width, cv.height);
+  g.setTransform(view.s, 0, 0, view.s, view.ox, view.oy);
+
+  // tapete
+  g.save();
+  g.shadowColor = 'rgba(8,16,32,0.45)'; g.shadowBlur = 18; g.shadowOffsetY = 6;
+  g.fillStyle = '#FAFBF8'; g.fillRect(0, 0, WORLD.W, WORLD.H);
+  g.restore();
+  g.imageSmoothingEnabled = true;
+  g.drawImage(Sim.floorCv, 0, 0, WORLD.W, WORLD.H);
+
+  // lâmpada
+  if (sc.lamp) {
+    g.save(); g.beginPath(); g.rect(0, 0, WORLD.W, WORLD.H); g.clip();
+    const L = sc.lamp, gr = g.createRadialGradient(L.x, L.y, 0, L.x, L.y, 70);
+    gr.addColorStop(0, 'rgba(255,214,90,0.55)'); gr.addColorStop(1, 'rgba(255,214,90,0)');
+    g.fillStyle = gr; g.fillRect(L.x - 70, L.y - 70, 140, 140);
+    g.fillStyle = '#FFD65A'; g.strokeStyle = '#8A6A00'; g.lineWidth = 0.5;
+    g.beginPath(); g.arc(L.x, L.y, 4, 0, 7); g.fill(); g.stroke();
+    g.restore();
+  }
+  // zona alvo
+  if (sc.goal && !sc.goal.cor) {
+    const G = sc.goal, t = Sim.t;
+    g.fillStyle = 'rgba(31,164,106,0.12)'; g.beginPath(); g.arc(G.x, G.y, G.r, 0, 7); g.fill();
+    g.strokeStyle = '#1FA46A'; g.lineWidth = 0.7; g.setLineDash([2.2, 1.6]); g.lineDashOffset = -t * 4;
+    g.beginPath(); g.arc(G.x, G.y, G.r, 0, 7); g.stroke(); g.setLineDash([]);
+    g.fillStyle = '#1FA46A'; g.font = '700 3.2px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText('ALVO', G.x, G.y + 1.1);
+  }
+  if (sc.goal && sc.goal.cor) {
+    g.fillStyle = '#FFFFFF'; g.font = '700 4px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText('META', 175, 20.5);
+  }
+  // rasto
+  if (Sim.showTrail && Sim.trail.length > 1) {
+    g.strokeStyle = 'rgba(255,94,26,0.55)'; g.lineWidth = 0.7; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.setLineDash([1.4, 1.4]);
+    g.beginPath(); Sim.trail.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.lineTo(robot.x, robot.y); g.stroke();
+    g.setLineDash([]);
+  }
+  // paredes
+  for (const w of sc.walls) {
+    g.fillStyle = 'rgba(10,20,40,0.22)'; g.fillRect(w.x + 1.2, w.y + 1.6, w.w, w.h);
+    g.fillStyle = '#2E3A4E'; g.fillRect(w.x, w.y, w.w, w.h);
+    g.fillStyle = '#46566F'; g.fillRect(w.x, w.y, w.w, Math.min(1, w.h));
+  }
+  // feixe de ultrassons
+  if (hasComp('ultrassons')) {
+    const [ox, oy] = Sensors.usOrigin(), a = Sensors.usAngle();
+    const d = Math.min(castRay(ox, oy, a), castRay(ox, oy, a - 7 * DEG), castRay(ox, oy, a + 7 * DEG));
+    const gr = g.createLinearGradient(ox, oy, ox + Math.cos(a) * d, oy + Math.sin(a) * d);
+    gr.addColorStop(0, 'rgba(44,107,224,0.28)'); gr.addColorStop(1, 'rgba(44,107,224,0.04)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(ox, oy);
+    g.arc(ox, oy, d, a - 7.5 * DEG, a + 7.5 * DEG); g.closePath(); g.fill();
+    g.fillStyle = '#2C6BE0'; g.beginPath(); g.arc(ox + Math.cos(a) * d, oy + Math.sin(a) * d, 0.8, 0, 7); g.fill();
+  }
+  drawRobot(g);
+  if (Sim.flash > 0) {
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = `rgba(215,38,61,${Sim.flash * 0.18})`; g.fillRect(0, 0, cv.width, cv.height);
+    Sim.flash = Math.max(0, Sim.flash - 0.06);
+  }
+}
+
+function drawRobot(g) {
+  const c = chassis(), b = BOARDS[Sim.cfg.board], L = c.L, W = c.W;
+  g.save();
+  g.translate(robot.x, robot.y); g.rotate(robot.th);
+  g.shadowColor = 'rgba(8,16,32,0.35)'; g.shadowBlur = 3; g.shadowOffsetY = 1;
+  // rodas / lagartas
+  g.fillStyle = '#1B1F27';
+  if (Sim.cfg.chassis === 'lag') {
+    for (const sy of [-1, 1]) {
+      const y = sy * (W / 2 - 1.6) - 2.2;
+      rr(g, -L / 2 - 0.4, y, L + 0.8, 4.4, 2); g.fill();
+    }
+    g.shadowColor = 'transparent';
+    g.strokeStyle = '#4A5160'; g.lineWidth = 0.35;
+    const off = ((robot.tread % 1.6) + 1.6) % 1.6;
+    for (const sy of [-1, 1]) {
+      const y = sy * (W / 2 - 1.6);
+      for (let x = -L / 2 + off; x < L / 2; x += 1.6) { g.beginPath(); g.moveTo(x, y - 2); g.lineTo(x, y + 2); g.stroke(); }
+    }
+  } else {
+    const xs = Sim.cfg.chassis === 'd4' ? [-L / 2 + 3.4, L / 2 - 3.4] : [-1.5];
+    for (const x of xs) for (const sy of [-1, 1]) { rr(g, x - 3.3, sy * (W / 2 + 0.2) - 1.5, 6.6, 3, 0.8); g.fill(); }
+    if (Sim.cfg.chassis === 'd2') { g.beginPath(); g.arc(L / 2 - 3, 0, 1.3, 0, 7); g.fill(); }
+  }
+  g.shadowColor = 'rgba(8,16,32,0.3)';
+  // placa do chassi
+  g.fillStyle = '#FF5E1A';
+  rr(g, -L / 2, -W / 2 + 1.4, L, W - 2.8, 2.6); g.fill();
+  g.shadowColor = 'transparent';
+  g.strokeStyle = '#C2410C'; g.lineWidth = 0.35; g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.18)'; rr(g, -L / 2 + 0.8, -W / 2 + 2, L - 1.6, 1.2, 0.6); g.fill();
+  // placa eletrónica
+  const bw = 7.2, bh = 5.6;
+  g.fillStyle = b.cor; rr(g, -bw / 2 - 1.2, -bh / 2, bw, bh, 0.6); g.fill();
+  if (Sim.cfg.board === 'microbit') {
+    g.fillStyle = '#3A3A3A';
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+      g.fillStyle = robot.display ? ((i + j + Math.floor(Sim.t * 4)) % 3 ? '#FF3B30' : '#4A1512') : '#3A3A3A';
+      g.fillRect(-bw / 2 - 1.2 + 2 + i * 0.75, -bh / 2 + 1 + j * 0.75, 0.4, 0.4);
+    }
+  } else {
+    g.fillStyle = '#0E1116'; g.fillRect(-1.6, -1.1, 2.2, 2.2);
+    g.fillStyle = '#E9C46A';
+    for (let i = 0; i < 8; i++) g.fillRect(-bw / 2 - 0.8 + i * 0.82, -bh / 2 + 0.3, 0.4, 0.4);
+    if (Sim.cfg.board === 'rpi') { g.fillStyle = '#C9CFD8'; g.fillRect(-bw / 2 - 1.2, bh / 2 - 1.6, 1.8, 1.2); }
+  }
+  // LED
+  if (hasComp('led')) {
+    const col = robot.led ? COLORS[robot.led] : '#55606F';
+    if (robot.led) { g.shadowColor = col; g.shadowBlur = 6; }
+    g.fillStyle = col; g.beginPath(); g.arc(-L / 2 + 2.6, 0, 1.15, 0, 7); g.fill();
+    g.shadowColor = 'transparent'; g.shadowBlur = 0;
+  }
+  // para-choques
+  if (hasComp('toque')) {
+    g.strokeStyle = robot.bump ? '#D7263D' : '#2E3A4E'; g.lineWidth = 0.9; g.lineCap = 'round';
+    g.beginPath(); g.arc(L / 2 - 6, 0, 7.2, -0.85, 0.85); g.stroke();
+  }
+  // sensores de linha
+  if (hasComp('linha')) {
+    for (const s of [-1, 1]) {
+      const on = Sensors.linha(s);
+      g.fillStyle = on ? '#111' : '#E8ECF1'; g.strokeStyle = '#2E3A4E'; g.lineWidth = 0.25;
+      g.fillRect(L / 2 - 2.7, s * 3 - 0.7, 1.4, 1.4); g.strokeRect(L / 2 - 2.7, s * 3 - 0.7, 1.4, 1.4);
+    }
+  }
+  if (hasComp('cor')) {
+    g.fillStyle = '#2E3A4E'; g.fillRect(L / 2 - 5, -1, 2, 2);
+    g.fillStyle = COLORS[Sensors.cor()]; g.fillRect(L / 2 - 4.6, -0.6, 1.2, 1.2);
+  }
+  // ultrassons com servo
+  if (hasComp('ultrassons')) {
+    g.save();
+    g.translate(L / 2 - 1, 0); g.rotate(-(robot.servoVis - 90) * DEG);
+    g.fillStyle = '#1F4FA8'; rr(g, -1.2, -4.4, 2.2, 8.8, 0.4); g.fill();
+    g.fillStyle = '#D9DEE5'; g.strokeStyle = '#7A8493'; g.lineWidth = 0.2;
+    for (const y of [-2.3, 2.3]) { g.beginPath(); g.arc(0.6, y, 1.6, 0, 7); g.fill(); g.stroke(); }
+    g.restore();
+  }
+  g.restore();
+}
+
+</script>
+<script>
+/* RoboLab: blocos (Blockly), gerador de C++ e Python, exemplos */
+'use strict';
+
+const CAT = {
+  ev: '#E8590C', mov: '#2C6BE0', ctl: '#C98A00', sen: '#0E9384', op: '#3B9A48', var: '#C2366B', out: '#7B4FD6'
+};
+const shade = (hex, f) => {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(f > 0 ? v + (255 - v) * f : v * (1 + f)));
+  return '#' + ch.map(v => v.toString(16).padStart(2, '0')).join('');
+};
+function style(hex, hat) {
+  const s = { colourPrimary: hex, colourSecondary: shade(hex, 0.35), colourTertiary: shade(hex, -0.25) };
+  if (hat) s.hat = 'cap';
+  return s;
+}
+
+const COR_OPTS = [['vermelho', 'vermelho'], ['verde', 'verde'], ['azul', 'azul'], ['amarelo', 'amarelo'], ['preto', 'preto'], ['branco', 'branco']];
+
+function defineBlocks() {
+  Blockly.Theme.defineTheme('robolab', {
+    base: Blockly.Themes.Classic,
+    blockStyles: {
+      ev_blocks: style(CAT.ev, true), mov_blocks: style(CAT.mov), ctl_blocks: style(CAT.ctl), sen_blocks: style(CAT.sen),
+      op_blocks: style(CAT.op), out_blocks: style(CAT.out),
+      math_blocks: style(CAT.op), text_blocks: style(CAT.op), logic_blocks: style(CAT.op), variable_blocks: style(CAT.var),
+      loop_blocks: style(CAT.ctl), procedure_blocks: style(CAT.var), list_blocks: style(CAT.var), colour_blocks: style(CAT.op),
+      variable_dynamic_blocks: style(CAT.var)
+    },
+    categoryStyles: {
+      ev: { colour: CAT.ev }, mov: { colour: CAT.mov }, ctl: { colour: CAT.ctl }, sen: { colour: CAT.sen },
+      op: { colour: CAT.op }, var: { colour: CAT.var }, out: { colour: CAT.out }
+    },
+    componentStyles: {
+      workspaceBackgroundColour: '#F3F5F8', toolboxBackgroundColour: '#FFFFFF', toolboxForegroundColour: '#14213D',
+      flyoutBackgroundColour: '#E9EDF2', flyoutForegroundColour: '#14213D', flyoutOpacity: 0.98,
+      scrollbarColour: '#B9C2CE', scrollbarOpacity: 0.6, insertionMarkerColour: '#14213D', insertionMarkerOpacity: 0.25,
+      cursorColour: '#FF5E1A', selectedGlowColour: '#FF5E1A'
+    },
+    fontStyle: { family: '"IBM Plex Sans", system-ui, sans-serif', weight: '600', size: 11 },
+    startHats: true
+  });
+
+  const stmt = (type, msg, args, st, tip) => ({ type, message0: msg, args0: args, previousStatement: null, nextStatement: null, style: st, inputsInline: true, tooltip: tip });
+  const val = (n) => ({ type: 'input_value', name: n, check: 'Number' });
+  const any = (n) => ({ type: 'input_value', name: n });
+  const bool = (n) => ({ type: 'input_value', name: n, check: 'Boolean' });
+  const DO = (n = 'DO') => ({ type: 'input_statement', name: n });
+  const rep = (type, msg, args, out, st, tip) => ({ type, message0: msg, args0: args, output: out, style: st, inputsInline: true, tooltip: tip });
+
+  Blockly.common.defineBlocksWithJsonArray([
+    { type: 'robo_inicio', message0: 'ao arrancar %1 %2', args0: [{ type: 'input_dummy' }, DO()], style: 'ev_blocks', tooltip: 'Corre uma vez quando o robô liga. Em Arduino corresponde a setup().' },
+    { type: 'robo_sempre_topo', message0: 'repetir sempre %1 %2', args0: [{ type: 'input_dummy' }, DO()], style: 'ev_blocks', tooltip: 'Repete sem parar depois de "ao arrancar". Em Arduino corresponde a loop().' },
+
+    stmt('robo_avancar', 'avançar %1 cm', [val('CM')], 'mov_blocks', 'Anda para a frente a distância indicada e pára.'),
+    stmt('robo_recuar', 'recuar %1 cm', [val('CM')], 'mov_blocks', 'Anda para trás a distância indicada e pára.'),
+    stmt('robo_virar', 'virar %1 %2 graus', [{ type: 'field_dropdown', name: 'DIR', options: [['à direita ↻', 'D'], ['à esquerda ↺', 'E']] }, val('G')], 'mov_blocks', 'Roda sobre si mesmo.'),
+    stmt('robo_motores', 'motores  esq. %1 dir. %2', [val('E'), val('D')], 'mov_blocks', 'Liga os motores com potência de -100 a 100 e continua o programa.'),
+    stmt('robo_parar', 'parar motores', [], 'mov_blocks', 'Desliga os dois motores.'),
+    stmt('robo_velocidade', 'velocidade %1 %%', [val('V')], 'mov_blocks', 'Velocidade usada por avançar, recuar e virar (0 a 100).'),
+    stmt('robo_servo', 'rodar servo para %1 °', [val('A')], 'mov_blocks', '90° aponta para a frente, 0° para a direita, 180° para a esquerda.'),
+
+    stmt('robo_esperar', 'esperar %1 ms', [val('MS')], 'ctl_blocks', 'Pausa o programa (1000 ms = 1 segundo).'),
+    { type: 'robo_repetir', message0: 'repetir %1 vezes %2 %3', args0: [val('N'), { type: 'input_dummy' }, DO()], previousStatement: null, nextStatement: null, style: 'ctl_blocks', inputsInline: true },
+    { type: 'robo_enquanto', message0: 'enquanto %1 %2 %3', args0: [bool('C'), { type: 'input_dummy' }, DO()], previousStatement: null, nextStatement: null, style: 'ctl_blocks', inputsInline: true },
+    { type: 'robo_ate', message0: 'repetir até %1 %2 %3', args0: [bool('C'), { type: 'input_dummy' }, DO()], previousStatement: null, nextStatement: null, style: 'ctl_blocks', inputsInline: true },
+    { type: 'robo_se', message0: 'se %1 então %2 %3', args0: [bool('C'), { type: 'input_dummy' }, DO()], previousStatement: null, nextStatement: null, style: 'ctl_blocks', inputsInline: true },
+    { type: 'robo_se_senao', message0: 'se %1 então %2 %3 senão %4 %5', args0: [bool('C'), { type: 'input_dummy' }, DO(), { type: 'input_dummy' }, DO('ELSE')], previousStatement: null, nextStatement: null, style: 'ctl_blocks', inputsInline: true },
+
+    rep('robo_distancia', 'distância (cm)', [], 'Number', 'sen_blocks', 'Distância medida pelo sensor de ultrassons.'),
+    rep('robo_linha', 'linha %1 vê preto', [{ type: 'field_dropdown', name: 'L', options: [['esquerda', 'E'], ['direita', 'D']] }], 'Boolean', 'sen_blocks', 'Verdadeiro quando o sensor está por cima da linha preta.'),
+    rep('robo_cor', 'cor do chão', [], 'String', 'sen_blocks', 'Nome da cor por baixo do sensor.'),
+    rep('robo_cor_e', 'cor do chão é %1', [{ type: 'field_dropdown', name: 'C', options: COR_OPTS }], 'Boolean', 'sen_blocks', ''),
+    rep('robo_toque', 'para-choques premido', [], 'Boolean', 'sen_blocks', 'Verdadeiro quando o robô bate à frente.'),
+    rep('robo_luz', 'luz (0 a 100)', [], 'Number', 'sen_blocks', ''),
+    rep('robo_direcao', 'direção (°)', [], 'Number', 'sen_blocks', 'Rotação desde o arranque, de 0 a 359°, no sentido dos ponteiros do relógio.'),
+    rep('robo_tempo', 'tempo (ms)', [], 'Number', 'sen_blocks', 'Milissegundos desde o arranque.'),
+
+    rep('robo_compara', '%1 %2 %3', [any('A'), { type: 'field_dropdown', name: 'OP', options: [['<', '<'], ['>', '>'], ['=', '=='], ['≠', '!='], ['≤', '<='], ['≥', '>=']] }, any('B')], 'Boolean', 'op_blocks', ''),
+    rep('robo_logica', '%1 %2 %3', [bool('A'), { type: 'field_dropdown', name: 'OP', options: [['e', 'E'], ['ou', 'OU']] }, bool('B')], 'Boolean', 'op_blocks', ''),
+    rep('robo_nao', 'não %1', [bool('A')], 'Boolean', 'op_blocks', ''),
+    rep('robo_conta', '%1 %2 %3', [val('A'), { type: 'field_dropdown', name: 'OP', options: [['+', '+'], ['−', '-'], ['×', '*'], ['÷', '/']] }, val('B')], 'Number', 'op_blocks', ''),
+    rep('robo_aleatorio', 'número ao acaso de %1 a %2', [val('A'), val('B')], 'Number', 'op_blocks', ''),
+
+    stmt('robo_led', 'LED %1', [{ type: 'field_dropdown', name: 'C', options: [['verde', 'verde'], ['vermelho', 'vermelho'], ['azul', 'azul'], ['amarelo', 'amarelo'], ['branco', 'branco'], ['desligado', 'desligado']] }], 'out_blocks', ''),
+    stmt('robo_som', 'tocar %1 Hz durante %2 ms', [val('F'), val('MS')], 'out_blocks', '440 Hz é a nota Lá.'),
+    stmt('robo_mostrar', 'mostrar no ecrã %1', [any('T')], 'out_blocks', ''),
+    stmt('robo_escrever', 'escrever na consola %1', [any('T')], 'out_blocks', 'Envia um valor para o Monitor série.')
+  ]);
+}
+
+const N = (n) => ({ shadow: { type: 'math_number', fields: { NUM: n } } });
+const T = (t) => ({ shadow: { type: 'text', fields: { TEXT: t } } });
+const B = (type, extra = {}) => ({ kind: 'block', type, ...extra });
+
+function buildToolbox(cfg) {
+  const has = (id) => cfg.comps.includes(id) || BOARDS[cfg.board].builtin.includes(id);
+  const sens = [];
+  if (has('ultrassons')) sens.push(B('robo_distancia'));
+  if (has('linha')) sens.push(B('robo_linha', { fields: { L: 'E' } }), B('robo_linha', { fields: { L: 'D' } }));
+  if (has('cor')) sens.push(B('robo_cor_e'), B('robo_cor'));
+  if (has('toque')) sens.push(B('robo_toque'));
+  if (has('luz')) sens.push(B('robo_luz'));
+  if (has('giro')) sens.push(B('robo_direcao'));
+  sens.push(B('robo_tempo'));
+  const mov = [
+    B('robo_avancar', { inputs: { CM: N(20) } }), B('robo_recuar', { inputs: { CM: N(10) } }),
+    B('robo_virar', { inputs: { G: N(90) } }), B('robo_motores', { inputs: { E: N(50), D: N(50) } }),
+    B('robo_parar'), B('robo_velocidade', { inputs: { V: N(50) } })
+  ];
+  if (has('servo')) mov.push(B('robo_servo', { inputs: { A: N(90) } }));
+  const out = [];
+  if (has('led')) out.push(B('robo_led'));
+  if (has('buzzer')) out.push(B('robo_som', { inputs: { F: N(440), MS: N(200) } }));
+  if (has('ecra')) out.push(B('robo_mostrar', { inputs: { T: T('Olá!') } }));
+  out.push(B('robo_escrever', { inputs: { T: T('olá') } }));
+  return {
+    kind: 'categoryToolbox',
+    contents: [
+      { kind: 'category', name: 'Eventos', categorystyle: 'ev', contents: [B('robo_inicio'), B('robo_sempre_topo')] },
+      { kind: 'category', name: 'Movimento', categorystyle: 'mov', contents: mov },
+      {
+        kind: 'category', name: 'Controlo', categorystyle: 'ctl', contents: [
+          B('robo_esperar', { inputs: { MS: N(500) } }), B('robo_repetir', { inputs: { N: N(4) } }),
+          B('robo_se'), B('robo_se_senao'), B('robo_enquanto'), B('robo_ate')
+        ]
+      },
+      { kind: 'category', name: 'Sensores', categorystyle: 'sen', contents: sens },
+      {
+        kind: 'category', name: 'Operadores', categorystyle: 'op', contents: [
+          B('robo_compara', { inputs: { A: N(0), B: N(20) }, fields: { OP: '<' } }), B('robo_logica'), B('robo_nao'),
+          B('robo_conta', { inputs: { A: N(1), B: N(1) } }), B('robo_aleatorio', { inputs: { A: N(1), B: N(10) } }),
+          B('math_number'), B('text'), B('logic_boolean')
+        ]
+      },
+      { kind: 'category', name: 'Variáveis', categorystyle: 'var', custom: 'VARIABLE' },
+      { kind: 'category', name: 'Saídas', categorystyle: 'out', contents: out }
+    ]
+  };
+}
+
+/* ---------- Gerador de código ---------- */
+const safeName = (s) => {
+  const t = String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\W+/g, '_').replace(/^(\d)/, '_$1');
+  return t || 'var';
+};
+
+function genCode(ws, cfg, hl) {
+  const board = BOARDS[cfg.board], py = board.lang === 'py', fl = board.pyFlavor;
+  const U = py ? 4 : 2, end = py ? '' : ';';
+  let depth = 0;
+  const loopVars = ['i', 'j', 'k', 'n', 'm'];
+
+  const val = (b, def = '0') => {
+    if (!b || !b.isEnabled()) return def;
+    const V = (n, d) => val(b.getInputTargetBlock(n), d);
+    switch (b.type) {
+      case 'math_number': return String(b.getFieldValue('NUM'));
+      case 'text': return JSON.stringify(b.getFieldValue('TEXT'));
+      case 'logic_boolean': return b.getFieldValue('BOOL') === 'TRUE' ? (py ? 'True' : 'true') : (py ? 'False' : 'false');
+      case 'variables_get': return safeName(b.getField('VAR').getText());
+      case 'robo_distancia': return 'robo.distancia()';
+      case 'robo_linha': { const e = b.getFieldValue('L') === 'E'; return py ? `robo.linha_${e ? 'esquerda' : 'direita'}()` : `robo.linha${e ? 'Esquerda' : 'Direita'}()`; }
+      case 'robo_cor': return 'robo.cor()';
+      case 'robo_cor_e': return `(robo.cor() == "${b.getFieldValue('C')}")`;
+      case 'robo_toque': return 'robo.toque()';
+      case 'robo_luz': return 'robo.luz()';
+      case 'robo_direcao': return fl === 'microbit' ? 'compass.heading()' : 'robo.direcao()';
+      case 'robo_tempo': return py ? (fl === 'microbit' ? 'running_time()' : 'robo.tempo()') : 'millis()';
+      case 'robo_compara': return `(${V('A')} ${b.getFieldValue('OP')} ${V('B')})`;
+      case 'robo_logica': { const o = b.getFieldValue('OP') === 'E' ? (py ? 'and' : '&&') : (py ? 'or' : '||'); return `(${V('A', py ? 'False' : 'false')} ${o} ${V('B', py ? 'False' : 'false')})`; }
+      case 'robo_nao': return py ? `(not ${V('A', 'False')})` : `!${V('A', 'false')}`;
+      case 'robo_conta': return `(${V('A')} ${b.getFieldValue('OP')} ${V('B')})`;
+      case 'robo_aleatorio': return py ? `random.randint(${V('A')}, ${V('B')})` : `random(${V('A')}, ${V('B')} + 1)`;
+      default: return def;
+    }
+  };
+
+  const stmts = (b, ind) => { let o = ''; while (b) { if (b.isEnabled()) o += stmt(b, ind); b = b.getNextBlock(); } return o; };
+  const stmt = (b, ind) => {
+    const pad = ' '.repeat(ind);
+    const V = (n, d) => val(b.getInputTargetBlock(n), d);
+    const S = (n) => { const s = stmts(b.getInputTargetBlock(n), ind + U); return s || (py ? pad + ' '.repeat(U) + 'pass\n' : ''); };
+    const L = (s) => pad + s + end + '\n';
+    const h = hl ? pad + `robo.__hl("${b.id}")` + end + '\n' : '';
+    const cond = (n) => { const c = V(n, py ? 'False' : 'false'); return py && /^\(.*\)$/.test(c) && balanced(c.slice(1, -1)) ? c.slice(1, -1) : c; };
+    switch (b.type) {
+      case 'robo_avancar': return h + L(`robo.avancar(${V('CM')})`);
+      case 'robo_recuar': return h + L(`robo.recuar(${V('CM')})`);
+      case 'robo_virar': {
+        const e = b.getFieldValue('DIR') === 'E';
+        return h + L(py ? `robo.virar_${e ? 'esquerda' : 'direita'}(${V('G')})` : `robo.virar${e ? 'Esquerda' : 'Direita'}(${V('G')})`);
+      }
+      case 'robo_motores': return h + L(`robo.motores(${V('E')}, ${V('D')})`);
+      case 'robo_parar': return h + L('robo.parar()');
+      case 'robo_velocidade': return h + L(`robo.velocidade(${V('V')})`);
+      case 'robo_servo': return h + L(`robo.servo(${V('A')})`);
+      case 'robo_esperar': {
+        const ms = V('MS');
+        if (!py) return h + L(`delay(${ms})`);
+        if (fl === 'microbit') return h + L(`sleep(${ms})`);
+        return h + L(`time.sleep(${/^\d+(\.\d+)?$/.test(ms) ? +ms / 1000 : ms + ' / 1000'})`);
+      }
+      case 'robo_repetir': {
+        const v = loopVars[Math.min(depth, loopVars.length - 1)], n = V('N');
+        depth++; const body = S('DO'); depth--;
+        if (py) return h + pad + `for ${v} in range(${/^\d+$/.test(n) ? n : 'int(' + n + ')'}):\n` + body;
+        return h + pad + `for (int ${v} = 0; ${v} < ${n}; ${v}++) {\n` + body + pad + '}\n';
+      }
+      case 'robo_enquanto':
+        return h + (py ? pad + `while ${cond('C')}:\n` + S('DO') : pad + `while ${wrap(V('C', 'false'))} {\n` + S('DO') + pad + '}\n');
+      case 'robo_ate':
+        return h + (py ? pad + `while not ${V('C', 'False')}:\n` + S('DO') : pad + `while (!${V('C', 'false')}) {\n` + S('DO') + pad + '}\n');
+      case 'robo_se':
+        return h + (py ? pad + `if ${cond('C')}:\n` + S('DO') : pad + `if ${wrap(V('C', 'false'))} {\n` + S('DO') + pad + '}\n');
+      case 'robo_se_senao':
+        return h + (py ? pad + `if ${cond('C')}:\n` + S('DO') + pad + 'else:\n' + S('ELSE')
+          : pad + `if ${wrap(V('C', 'false'))} {\n` + S('DO') + pad + '} else {\n' + S('ELSE') + pad + '}\n');
+      case 'variables_set': return h + L(`${safeName(b.getField('VAR').getText())} = ${V('VALUE')}`);
+      case 'math_change': return h + L(`${safeName(b.getField('VAR').getText())} += ${V('DELTA', '1')}`);
+      case 'robo_led': return h + L(`robo.led("${b.getFieldValue('C')}")`);
+      case 'robo_som': return h + L(fl === 'microbit' ? `music.pitch(${V('F')}, ${V('MS')})` : `robo.som(${V('F')}, ${V('MS')})`);
+      case 'robo_mostrar': return h + L(fl === 'microbit' ? `display.scroll(str(${V('T', '""')}))` : `robo.mostrar(${V('T', '""')})`);
+      case 'robo_escrever': return h + L(py ? `print(${V('T', '""')})` : `Serial.println(${V('T', '""')})`);
+      default: return '';
+    }
+  };
+  const wrap = (c) => /^\(.*\)$/.test(c) && balanced(c.slice(1, -1)) ? c : '(' + c + ')';
+
+  const tops = ws.getTopBlocks(true);
+  const ini = tops.filter(b => b.type === 'robo_inicio' && b.isEnabled());
+  const sem = tops.filter(b => b.type === 'robo_sempre_topo' && b.isEnabled());
+  const vars = ws.getVariableMap().getAllVariables().map(v => safeName(v.name));
+  const indIni = py ? 0 : 2, indSem = py ? 4 : 2;
+  let bodyIni = ini.map(b => stmts(b.getInputTargetBlock('DO'), indIni)).join('');
+  let bodySem = sem.map(b => stmts(b.getInputTargetBlock('DO'), indSem)).join('');
+  const titulo = `Robô: ${board.curto} · ${CHASSIS[cfg.chassis].nome}`;
+
+  if (!py) {
+    return `// ${titulo}\n// Programa gerado pelo RoboLab\n#include <RoboLab.h>\nRoboLab robo;\n\n` +
+      (vars.length ? vars.map(v => `float ${v} = 0;`).join('\n') + '\n\n' : '') +
+      `void setup() {\n  Serial.begin(115200);\n  robo.begin();\n${bodyIni}}\n\nvoid loop() {\n${bodySem}}\n`;
+  }
+  const all = bodyIni + bodySem;
+  let head = `# ${titulo}\n# Programa gerado pelo RoboLab\n`;
+  if (fl === 'microbit') head += 'from microbit import *\n';
+  if (fl === 'microbit' && /music\./.test(all)) head += 'import music\n';
+  if (fl === 'rpi') head += 'import time\n';
+  if (/random\./.test(all)) head += 'import random\n';
+  head += 'from robolab import robo\n\n';
+  if (vars.length) head += vars.map(v => `${v} = 0`).join('\n') + '\n\n';
+  let out = head + bodyIni;
+  if (sem.length) out += (bodyIni ? '\n' : '') + 'while True:\n' + (bodySem || '    pass\n');
+  return out;
+}
+function balanced(s) { let d = 0; for (const c of s) { if (c === '(') d++; else if (c === ')') { d--; if (d < 0) return false; } } return d === 0; }
+
+/* ---------- Exemplos ---------- */
+function chain(...bs) { for (let i = 0; i < bs.length - 1; i++) bs[i].next = { block: bs[i + 1] }; return bs[0]; }
+const blk = (type, o = {}) => ({ type, ...o });
+const I = (b) => ({ block: b });
+const cmp = (a, op, n) => blk('robo_compara', { fields: { OP: op }, inputs: { A: I(a), B: N(n) } });
+const hat = (type, body, x, y) => ({ ...blk(type, { inputs: body ? { DO: I(body) } : {} }), x, y });
+
+const EXAMPLES = {
+  obstaculos: {
+    nome: 'Evitar obstáculos', cenario: 'livre', comps: ['ultrassons', 'led', 'buzzer'],
+    blocks: () => [
+      hat('robo_inicio', chain(blk('robo_velocidade', { inputs: { V: N(50) } }), blk('robo_led', { fields: { C: 'verde' } })), 20, 20),
+      hat('robo_sempre_topo', blk('robo_se_senao', {
+        inputs: {
+          C: I(cmp(blk('robo_distancia'), '<', 18)),
+          DO: I(chain(blk('robo_led', { fields: { C: 'vermelho' } }), blk('robo_parar'), blk('robo_som', { inputs: { F: N(880), MS: N(120) } }),
+            blk('robo_recuar', { inputs: { CM: N(6) } }), blk('robo_virar', { fields: { DIR: 'D' }, inputs: { G: N(60) } }))),
+          ELSE: I(chain(blk('robo_led', { fields: { C: 'verde' } }), blk('robo_motores', { inputs: { E: N(50), D: N(50) } })))
+        }
+      }), 20, 150)
+    ]
+  },
+  linha: {
+    nome: 'Seguir a linha', cenario: 'linha', comps: ['linha'],
+    blocks: () => [
+      hat('robo_sempre_topo', blk('robo_se_senao', {
+        inputs: {
+          C: I(blk('robo_linha', { fields: { L: 'E' } })),
+          DO: I(blk('robo_motores', { inputs: { E: N(-15), D: N(45) } })),
+          ELSE: I(blk('robo_se_senao', {
+            inputs: {
+              C: I(blk('robo_linha', { fields: { L: 'D' } })),
+              DO: I(blk('robo_motores', { inputs: { E: N(45), D: N(-15) } })),
+              ELSE: I(blk('robo_motores', { inputs: { E: N(40), D: N(40) } }))
+            }
+          }))
+        }
+      }), 20, 20)
+    ]
+  },
+  quadrado: {
+    nome: 'Desenhar um quadrado', cenario: 'livre', comps: [],
+    blocks: () => [
+      hat('robo_inicio', blk('robo_repetir', {
+        inputs: { N: N(4), DO: I(chain(blk('robo_avancar', { inputs: { CM: N(30) } }), blk('robo_virar', { fields: { DIR: 'D' }, inputs: { G: N(90) } }))) }
+      }), 20, 20)
+    ]
+  },
+  estacionar: {
+    nome: 'Estacionar', cenario: 'estacionar', comps: ['ultrassons'],
+    blocks: () => [
+      hat('robo_inicio', chain(
+        blk('robo_motores', { inputs: { E: N(40), D: N(40) } }),
+        blk('robo_ate', { inputs: { C: I(cmp(blk('robo_distancia'), '<', 11)), DO: I(blk('robo_esperar', { inputs: { MS: N(10) } })) } }),
+        blk('robo_parar'),
+        blk('robo_escrever', { inputs: { T: I(blk('robo_distancia')) } })
+      ), 20, 20)
+    ]
+  },
+  cores: {
+    nome: 'Parar na cor vermelha', cenario: 'cores', comps: ['cor', 'led'],
+    blocks: () => [
+      hat('robo_inicio', chain(
+        blk('robo_motores', { inputs: { E: N(30), D: N(30) } }),
+        blk('robo_ate', { inputs: { C: I(blk('robo_cor_e', { fields: { C: 'vermelho' } })), DO: I(blk('robo_esperar', { inputs: { MS: N(10) } })) } }),
+        blk('robo_parar'),
+        blk('robo_led', { fields: { C: 'vermelho' } })
+      ), 20, 20)
+    ]
+  },
+  labirinto: {
+    nome: 'Sair do labirinto', cenario: 'labirinto', comps: ['ultrassons', 'giro'],
+    blocks: () => [
+      hat('robo_sempre_topo', blk('robo_se_senao', {
+        inputs: {
+          C: I(cmp(blk('robo_distancia'), '>', 15)),
+          DO: I(blk('robo_motores', { inputs: { E: N(40), D: N(40) } })),
+          ELSE: I(chain(
+            blk('robo_parar'),
+            blk('robo_virar', { fields: { DIR: 'E' }, inputs: { G: N(90) } }),
+            blk('robo_se', { inputs: { C: I(cmp(blk('robo_distancia'), '<', 40)), DO: I(blk('robo_virar', { fields: { DIR: 'D' }, inputs: { G: N(180) } })) } })
+          ))
+        }
+      }), 20, 20)
+    ]
+  }
+};
+
+</script>
+<script>
+/* RoboLab: interface (oficina, editores, palco, telemetria, gravação) */
+'use strict';
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const STORE = 'robolab.v1';
+
+const state = {
+  cfg: JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
+  codes: { cpp: '', py: '' }, codeEdited: { cpp: false, py: false },
+  source: 'blocos', tab: 'montar', blocks: null, gen: true, errLine: null
+};
+let ws = null;
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (s && s.cfg && BOARDS[s.cfg.board]) Object.assign(state, s, { errLine: null, tab: s.tab || 'montar' });
+  } catch (e) { /* sem armazenamento */ }
+}
+let saveTimer = 0;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      if (ws) state.blocks = Blockly.serialization.workspaces.save(ws);
+      localStorage.setItem(STORE, JSON.stringify({ cfg: state.cfg, codes: state.codes, codeEdited: state.codeEdited, source: state.source, tab: state.tab, blocks: state.blocks, gen: state.gen }));
+    } catch (e) { /* sem armazenamento */ }
+  }, 300);
+}
+
+const board = () => BOARDS[state.cfg.board];
+const lang = () => board().lang;
+const fileName = () => 'robo' + board().ext;
+
+/* ---------- Ilustrações ---------- */
+const ART = {
+  arduino: `<svg viewBox="0 0 120 80"><rect x="8" y="6" width="106" height="68" rx="5" fill="#0B7C84"/><rect x="0" y="14" width="22" height="17" rx="2" fill="#C9CFD8"/><rect x="2" y="50" width="17" height="15" rx="2" fill="#1B1F27"/><rect x="36" y="10" width="72" height="6" rx="1" fill="#1B1F27"/><rect x="46" y="64" width="62" height="6" rx="1" fill="#1B1F27"/><rect x="54" y="40" width="46" height="11" rx="1.5" fill="#1B1F27"/><circle cx="30" cy="44" r="4" fill="#E9C46A"/><text x="58" y="33" fill="#fff" font-size="9" font-family="Chakra Petch,sans-serif" font-weight="700">UNO</text></svg>`,
+  microbit: `<svg viewBox="0 0 120 80"><path d="M10 14a8 8 0 0 1 8-8h84a8 8 0 0 1 8 8v48H10z" fill="#1C1C1C"/><rect x="10" y="60" width="100" height="14" fill="#C9A227"/><g fill="#1C1C1C"><circle cx="22" cy="67" r="4"/><circle cx="60" cy="67" r="4"/><circle cx="98" cy="67" r="4"/></g><circle cx="24" cy="32" r="6" fill="#3A3A3A"/><circle cx="96" cy="32" r="6" fill="#3A3A3A"/><g fill="#FF3B30">${[0, 1, 2, 3, 4].map(i => [0, 1, 2, 3, 4].map(j => `<rect x="${47 + i * 6.5}" y="${15 + j * 7.5}" width="3" height="3" opacity="${(i + j) % 2 ? 0.35 : 1}"/>`).join('')).join('')}</g></svg>`,
+  esp32: `<svg viewBox="0 0 120 80"><rect x="24" y="4" width="72" height="72" rx="4" fill="#2B2D42"/><rect x="36" y="8" width="48" height="34" rx="2" fill="#C9CFD8"/><path d="M40 12h6v6h-6v6h6" stroke="#8A93A3" stroke-width="1.5" fill="none"/><g fill="#E9C46A">${Array.from({ length: 10 }, (_, i) => `<circle cx="28" cy="${10 + i * 6.4}" r="1.6"/><circle cx="92" cy="${10 + i * 6.4}" r="1.6"/>`).join('')}</g><rect x="52" y="66" width="16" height="10" rx="1.5" fill="#C9CFD8"/><rect x="50" y="50" width="20" height="8" rx="1" fill="#14161F"/></svg>`,
+  rpi: `<svg viewBox="0 0 120 80"><rect x="4" y="8" width="112" height="64" rx="5" fill="#1E7B4F"/><g fill="#E9C46A">${Array.from({ length: 20 }, (_, i) => `<rect x="${12 + i * 3.8}" y="11" width="2" height="2"/><rect x="${12 + i * 3.8}" y="15" width="2" height="2"/>`).join('')}</g><rect x="34" y="32" width="22" height="22" rx="2" fill="#C9CFD8"/><rect x="62" y="36" width="12" height="16" rx="1" fill="#14161F"/><rect x="96" y="24" width="24" height="14" rx="1" fill="#C9CFD8"/><rect x="96" y="42" width="24" height="12" rx="1" fill="#C9CFD8"/><rect x="96" y="58" width="24" height="12" rx="1" fill="#C9CFD8"/></svg>`,
+  d2: `<svg viewBox="0 0 120 80"><rect x="22" y="14" width="76" height="52" rx="12" fill="#FF5E1A"/><rect x="26" y="4" width="30" height="12" rx="3" fill="#1B1F27"/><rect x="26" y="64" width="30" height="12" rx="3" fill="#1B1F27"/><circle cx="86" cy="40" r="6" fill="#1B1F27"/><rect x="40" y="30" width="26" height="20" rx="2" fill="#0B7C84"/></svg>`,
+  d4: `<svg viewBox="0 0 120 80"><rect x="18" y="14" width="84" height="52" rx="10" fill="#FF5E1A"/><rect x="20" y="4" width="26" height="12" rx="3" fill="#1B1F27"/><rect x="74" y="4" width="26" height="12" rx="3" fill="#1B1F27"/><rect x="20" y="64" width="26" height="12" rx="3" fill="#1B1F27"/><rect x="74" y="64" width="26" height="12" rx="3" fill="#1B1F27"/><rect x="46" y="30" width="28" height="20" rx="2" fill="#0B7C84"/></svg>`,
+  lag: `<svg viewBox="0 0 120 80"><rect x="14" y="2" width="92" height="16" rx="8" fill="#1B1F27"/><rect x="14" y="62" width="92" height="16" rx="8" fill="#1B1F27"/><g stroke="#4A5160" stroke-width="2">${Array.from({ length: 11 }, (_, i) => `<path d="M${20 + i * 8} 4v12M${20 + i * 8} 64v12"/>`).join('')}</g><rect x="22" y="16" width="76" height="48" rx="8" fill="#FF5E1A"/><rect x="46" y="30" width="28" height="20" rx="2" fill="#0B7C84"/></svg>`,
+  tt: `<svg viewBox="0 0 120 80"><rect x="18" y="22" width="50" height="34" rx="4" fill="#F2C230"/><rect x="66" y="28" width="38" height="22" rx="11" fill="#C9CFD8"/><rect x="100" y="34" width="10" height="10" rx="2" fill="#8A93A3"/><rect x="36" y="8" width="8" height="64" rx="2" fill="#FFFFFF" stroke="#C9CFD8"/></svg>`,
+  n20: `<svg viewBox="0 0 120 80"><rect x="24" y="28" width="24" height="24" rx="3" fill="#D4A72C"/><rect x="48" y="30" width="34" height="20" rx="4" fill="#C9CFD8"/><rect x="82" y="22" width="6" height="36" rx="2" fill="#1B1F27"/><circle cx="96" cy="40" r="13" fill="#1B1F27"/><circle cx="96" cy="40" r="5" fill="#FF5E1A"/><rect x="10" y="38" width="16" height="4" rx="2" fill="#8A93A3"/></svg>`
+};
+
+/* ---------- Pinos ---------- */
+function allocatePins(cfg) {
+  const b = BOARDS[cfg.board], used = new Set(), rows = [], falta = {};
+  const enc = MOTORS[cfg.motor].enc;
+  const comps = COMPS.filter(c => cfg.comps.includes(c.id) && !b.builtin.includes(c.id));
+  const items = [];
+  if (b.motoresI2C) items.push({ id: 'motores', nome: 'Driver de motores (placa de expansão)', i2c: '0x10' });
+  else {
+    const p = [['ENA · vel. esq.', 'pwm'], ['IN1', 'dig'], ['IN2', 'dig'], ['ENB · vel. dir.', 'pwm'], ['IN3', 'dig'], ['IN4', 'dig']];
+    if (enc) p.push(['Encoder esq.', 'dig'], ['Encoder dir.', 'dig']);
+    items.push({ id: 'motores', nome: 'Driver L298N · motores', pinos: p });
+  }
+  if (b.motoresI2C && enc) items.push({ id: 'encoders', nome: 'Encoders dos motores', pinos: [['Encoder esq.', 'dig'], ['Encoder dir.', 'dig']] });
+  comps.forEach(c => items.push(c));
+  const needI2C = items.some(c => c.i2c);
+  if (needI2C) b.i2c.forEach(p => used.add(p));
+  const SPI = ['GPIO8', 'GPIO9', 'GPIO10', 'GPIO11'];
+  let adcCh = 0;
+  const pool = (t) => {
+    if (t === 'analog') return b.analog;
+    if (t === 'pwm') return b.pwmAny ? [...b.pwm, ...b.dig, ...(b.analogDig ? b.analog : [])] : b.pwm;
+    return [...b.dig, ...b.pwm, ...(b.analogDig ? b.analog : [])];
+  };
+  const reqs = [];
+  items.forEach(c => (c.pinos || []).forEach(([sinal, t], k) => reqs.push({ c, sinal, t, k })));
+  const order = { analog: 0, pwm: 1, dig: 2 };
+  const assigned = new Map();
+  [...reqs].sort((a, b2) => order[a.t] - order[b2.t]).forEach(r => {
+    let pin = null;
+    if (r.t === 'analog' && b.adc) {
+      SPI.forEach(p => used.add(p));
+      pin = 'MCP3008 CH' + adcCh++;
+    } else {
+      for (const p of pool(r.t)) if (!used.has(p)) { used.add(p); pin = p; break; }
+    }
+    assigned.set(r, pin);
+    if (!pin) falta[r.c.id] = true;
+  });
+  for (const c of items) {
+    if (c.i2c) {
+      rows.push({ c, sinal: 'SDA · SCL', pin: b.i2c.join(' · '), extra: 'I2C ' + c.i2c, first: true, n: 1 });
+    } else {
+      const rs = reqs.filter(r => r.c === c);
+      rs.forEach((r, i) => rows.push({ c, sinal: r.sinal, pin: assigned.get(r), first: i === 0, n: rs.length }));
+    }
+  }
+  for (const id of b.builtin) if (cfg.comps.includes(id) || true) rows.push({ c: COMP[id], sinal: 'integrado', pin: COMP[id].builtinNome, first: true, n: 1, builtin: true });
+  const total = new Set([...b.analog, ...b.pwm, ...b.dig, ...b.i2c, ...(b.adc ? SPI : [])]).size;
+  return { rows, used: used.size, total, falta };
+}
+
+/* ---------- Oficina ---------- */
+function pinSummary(c) {
+  const b = board();
+  if (b.builtin.includes(c.id)) return [`<span class="tag ok">integrado</span>`];
+  if (c.i2c) return [`<span class="tag">I2C ${c.i2c}</span>`];
+  const n = {};
+  c.pinos.forEach(([, t]) => n[t] = (n[t] || 0) + 1);
+  const nome = { dig: 'digital', pwm: 'PWM', analog: 'analógico' };
+  const plural = { dig: 'digitais', pwm: 'PWM', analog: 'analógicos' };
+  const out = Object.entries(n).map(([t, k]) => `<span class="tag${t === 'analog' && b.adc ? ' hot' : ''}">${k} ${k > 1 ? plural[t] : nome[t]}${t === 'analog' && b.adc ? ' via ADC' : ''}</span>`);
+  if (c.v5 && b.tensao !== '5 V') out.push('<span class="tag hot">5 V</span>');
+  return out;
+}
+
+function renderWorkshop() {
+  const cfg = state.cfg, b = board();
+  $('#boards').innerHTML = Object.entries(BOARDS).map(([k, v]) => `
+    <button class="card" type="button" data-board="${k}" aria-pressed="${cfg.board === k}">
+      <div class="art">${ART[k]}</div>
+      <h3>${v.nome}</h3><p>${v.chip}</p>
+      <div class="tags"><span class="tag">${v.tensao}</span><span class="tag hot">${v.langNome}</span></div>
+    </button>`).join('');
+  $('#chassis').innerHTML = Object.entries(CHASSIS).map(([k, v]) => `
+    <button class="card" type="button" data-chassis="${k}" aria-pressed="${cfg.chassis === k}">
+      <div class="art">${ART[k]}</div><h3>${v.nome}</h3><p>${v.desc}</p>
+      <div class="tags"><span class="tag">${v.max} cm/s</span><span class="tag">${v.motores} motores</span></div>
+    </button>`).join('');
+  $('#motors').innerHTML = Object.entries(MOTORS).map(([k, v]) => `
+    <button class="card" type="button" data-motor="${k}" aria-pressed="${cfg.motor === k}">
+      <div class="art">${ART[k]}</div><h3>${v.nome}</h3><p>${v.desc}</p>
+      <div class="tags">${v.enc ? '<span class="tag ok">precisão alta</span><span class="tag">+2 pinos</span>' : '<span class="tag">económico</span>'}</div>
+    </button>`).join('');
+  const compCard = (c) => {
+    const bi = b.builtin.includes(c.id), on = bi || cfg.comps.includes(c.id);
+    return `<button class="card comp${bi ? ' builtin' : ''}" type="button" data-comp="${c.id}" aria-pressed="${on}"${bi ? ' aria-disabled="true" title="Já vem na placa"' : ''}>
+      <span class="ico"><svg viewBox="0 0 24 24">${ICONS[c.id]}</svg></span>
+      <h3>${bi ? c.builtinNome : c.nome}</h3><p>${bi ? 'Já vem na placa ' + b.curto + '.' : c.desc}</p>
+      <div class="tags">${pinSummary(c).join('')}</div>
+    </button>`;
+  };
+  $('#sensors').innerHTML = COMPS.filter(c => c.grupo === 'sensor').map(compCard).join('');
+  $('#outputs').innerHTML = COMPS.filter(c => c.grupo !== 'sensor').map(compCard).join('');
+  renderWiring();
+}
+
+function renderWiring() {
+  const a = allocatePins(state.cfg), b = board();
+  Sim.pins = Object.fromEntries(Object.keys(a.falta).map(k => [k, { falta: true }]));
+  $('#pincount').textContent = `${a.used} / ${a.total}`;
+  $('#pinbar').classList.toggle('full', Object.keys(a.falta).length > 0);
+  $('#pinbar span').style.width = Math.min(100, a.used / a.total * 100) + '%';
+  $('#pintable').innerHTML = a.rows.map(r => `<tr${r.first && r !== a.rows[0] ? ' class="grp"' : ''}>
+      <td>${r.first ? (r.c.nome || r.c.id) : ''}</td><td>${r.sinal}${r.extra ? ' <span class="tag">' + r.extra + '</span>' : ''}</td>
+      <td class="pin${r.pin ? '' : ' miss'}">${r.pin || 'sem pino'}</td></tr>`).join('');
+  const notes = [];
+  const faltam = Object.keys(a.falta).map(id => (COMP[id] || { nome: 'Motores' }).nome);
+  if (faltam.length) notes.push(`<li class="err">A placa ficou sem pinos livres para: ${faltam.join(', ')}. Retira componentes ou escolhe outra placa.</li>`);
+  if (state.cfg.comps.includes('ultrassons') && b.tensao !== '5 V') notes.push('<li class="warn">O HC-SR04 funciona a 5 V e esta placa a 3,3 V: liga o ECHO através de um divisor de tensão (por exemplo 1 kΩ e 2 kΩ).</li>');
+  if (state.cfg.comps.includes('luz') && b.adc) notes.push('<li class="warn">O LDR é analógico: precisa do conversor MCP3008 ligado por SPI (GPIO8 a GPIO11).</li>');
+  if (state.cfg.comps.includes('servo')) notes.push('<li>O servo deve ter alimentação de 5 V própria, com o GND comum à placa.</li>');
+  b.notas.forEach(n => notes.push(`<li>${n}</li>`));
+  $('#notes').innerHTML = notes.join('');
+}
+
+function renderSpec() {
+  const b = board(), n = state.cfg.comps.filter(c => !b.builtin.includes(c)).length + b.builtin.length;
+  $('#spec').innerHTML = `<span class="chip"><i style="background:${b.cor}"></i>${b.curto}</span><span class="chip">${CHASSIS[state.cfg.chassis].nome}</span><span class="chip">${n} componentes</span><span class="chip">${b.langNome}</span>`;
+}
+
+function onWorkshopClick(e) {
+  const el = e.target.closest('.card'); if (!el) return;
+  const cfg = state.cfg;
+  const prevLang = lang();
+  if (el.dataset.board) cfg.board = el.dataset.board;
+  else if (el.dataset.chassis) cfg.chassis = el.dataset.chassis;
+  else if (el.dataset.motor) cfg.motor = el.dataset.motor;
+  else if (el.dataset.comp) {
+    if (el.getAttribute('aria-disabled') === 'true') return;
+    const id = el.dataset.comp, i = cfg.comps.indexOf(id);
+    if (i >= 0) cfg.comps.splice(i, 1); else cfg.comps.push(id);
+  } else return;
+  configChanged(prevLang !== lang());
+}
+
+function configChanged(langChanged) {
+  stopProgram(true);
+  Sim.cfg = state.cfg;
+  resetRobot();
+  renderWorkshop(); renderSpec(); buildReadouts(); renderRef();
+  if (ws) ws.updateToolbox(buildToolbox(state.cfg));
+  updateGen();
+  if (langChanged || !state.codes[lang()]) loadCodeForLang();
+  updateCodeHeader();
+  setStatus('idle');
+  save();
+}
+
+/* ---------- Blocos ---------- */
+function initBlockly() {
+  defineBlocks();
+  ws = Blockly.inject('blockly', {
+    toolbox: buildToolbox(state.cfg), theme: 'robolab', renderer: 'zelos',
+    grid: { spacing: 24, length: 2, colour: '#D8DEE7', snap: true },
+    zoom: { controls: false, wheel: true, startScale: 0.78, maxScale: 2, minScale: 0.35, scaleSpeed: 1.15 },
+    trashcan: false, move: { scrollbars: true, drag: true, wheel: false }, sounds: false
+  });
+  let ok = false;
+  if (state.blocks) { try { Blockly.serialization.workspaces.load(state.blocks, ws); ok = true; } catch (e) { ok = false; } }
+  if (!ok) loadExampleBlocks('obstaculos');
+  ws.addChangeListener((e) => {
+    if (e.isUiEvent) return;
+    updateGen(); save();
+    if (e.type !== Blockly.Events.FINISHED_LOADING && !Sim.running) setSource('blocos', true);
+  });
+  new ResizeObserver(() => Blockly.svgResize(ws)).observe($('#blockly'));
+  Sim.onHighlight = (id) => { if (state.source === 'blocos' && ws) ws.highlightBlock(id); };
+}
+function loadExampleBlocks(key) {
+  const ex = EXAMPLES[key];
+  ws.clear();
+  Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: ex.blocks() } }, ws);
+  ws.cleanUp();
+  ws.scrollCenter();
+}
+function updateGen() {
+  if (!ws) return;
+  const code = genCode(ws, state.cfg, false);
+  $('#gen-code').innerHTML = highlight(code, lang());
+  $('#gen-lang').textContent = board().langNome + ' · ' + fileName();
+  if (!state.codeEdited[lang()]) { state.codes[lang()] = code; if (state.tab === 'codigo') syncEditor(); else $('#code').value = code; }
+}
+
+/* ---------- Código ---------- */
+const ta = () => $('#code');
+function loadCodeForLang() {
+  if (!state.codes[lang()] || !state.codeEdited[lang()]) { state.codes[lang()] = genCode(ws, state.cfg, false); }
+  ta().value = state.codes[lang()];
+  state.errLine = null;
+  syncEditor();
+}
+function syncEditor() {
+  const v = ta().value;
+  if (ta().value !== state.codes[lang()]) ta().value = state.codes[lang()];
+  $('#code-hl').innerHTML = highlight(ta().value, lang()) + '\n';
+  const n = ta().value.split('\n').length;
+  $('#gutter').innerHTML = Array.from({ length: n }, (_, i) => state.errLine === i + 1 ? `<span class="e">${i + 1}</span>` : String(i + 1)).join('\n');
+  return v;
+}
+function updateCodeHeader() {
+  $('#code-lang').innerHTML = `${board().langNome} <em>${fileName()}</em>`;
+}
+function onCodeInput() {
+  state.codes[lang()] = ta().value;
+  state.codeEdited[lang()] = true;
+  state.errLine = null;
+  syncEditor();
+  if (!Sim.running) setSource('codigo', true);
+  save();
+}
+function onCodeKey(e) {
+  const t = ta(), s = t.selectionStart, en = t.selectionEnd, v = t.value;
+  const unit = lang() === 'py' ? '    ' : '  ';
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    t.setRangeText(unit, s, en, 'end'); onCodeInput();
+  } else if (e.key === 'Enter') {
+    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+    const line = v.slice(lineStart, s);
+    let ind = line.match(/^\s*/)[0];
+    if (/[{:]\s*$/.test(line)) ind += unit;
+    e.preventDefault();
+    t.setRangeText('\n' + ind, s, en, 'end'); onCodeInput();
+  } else if (e.key === '}' && lang() === 'cpp') {
+    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+    const line = v.slice(lineStart, s);
+    if (/^\s+$/.test(line)) { e.preventDefault(); t.setRangeText(line.slice(unit.length) + '}', lineStart, en, 'end'); onCodeInput(); }
+  }
+}
+
+const REF = [
+  ['Movimento', [
+    ['robo.avancar(20)', 'robo.avancar(20)', 'Anda 20 cm em frente e pára'],
+    ['robo.recuar(10)', 'robo.recuar(10)', 'Anda 10 cm para trás'],
+    ['robo.virarDireita(90)', 'robo.virar_direita(90)', 'Roda 90° no sentido do relógio'],
+    ['robo.virarEsquerda(90)', 'robo.virar_esquerda(90)', 'Roda 90° no sentido contrário'],
+    ['robo.motores(50, 50)', 'robo.motores(50, 50)', 'Potência esq./dir. de -100 a 100, sem esperar'],
+    ['robo.parar()', 'robo.parar()', 'Desliga os motores'],
+    ['robo.velocidade(60)', 'robo.velocidade(60)', 'Velocidade de avançar e virar (%)'],
+    ['robo.servo(90)', 'robo.servo(90)', 'Roda o servo (0 a 180°)', 'servo']
+  ]],
+  ['Sensores', [
+    ['robo.distancia()', 'robo.distancia()', 'Distância em cm', 'ultrassons'],
+    ['robo.linhaEsquerda()', 'robo.linha_esquerda()', 'true se vê preto', 'linha'],
+    ['robo.linhaDireita()', 'robo.linha_direita()', 'true se vê preto', 'linha'],
+    ['robo.cor()', 'robo.cor()', '"vermelho", "verde", "azul"…', 'cor'],
+    ['robo.toque()', 'robo.toque()', 'true quando bate', 'toque'],
+    ['robo.luz()', 'robo.luz()', 'Intensidade de 0 a 100', 'luz'],
+    ['robo.direcao()', { microbit: 'compass.heading()', rpi: 'robo.direcao()' }, 'Rotação em graus (0 a 359)', 'giro']
+  ]],
+  ['Saídas', [
+    ['robo.led("verde")', 'robo.led("verde")', 'Cores: verde, vermelho, azul, amarelo, branco, desligado', 'led'],
+    ['robo.som(440, 200)', { microbit: 'music.pitch(440, 200)', rpi: 'robo.som(440, 200)' }, 'Frequência (Hz) e duração (ms)', 'buzzer'],
+    ['robo.mostrar("Olá")', { microbit: 'display.scroll("Olá")', rpi: 'robo.mostrar("Olá")' }, 'Escreve no ecrã', 'ecra'],
+    ['Serial.println(valor)', 'print(valor)', 'Escreve no Monitor série']
+  ]],
+  ['Tempo e números', [
+    ['delay(500)', { microbit: 'sleep(500)', rpi: 'time.sleep(0.5)' }, 'Espera (Arduino e micro:bit em ms, Raspberry Pi em segundos)'],
+    ['millis()', { microbit: 'running_time()', rpi: 'robo.tempo()' }, 'Milissegundos desde o arranque'],
+    ['random(1, 11)', 'random.randint(1, 10)', 'Número inteiro ao acaso']
+  ]]
+];
+function renderRef() {
+  const b = board(), py = b.lang === 'py';
+  const has = (id) => !id || state.cfg.comps.includes(id) || b.builtin.includes(id);
+  $('#ref').innerHTML = `<p class="label" style="margin:0 0 4px">Biblioteca robo · ${b.curto}</p>` + REF.map(([g, items]) =>
+    `<h3>${g}</h3>` + items.map(([c, p, d, need]) => {
+      const code = py ? (typeof p === 'string' ? p : p[b.pyFlavor]) : c;
+      return `<button type="button" data-ins="${code.replace(/"/g, '&quot;')}" ${has(need) ? '' : 'style="opacity:.45" title="Falta o componente na Oficina"'}><code>${esc(code)}</code><span>${d}${has(need) ? '' : ' · falta componente'}</span></button>`;
+    }).join('')).join('');
+}
+
+/* ---------- Palco ---------- */
+function buildReadouts() {
+  const has = (id) => state.cfg.comps.includes(id) || board().builtin.includes(id);
+  const r = [`<div class="ro" style="grid-column:span 2"><span class="k">Motores esq. · dir.</span><span class="v"><span class="mbar"><span id="mb-l"></span></span><span class="mbar"><span id="mb-r"></span></span></span></div>`];
+  if (has('ultrassons')) r.push(`<div class="ro"><span class="k">Distância</span><span class="v" id="ro-dist">0</span></div>`);
+  if (has('linha')) r.push(`<div class="ro"><span class="k">Linha E · D</span><span class="v"><span class="dot" id="ro-le"></span><span class="dot" id="ro-ld"></span></span></div>`);
+  if (has('cor')) r.push(`<div class="ro"><span class="k">Cor</span><span class="v" id="ro-cor"></span></div>`);
+  if (has('toque')) r.push(`<div class="ro"><span class="k">Para-choques</span><span class="v" id="ro-toque"></span></div>`);
+  if (has('luz')) r.push(`<div class="ro"><span class="k">Luz</span><span class="v" id="ro-luz"></span></div>`);
+  if (has('giro')) r.push(`<div class="ro"><span class="k">Direção</span><span class="v" id="ro-dir"></span></div>`);
+  if (has('servo')) r.push(`<div class="ro"><span class="k">Servo</span><span class="v" id="ro-servo"></span></div>`);
+  if (has('led')) r.push(`<div class="ro"><span class="k">LED</span><span class="v" id="ro-led"></span></div>`);
+  if (has('ecra')) r.push(`<div class="ro" style="grid-column:span 2"><span class="k">Ecrã</span><span class="v" id="ro-ecra"></span></div>`);
+  r.push(`<div class="ro"><span class="k">Tempo</span><span class="v" id="ro-t"></span></div>`);
+  r.push(`<div class="ro"><span class="k">Colisões</span><span class="v" id="ro-col"></span></div>`);
+  $('#readouts').innerHTML = r.join('');
+}
+let lastRO = 0;
+function updateReadouts() {
+  const now = performance.now(); if (now - lastRO < 90) return; lastRO = now;
+  const set = (id, h) => { const el = document.getElementById(id); if (el && el.innerHTML !== h) el.innerHTML = h; };
+  const bar = (id, v) => { const el = document.getElementById(id); if (!el) return; const p = Math.max(-1, Math.min(1, v)) * 50; el.style.left = (p < 0 ? 50 + p : 50) + '%'; el.style.width = Math.abs(p) + '%'; };
+  bar('mb-l', robot.vl); bar('mb-r', robot.vr);
+  set('ro-dist', Sensors.distancia().toFixed(1) + ' <small>cm</small>');
+  const le = document.getElementById('ro-le');
+  if (le) { le.classList.toggle('on', Sensors.linha(-1)); document.getElementById('ro-ld').classList.toggle('on', Sensors.linha(1)); }
+  if (document.getElementById('ro-cor')) { const c = Sensors.cor(); set('ro-cor', `<span class="dot" style="background:${COLORS[c]};border-color:#fff"></span>${c}`); }
+  set('ro-toque', robot.bump ? 'premido' : 'livre');
+  set('ro-luz', String(Sensors.luz()));
+  set('ro-dir', Sensors.direcao() + '°');
+  set('ro-servo', Math.round(robot.servo) + '°');
+  set('ro-led', robot.led ? `<span class="dot" style="background:${COLORS[robot.led]};border-color:#fff"></span>${robot.led}` : 'apagado');
+  set('ro-ecra', esc(robot.display || '·'));
+  set('ro-t', ((Sim.t - Sim.mission.t0)).toFixed(1).replace('.', ',') + ' <small>s</small>');
+  set('ro-col', String(Sim.collisions));
+}
+
+function renderMission() {
+  const sc = SCENARIOS[state.cfg.scenario];
+  $('#mission').innerHTML = `<b>Missão</b> · ${sc.missao}`;
+}
+
+let toastTimer = 0;
+function toast(html, ms = 3200) {
+  const t = $('#toast'); t.innerHTML = html; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+function log(msg, cls) {
+  const el = $('#log');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  el.appendChild(line);
+  while (el.childNodes.length > 400) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(s, extra) {
+  const p = $('#status');
+  const map = { idle: ['', 'Pronto'], run: ['is-run', 'A executar'], end: ['', 'Terminado'], stopped: ['', 'Parado'], error: ['err', 'Erro'], mission: ['ok', 'Missão cumprida'] };
+  const [cls, txt] = map[s] || map.idle;
+  p.className = 'pill ' + cls; p.innerHTML = `<i></i>${extra || txt}`;
+}
+function setRunButton(running) {
+  const b = $('#btn-run');
+  b.classList.toggle('stop', running);
+  b.innerHTML = running
+    ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>Parar</span>'
+    : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span>Executar</span>';
+}
+function setSource(v, quiet) {
+  state.source = v;
+  $$('#seg-src button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  if (!quiet) save();
+}
+
+Sim.onLog = (m) => log(m);
+Sim.onState = (s, err) => {
+  if (s === 'run') { setRunButton(true); setStatus('run'); log(`▶ ${fileName()} · ${board().curto} · ${state.source === 'blocos' ? 'blocos' : 'código'}`, 'sys'); }
+  if (s === 'end') { log('■ Programa terminado', 'sys'); setStatus(Sim.mission.done ? 'mission' : 'end'); }
+  if (s === 'stopped') { log('■ Parado', 'sys'); setRunButton(false); setStatus(Sim.mission.done ? 'mission' : 'stopped'); }
+  if (s === 'idle') { setRunButton(false); if ($('#status').classList.contains('is-run')) setStatus(Sim.mission.done ? 'mission' : 'end'); }
+  if (s === 'error') showError(err);
+  if (s === 'mission') {
+    const t = Sim.mission.time.toFixed(1).replace('.', ',');
+    toast(`<span class="big">Missão cumprida</span><span>${t} s · ${Sim.collisions} ${Sim.collisions === 1 ? 'colisão' : 'colisões'}</span>`, 4500);
+    log(`★ Missão cumprida em ${t} s`, 'okm');
+    setStatus('mission', `Cumprida · ${t} s`);
+    beep(660, 120); setTimeout(() => beep(990, 180), 140);
+  }
+};
+function showError(err) {
+  const linha = err && err.linha;
+  log('✖ ' + err.message + (linha ? ` (linha ${linha})` : ''), 'err');
+  setStatus('error'); setRunButton(false);
+  toast(`<span style="color:var(--err)">✖</span><span>${esc(err.message)}</span>`, 5000);
+  if (linha && state.source === 'codigo') { state.errLine = linha; syncEditor(); }
+}
+
+async function run() {
+  if (Sim.running) { stopProgram(); return; }
+  try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) { /* sem áudio */ }
+  state.errLine = null;
+  let src;
+  if (state.source === 'blocos') src = genCode(ws, state.cfg, true);
+  else src = state.codes[lang()];
+  if (state.source === 'codigo') syncEditor();
+  $('#toast').classList.remove('show');
+  try { await runProgram(src, lang()); }
+  catch (e) { showError(e instanceof CodeError ? e : new CodeError(String(e.message || e))); }
+}
+
+function setTab(t) {
+  state.tab = t;
+  $$('.step').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + t));
+  if (t === 'blocos' && ws) { Blockly.svgResize(ws); setSource('blocos', true); }
+  if (t === 'codigo') { syncEditor(); setSource('codigo', true); }
+  save();
+}
+
+/* ---------- Arranque ---------- */
+function init() {
+  load();
+  Sim.cfg = state.cfg;
+  $('#scenario').innerHTML = Object.entries(SCENARIOS).map(([k, v]) => `<option value="${k}">${v.nome}</option>`).join('');
+  $('#scenario').value = state.cfg.scenario;
+  $('#examples').innerHTML += Object.entries(EXAMPLES).map(([k, v]) => `<option value="${k}">${v.nome}</option>`).join('');
+  setScenario(state.cfg.scenario);
+  initCanvas($('#mat'));
+  renderWorkshop(); renderSpec(); buildReadouts(); renderMission(); renderRef();
+  initBlockly();
+  updateGen();
+  loadCodeForLang(); updateCodeHeader();
+  setSource(state.source, true);
+  $('#blk-area').classList.toggle('gen-on', state.gen);
+  $('#btn-gen').setAttribute('aria-pressed', String(state.gen));
+  $('#btn-gen').classList.toggle('dark', state.gen);
+  setTab(state.tab);
+
+  $$('.step').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+  $('#p-montar').addEventListener('click', onWorkshopClick);
+  $('#btn-run').addEventListener('click', run);
+  $('#btn-reset').addEventListener('click', () => { stopProgram(true); resetRobot(); setStatus('idle'); });
+  $('#scenario').addEventListener('change', (e) => { stopProgram(true); state.cfg.scenario = e.target.value; setScenario(e.target.value); renderMission(); setStatus('idle'); save(); });
+  $('#seg-src').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSource(b.dataset.v); });
+  $('#seg-speed').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    Sim.speed = +b.dataset.v;
+    $$('#seg-speed button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  });
+  $('#btn-trail').addEventListener('click', (e) => { Sim.showTrail = !Sim.showTrail; e.currentTarget.setAttribute('aria-pressed', String(Sim.showTrail)); e.currentTarget.style.opacity = Sim.showTrail ? 1 : 0.55; });
+  $('#btn-clear-log').addEventListener('click', () => { $('#log').innerHTML = ''; });
+  $('#btn-gen').addEventListener('click', (e) => {
+    state.gen = !state.gen;
+    $('#blk-area').classList.toggle('gen-on', state.gen);
+    e.currentTarget.setAttribute('aria-pressed', String(state.gen)); e.currentTarget.classList.toggle('dark', state.gen);
+    save();
+  });
+  $('#btn-clear-blocks').addEventListener('click', () => { ws.clear(); });
+  $('#btn-zoom-in').addEventListener('click', () => ws.zoomCenter(1));
+  $('#btn-zoom-out').addEventListener('click', () => ws.zoomCenter(-1));
+  $('#btn-tidy').addEventListener('click', () => { ws.cleanUp(); ws.scrollCenter(); });
+  $('#examples').addEventListener('change', (e) => {
+    const k = e.target.value; if (!k) return;
+    const ex = EXAMPLES[k];
+    stopProgram(true);
+    const added = ex.comps.filter(c => !state.cfg.comps.includes(c) && !board().builtin.includes(c));
+    state.cfg.comps.push(...added);
+    state.cfg.scenario = ex.cenario; $('#scenario').value = ex.cenario; setScenario(ex.cenario); renderMission();
+    state.codeEdited[lang()] = false;
+    configChanged(false);
+    loadExampleBlocks(k);
+    setSource('blocos');
+    if (added.length) log('Oficina: acrescentei ' + added.map(c => COMP[c].nome).join(', ') + '.', 'sys');
+    e.target.value = '';
+  });
+  const toCode = () => { state.codes[lang()] = genCode(ws, state.cfg, false); state.codeEdited[lang()] = false; state.errLine = null; setTab('codigo'); syncEditor(); setSource('codigo'); };
+  $('#btn-to-code').addEventListener('click', toCode);
+  $('#btn-from-blocks').addEventListener('click', () => { toCode(); toast('Código substituído pelo programa dos blocos', 2200); });
+  $('#btn-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(ta().value); toast('Código copiado. Cola-o no Arduino IDE ou no Thonny.', 2600); }
+    catch (e) { ta().focus(); ta().select(); toast('Seleccionei o código: usa Ctrl+C para copiar.', 2600); }
+  });
+  $('#btn-ref').addEventListener('click', (e) => {
+    const on = $('#code-area').classList.toggle('no-ref');
+    e.currentTarget.setAttribute('aria-pressed', String(!on));
+  });
+  $('#ref').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-ins]'); if (!b) return;
+    const t = ta(); t.focus();
+    t.setRangeText(b.dataset.ins, t.selectionStart, t.selectionEnd, 'end'); onCodeInput();
+  });
+  ta().addEventListener('input', onCodeInput);
+  ta().addEventListener('keydown', onCodeKey);
+
+  const typing = (el) => el && (el.closest('textarea, input, select, .blocklyWidgetDiv, .blocklyDropDownDiv') || el.closest('#blockly'));
+  document.addEventListener('keydown', (e) => {
+    if (!e.key.startsWith('Arrow') || typing(e.target)) return;
+    Sim.keys[e.key] = true; e.preventDefault();
+  });
+  document.addEventListener('keyup', (e) => { if (e.key.startsWith('Arrow')) Sim.keys[e.key] = false; });
+  window.addEventListener('blur', () => { Sim.keys = {}; });
+  if (matchMedia('(pointer: coarse)').matches) $('#hint').style.display = 'none';
+
+  Sim.onFrame = updateReadouts;
+  log('RoboLab pronto. Monta o robô, programa-o e carrega em Executar.', 'sys');
+  loop();
+}
+
+if (window.Blockly) init();
+else document.body.insertAdjacentHTML('afterbegin', '<p style="padding:20px;font:16px sans-serif">Não foi possível carregar o editor de blocos. Verifica a ligação à internet e recarrega a página.</p>');
+
+</script>
+</body>
+</html>
