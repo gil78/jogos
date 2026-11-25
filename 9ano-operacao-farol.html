@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Operação Farol</title>
+<title>Operação Farol 2</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -226,6 +226,33 @@ details>summary{cursor:pointer;font-weight:600}
 .fkey{display:flex;flex-direction:column;gap:4px;align-items:flex-start;background:#fff3c4;color:#3a2a00;border:3px dashed #d99a00;border-radius:10px;padding:12px 16px}
 .fkey span{font-weight:600;font-size:14.5px}
 .fkey b{font-family:var(--f-data);font-size:clamp(32px,6vw,50px);letter-spacing:.12em;line-height:1.1}
+/* Operação Farol 2: componentes dos novos níveis */
+.btn.isok,.btn.isok[disabled]{background:var(--kelp);color:var(--hull-deep);box-shadow:0 5px 0 var(--kelp-deep);opacity:1}
+.btn.isno,.btn.isno[disabled]{background:var(--coral);color:#fff;box-shadow:0 5px 0 var(--coral-deep);opacity:1}
+.sents{display:flex;flex-direction:column;gap:10px}
+.bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}
+.bin{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;min-height:84px}
+.bin b{font-size:19px}.bin small{font-weight:600;font-size:13px;opacity:.85}
+.bin[disabled]{opacity:1}
+.rtest{display:flex;flex-direction:column;gap:8px}
+.rrow{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:10px 12px;border-radius:5px;border:2px solid var(--line);background:var(--hull-deep);animation:rise .25s ease-out}
+.rrow.ok{border-color:var(--kelp)}.rrow.no{border-color:var(--coral)}
+.bdg{font-weight:800;font-size:14px;padding:5px 10px;border-radius:5px}
+.mk{font-weight:800;font-size:14px}.rrow.ok .mk{color:var(--kelp)}.rrow.no .mk{color:var(--coral)}
+.dbars{display:flex;flex-direction:column;gap:10px}
+.dbar{display:grid;grid-template-columns:minmax(110px,190px) 1fr 52px;gap:10px;align-items:center;font-weight:600}
+.dbar b{font-family:var(--f-data);text-align:right}
+.dbar .bar i{background:linear-gradient(90deg,var(--flare),var(--kelp))}
+.numgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;width:min(100%,340px);margin:0 auto;font-family:var(--f-data);font-weight:700}
+.numgrid span{aspect-ratio:1;display:grid;place-items:center;background:var(--hull-deep);border-radius:4px;font-size:clamp(14px,3.6vw,19px);color:var(--mist);transition:background .5s,color .5s}
+.numgrid .one{color:var(--foam)}
+.numgrid.lit .one{background:var(--flare);color:var(--hull-deep)}
+.pxo{display:flex;align-items:center;gap:12px}
+.pxs{width:44px;height:44px;flex:none;background:var(--hull-deep);border-radius:4px;padding:4px;fill:var(--flare)}
+.bot{background:var(--hull-deep);border:2px solid var(--line);border-radius:5px 18px 18px 18px;padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.bot .who{font-family:var(--f-data);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--kelp)}
+.bot p{margin:0;font-size:clamp(19px,2.6vw,24px);font-weight:600;line-height:1.35}
+@media (max-width:600px){.dbar{grid-template-columns:1fr 46px}.dbar .bar{grid-column:1/-1;grid-row:2}.rrow{grid-template-columns:1fr auto}.rrow .mk{grid-column:1/-1}}
 </style>
 
 <canvas id="sea" aria-hidden="true"></canvas>
@@ -408,7 +435,7 @@ const starRow=v=>`<span class="stars" role="img" aria-label="${starsOf(v)} de 3 
 const shipSvg=on=>`<svg viewBox="0 0 30 20" aria-hidden="true"><path fill="${on?"var(--kelp)":"#ffffff26"}" d="M2 13h26l-5 6H7zM14 1v11H5zM16 3l8 9h-8z"/></svg>`;
 
 /* ---------- estado guardado ---------- */
-const KEY="operacao-farol-v1";
+const KEY="operacao-farol2-v1";
 const memory={};
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return memory[k]??null}},set(k,v){memory[k]=v;try{localStorage.setItem(k,v)}catch(e){}}};
 const S=Object.assign({teams:[],imported:[],current:null,unlock:false,sound:true,exam:{on:false,max:1}},(()=>{try{return JSON.parse(store.get(KEY))||{}}catch(e){return{}}})());
@@ -436,11 +463,11 @@ const examMax=t=>exOf(t)?exOf(t).max:1;
 const exUsed=(t,i)=>{const e=exOf(t);return e?tries(t,i).filter(l=>l.x===e.id).length:0};
 const examLeft=(t,i)=>exOf(t)?Math.max(0,exOf(t).max-exUsed(t,i)):Infinity;
 const examTxt=()=>`Modo avaliação: cada nível só pode ser jogado ${examMax()===1?"uma vez":examMax()+" vezes"}. ${examMax()===1?"Essa tentativa conta para a avaliação.":"Conta a melhor dessas tentativas."}`;
-const canPlay=(t,i)=>(S.unlock||i===0||(t&&t.scores[i-1]!=null))&&(!t||examLeft(t,i)>0);
+const canPlay=(t,i)=>!t||examLeft(t,i)>0;
 const attemptFactor=(t,i)=>Math.max(.5,1-.15*(exOf(t)?exUsed(t,i):(t.att[i]||0)));
 
 /* Código da equipa: resultados, elementos e percurso, com verificação contra erros de cópia */
-const SALT="cabo-da-roca-38.78N";
+const SALT="farol-2-nova-rota-38.78N";
 function hash(s){let h=0x811c9dc5;for(const ch of s+SALT){h^=ch.codePointAt(0);h=Math.imul(h,0x01000193)}return (h>>>0).toString(36).padStart(7,"0").slice(-5).toUpperCase()}
 function b64(s){return btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g,"_").replace(/\//g,"~").replace(/=+$/,"")}
 function unb64(s){s=s.replace(/_/g,"+").replace(/~/g,"/");return new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)))}
@@ -453,9 +480,9 @@ const idsNames=(t,ids)=>[...ids].map(id=>{const m=(t.members||[]).find(x=>x.id==
 const playedIn=(t,i)=>{const s=new Set();t.log.forEach(l=>{if((i==null||l.l===i)&&l.m)[...l.m].forEach(c=>s.add(c))});return s};
 const fmtD=t=>new Date(t).toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit",year:"numeric"});
 const fmtH=t=>new Date(t).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
-function makeCode(t){const o={i:t.id,n:tidy(t.name),t:tidy(t.turma||""),e:t.emblem,c:t.color,s:t.scores,a:t.att,m:(t.members||[]).map(m=>[m.id,tidy(m.n),tidy(m.t||""),m.out?1:0]),l:(()=>{const L=t.log||[],keep=new Set(L.slice(-90));for(let i=0;i<8;i++){const f=L.find(l=>l.l===i);if(f)keep.add(f)}return L.filter(l=>keep.has(l))})().map(l=>[l.l,l.p,Math.max(0,Math.round((l.t-EP)/60000)),l.m||"",l.x||0])};const p=b64(JSON.stringify(o));return `FAROL2.${p}.${hash(p)}`}
+function makeCode(t){const o={i:t.id,n:tidy(t.name),t:tidy(t.turma||""),e:t.emblem,c:t.color,s:t.scores,a:t.att,m:(t.members||[]).map(m=>[m.id,tidy(m.n),tidy(m.t||""),m.out?1:0]),l:(()=>{const L=t.log||[],keep=new Set(L.slice(-90));for(let i=0;i<8;i++){const f=L.find(l=>l.l===i);if(f)keep.add(f)}return L.filter(l=>keep.has(l))})().map(l=>[l.l,l.p,Math.max(0,Math.round((l.t-EP)/60000)),l.m||"",l.x||0])};const p=b64(JSON.stringify(o));return `FAROLB.${p}.${hash(p)}`}
 function readCode(code){
-  const m=code.trim().match(/^FAROL(2?)\.([A-Za-z0-9_~]+)\.([A-Z0-9]{5})$/);
+  const m=code.trim().match(/^FAROL(B)\.([A-Za-z0-9_~]+)\.([A-Z0-9]{5})$/);
   if(!m||hash(m[2])!==m[3])return null;
   try{
     if(m[1]){const o=JSON.parse(unb64(m[2]));const ok=v=>v==null||(v>=0&&v<=1000);if(!Array.isArray(o.s)||o.s.length!==8||!o.s.every(ok))return null;
@@ -487,15 +514,15 @@ const LEVELS=[
  {t:"Caça à IA",c:"O que é a IA",run:L1,min:15,
   learn:["A IA que usas todos os dias aprende padrões a partir de dados.","Um programa com regras fixas faz apenas o que alguém escreveu, passo a passo.","Também existe IA baseada em regras escritas por especialistas, mas hoje a maior parte aprende com dados."],
   q:"Que aplicação do vosso telemóvel melhora com o uso? De onde vêm os dados dela?"},
- {t:"Treina o Radar",c:"Aprendizagem supervisionada",run:L2,min:20,
-  learn:["Na aprendizagem supervisionada, o modelo aprende com exemplos que têm etiqueta.","O teste usa dados que o modelo nunca viu: é assim que se sabe se aprendeu mesmo.","Mais exemplos ajudam, sobretudo se cobrirem todos os tipos de caso."],
-  q:"Porque é que seria batota testar o modelo com os mesmos exemplos que usou para aprender?"},
- {t:"Três Câmaras",c:"Enviesamento nos dados",run:L3,min:20,
-  learn:["Um modelo só conhece o mundo que aparece nos seus dados.","A média pode parecer boa e esconder um grupo onde o modelo falha muito.","Em 2018, o estudo Gender Shades testou sistemas comerciais de análise facial: o erro chegou a 34,7% em mulheres de pele mais escura e não passou de 0,8% em homens de pele mais clara."],
-  q:"Se um sistema falha mais num grupo de pessoas, de quem é a responsabilidade?"},
- {t:"O Neurónio",c:"Redes neuronais",run:L4,min:20,
-  learn:["Um neurónio artificial multiplica cada entrada por um peso e soma tudo.","Se a soma atingir o limiar, o neurónio dispara.","Treinar uma rede é ajustar milhões de pesos de forma automática. Um único neurónio não resolve o OU exclusivo: para isso são precisas camadas."],
-  q:"O que significa um peso negativo? Deem um exemplo da vossa vida."},
+ {t:"O Robô Reciclador",c:"Aprendizagem supervisionada",run:L2,min:20,
+  learn:["Na aprendizagem supervisionada, uma pessoa dá exemplos com a resposta certa (etiquetas).","O modelo copia o que lhe ensinaram: se as etiquetas estiverem erradas, ele aprende os erros.","Para saber se aprendeu mesmo, testa-se com exemplos novos, que nunca viu."],
+  q:"Quem deve ter cuidado com a qualidade dos dados: quem cria a IA, quem a usa ou os dois?"},
+ {t:"Dados Desequilibrados",c:"Enviesamento",run:L3,min:15,
+  learn:["Um modelo aprende melhor o que aparece muitas vezes nos dados.","Quando um grupo ou uma situação aparece pouco, o modelo falha mais nesse caso: é o enviesamento.","A solução passa por recolher dados mais variados e testar o modelo com todos os grupos."],
+  q:"Conhecem algum caso em que uma tecnologia funcione pior para algumas pessoas?"},
+ {t:"Pixel a Pixel",c:"Como a IA vê imagens",run:L4,min:15,
+  learn:["Para um computador, uma imagem é uma grelha de números: cada quadradinho é um pixel.","Numa imagem a cores, cada pixel tem três valores: vermelho, verde e azul.","A visão computacional ensina a IA a encontrar padrões nesses números, como olhos, rodas ou letras."],
+  q:"Quantos números são precisos para guardar uma fotografia a cores com 1000 por 1000 pixels?"},
  {t:"O Barco que Aprende",c:"Aprendizagem por reforço",run:L5,min:25,
   learn:["Na aprendizagem por reforço, um agente aprende por tentativa e erro, com recompensas.","O agente procura a recompensa que lhe deste, mesmo que isso não seja o que querias.","Explorar é essencial: um agente que só repete o que já conhece pode nunca encontrar a melhor rota."],
   q:"Se premiassem uma IA por cada clique num vídeo, que tipo de vídeos ela iria mostrar?"},
@@ -506,7 +533,7 @@ const LEVELS=[
   learn:["O Regulamento (UE) 2024/1689 trata a IA de forma diferente consoante o risco.","Algumas práticas são proibidas, como a classificação social e, nas escolas, o reconhecimento de emoções, salvo razões médicas ou de segurança.","Deves saber quando estás a falar com uma IA, e os deepfakes têm de ser identificados."],
   q:"Concordam que uma escola não possa usar IA para detetar emoções dos alunos? Porquê?"},
  {t:"A Tempestade",c:"Prova final",run:L8,min:15,
-  learn:["Já sabes distinguir IA de regras fixas, treinar e testar modelos e procurar enviesamentos.","Sabes como funciona um neurónio e como as recompensas moldam um agente.","E sabes a regra mais importante: a IA ajuda, mas quem pensa e decide és tu."],
+  learn:["Já sabes distinguir IA de regras fixas, treinar e testar modelos e procurar enviesamentos.","Sabes que, para a IA, uma imagem é uma grelha de números, e como as recompensas moldam um agente.","E sabes a regra mais importante: a IA ajuda, mas quem pensa e decide és tu."],
   q:"Qual foi a ideia que mais vos surpreendeu nesta missão?"}
 ];
 
@@ -515,6 +542,30 @@ function shell(i,mission,body){
 }
 const setPts=v=>{const e=$("#lvp");if(e)e.textContent=Math.round(v)};
 const fbBox=(ok,title,txt,btn="Continuar")=>`<div class="fb ${ok?"ok":"no"}" role="status"><div><b>${title}</b> ${txt}</div>${btn?`<div><button class="btn" id="next">${btn}</button></div>`:""}</div>`;
+
+/* motor comum: uma pergunta de cada vez, com escolha e explicação */
+function cardGame(i,done,o){
+  const deck=o.deck,N=deck.length,per=1000/N,sent=!!o.sent;let n=0,pts=0,marks=[],stop=()=>1;
+  view.innerHTML=shell(i,o.mission,`<div class="plate"><div class="dots" id="dots"></div>${o.sec?'<div class="timer"><i id="tb"></i></div>':""}<div id="qa" aria-live="polite"></div><div class="${sent?"sents":"choices"}" id="ch"></div><div id="fb"></div></div>`);
+  const dots=()=>$("#dots").innerHTML=deck.map((_,k)=>`<i class="${marks[k]===1?"ok":marks[k]===0?"no":k===n?"cur":""}"></i>`).join("");
+  function show(){
+    clearRun();dots();const c=deck[n];$("#qa").innerHTML=c.qh||`<div class="card">${esc(c.q)}</div>`;$("#fb").innerHTML="";
+    const ord=o.keep?c.opts.map((_,k)=>k):shuffle(c.opts.map((_,k)=>k));
+    $("#ch").innerHTML=ord.map(k=>`<button class="${sent?"sent":o.cls?"btn":"btn ghost"}${o.cls?" "+o.cls(k,c):""}" data-k="${k}" ${o.sty?`style="${o.sty(k,c)}"`:""}>${o.optH?o.optH(c.opts[k],k,c):esc(c.opts[k])}</button>`).join("");
+    $$("#ch button").forEach(b=>b.onclick=()=>answer(+b.dataset.k));
+    if(o.sec)stop=countdown(o.sec,f=>{$("#tb").style.width=f*100+"%"},()=>answer(-1));
+  }
+  function answer(k){
+    const f=o.sec?stop():1,c=deck[n],ok=k===c.a;
+    $$("#ch button").forEach(b=>{b.disabled=true;const kk=+b.dataset.k;if(kk===c.a)b.classList.add(sent?"right":"isok");else if(kk===k)b.classList.add(sent?"wrong":"isno");else b.style.opacity=.45});
+    if(ok){pts+=per*(o.sec?.7+.3*f:1);sfx.ok()}else sfx.bad();
+    marks[n]=ok?1:0;setPts(pts);dots();if(o.after)o.after(c,ok);
+    $("#fb").innerHTML=fbBox(ok,ok?"Certo!":k<0?"Acabou o tempo.":"Não desta vez.",`<br>${o.ans?o.ans(c):""}${esc(c.w)}`,n<N-1?(o.nextTxt||"Continuar"):"Ver resultado");
+    $("#next").focus();
+    $("#next").onclick=()=>{n++;if(n<N)show();else{const g=marks.filter(Boolean).length;done(pts,o.sum?o.sum(g,N):`${g} de ${N} certas`)}};
+  }
+  show();
+}
 
 /* ---------- Nível 1 ---------- */
 const CARDS=[
@@ -563,173 +614,74 @@ function L1(i,done){
 }
 
 /* ---------- Nível 2 ---------- */
-const FISH_BLOBS=[[.2,.76],[.2,.24],[.5,.86]], JELLY_BLOBS=[[.8,.22],[.82,.72],[.55,.3]];
-function radarPoint(kind){
-  const b=(kind?JELLY_BLOBS:FISH_BLOBS)[Math.floor(Math.random()*3)];
-  return{x:clamp(b[0]+gauss()*.075,.03,.97),y:clamp(b[1]+gauss()*.075,.03,.97),k:kind};
-}
-const radarSet=n=>shuffle(Array.from({length:n},(_,i)=>radarPoint(i%2)));
-function nearest(labeled,p){let best=null,bd=1e9;for(const q of labeled){const d=(q.x-p.x)**2+(q.y-p.y)**2;if(d<bd){bd=d;best=q}}return best?best.k:null}
-const accuracy=(labeled,test)=>test.filter(p=>nearest(labeled,p)===p.k).length/test.length;
-function drawFish(g,x,y,col){g.fillStyle=col;g.beginPath();g.ellipse(x,y,11,6.5,0,0,6.3);g.fill();g.beginPath();g.moveTo(x-9,y);g.lineTo(x-18,y-7);g.lineTo(x-18,y+7);g.closePath();g.fill();g.fillStyle="#0a1140";g.beginPath();g.arc(x+5,y-1,1.6,0,6.3);g.fill()}
-function drawJelly(g,x,y,col){g.fillStyle=col;g.beginPath();g.arc(x,y-1,10,Math.PI,0);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=2;g.beginPath();for(let i=-6;i<=6;i+=4){g.moveTo(x+i,y-1);g.quadraticCurveTo(x+i+3,y+6,x+i,y+11)}g.stroke()}
+const BINS=[["Amarelo","Plástico, metal e pacotes de bebidas","#ffd23f","#2c2300"],["Azul","Papel e cartão","#3f8cff","#fff"],["Verde","Vidro","#2fbf71","#062b16"],["Lixo comum","O que não se recicla","#8a93a6","#10131a"]];
+const TRAIN=[["Garrafa de água de plástico",0,"As embalagens de plástico vão para o ecoponto amarelo."],["Lata de refrigerante",0,"As latas e outras embalagens de metal também vão para o ecoponto amarelo."],["Jornal",1,"Jornais e revistas vão para o ecoponto azul."],["Caixa de cartão dos cereais",1,"As embalagens de cartão limpas vão para o ecoponto azul."],["Garrafa de vidro de sumo",2,"As garrafas de vidro vão para o ecoponto verde (vidrão)."],["Frasco de compota de vidro, sem tampa",2,"Os frascos de vidro vão para o ecoponto verde. A tampa de metal iria para o amarelo."],["Pacote de leite",0,"Parece cartão, mas também tem plástico e alumínio. Os pacotes de leite e de sumo vão para o ecoponto amarelo, não para o azul."],["Guardanapo de papel usado",3,"Apesar de ser papel, os guardanapos, os lenços e o papel de cozinha não vão para o ecoponto azul, nem limpos nem sujos. Vão para o lixo comum."]];
+const TEST=[["Garrafa de detergente de plástico",0,0],["Lata de atum, já lavada",0,1],["Revista",1,2],["Caixa de sapatos",1,3],["Garrafa de vinho",2,4],["Boião de iogurte de vidro",2,5],["Pacote de sumo",0,6],["Lenço de papel usado",3,7]];
+const binBtn=(k)=>`background:${BINS[k][2]};color:${BINS[k][3]};box-shadow:0 5px 0 #0006`;
 function L2(i,done){
-  const rounds=[4,10],res=[];let r=0;
-  const FISH="#ffc23d",JELLY="#ff7f9b",SZ=[640,470],PAD=34;
-  function start(){
-    clearRun();
-    const budget=rounds[r],pool=radarSet(40),test=radarSet(60);let labeled=[],phase="label",tested=[];
-    view.innerHTML=shell(i,"O radar do farol vê criaturas no mar, mas não sabe distinguir <b>peixes</b> de <b>medusas</b>. Escolhe que pontos vais identificar. Cada etiqueta gasta orçamento, por isso escolhe exemplos variados. Dados simulados.",`
-    <div class="split"><div class="plate"><canvas class="game" id="rad" width="${SZ[0]*2}" height="${SZ[1]*2}" aria-label="Gráfico de transparência e velocidade. Clica num ponto para o identificar."></canvas>
-    <div class="legend"><span><i style="background:${FISH}"></i>Zona que o modelo acha peixe</span><span><i style="background:${JELLY}"></i>Zona que o modelo acha medusa</span></div></div>
-    <div class="plate"><span class="eyebrow">Ronda ${r+1} de 2</span><h3 id="bud"></h3><p class="small muted">O modelo olha para o exemplo conhecido mais parecido e copia-lhe a etiqueta. As zonas coloridas mostram o que ele já pensa.</p>
-    <button class="btn ghost" id="rnd">Identificar um ponto ao acaso</button><button class="btn" id="go" disabled>Testar o modelo</button><div id="out"></div></div></div>`);
-    const cv=$("#rad"),g=cv.getContext("2d");g.scale(2,2);
-    const px=p=>[PAD+p.x*(SZ[0]-PAD-10),SZ[1]-PAD-p.y*(SZ[1]-PAD-10)];
-    function draw(){
-      g.clearRect(0,0,SZ[0],SZ[1]);
-      if(labeled.length){
-        const step=12;
-        for(let a=PAD;a<SZ[0]-10;a+=step)for(let b=10;b<SZ[1]-PAD;b+=step){
-          const k=nearest(labeled,{x:(a+step/2-PAD)/(SZ[0]-PAD-10),y:(SZ[1]-PAD-b-step/2)/(SZ[1]-PAD-10)});
-          g.fillStyle=k?"#ff7f9b30":"#ffc23d26";g.fillRect(a,b,step,step);
-        }
-      }
-      g.strokeStyle="#ffffff30";g.lineWidth=1;g.beginPath();g.moveTo(PAD,10);g.lineTo(PAD,SZ[1]-PAD);g.lineTo(SZ[0]-10,SZ[1]-PAD);g.stroke();
-      g.fillStyle="#a9bce6";g.font="13px Lexend, sans-serif";g.textAlign="center";g.fillText("Transparência →",SZ[0]/2,SZ[1]-11);
-      g.save();g.translate(16,SZ[1]/2-12);g.rotate(-Math.PI/2);g.fillText("Velocidade →",0,0);g.restore();
-      pool.forEach(p=>{if(p.seen)return;const [x,y]=px(p);g.fillStyle="#eef6ff";g.globalAlpha=.85;g.beginPath();g.arc(x,y,5.5,0,6.3);g.fill();g.globalAlpha=1});
-      labeled.forEach(p=>{const [x,y]=px(p);p.k?drawJelly(g,x,y,JELLY):drawFish(g,x,y,FISH)});
-      tested.forEach(p=>{const [x,y]=px(p);g.fillStyle=p.ok?"#2ee6b0":"#ff5a78";g.beginPath();g.arc(x,y,4,0,6.3);g.fill()});
-    }
-    function ui(){
-      $("#bud").textContent=`Etiquetas: ${labeled.length} de ${budget}`;
-      $("#go").disabled=!(phase==="label"&&labeled.length>=budget);
-      $("#rnd").disabled=phase!=="label"||labeled.length>=budget;
-    }
-    function reveal(p){p.seen=true;labeled.push(p);sfx.tap();draw();ui()}
-    cv.onclick=e=>{
-      if(phase!=="label"||labeled.length>=budget)return;
-      const b=cv.getBoundingClientRect(),mx=(e.clientX-b.left)*SZ[0]/b.width,my=(e.clientY-b.top)*SZ[1]/b.height;
-      let hit=null,bd=26*26;pool.forEach(p=>{if(p.seen)return;const [x,y]=px(p),d=(x-mx)**2+(y-my)**2;if(d<bd){bd=d;hit=p}});
-      if(hit)reveal(hit);
-    };
-    $("#rnd").onclick=()=>{const rest=pool.filter(p=>!p.seen);if(rest.length)reveal(rest[Math.floor(Math.random()*rest.length)])};
-    $("#go").onclick=()=>{
-      phase="test";ui();const acc=accuracy(labeled,test);let n=0;
-      const id=setInterval(()=>{for(let q=0;q<4&&n<test.length;q++,n++){const p=test[n];tested.push({x:p.x,y:p.y,ok:nearest(labeled,p)===p.k})}draw();
-        if(n>=test.length){clearInterval(id);res[r]=acc;sfx[acc>=.8?"ok":"bad"]();
-          const f=[.35,.65],pts=res.reduce((a,v,k)=>a+f[k]*clamp((v-.5)/.42)*1000,0);setPts(pts);
-          const pct=Math.round(acc*100);
-          $("#out").innerHTML=fbBox(acc>=.8,`Acertou ${pct}%`,`em ${test.length} criaturas que o modelo nunca tinha visto.${r===0?" Com tão poucos exemplos é fácil falhar. Vais ter mais orçamento.":""}`,r===0?"Ronda seguinte":"Ver resultado");
-          $("#next").focus();
-          $("#next").onclick=()=>{if(r===0){r=1;start()}else done(pts,`Precisão ${Math.round(res[0]*100)}% com 4 etiquetas e ${Math.round(res[1]*100)}% com 10`)};
-        }},45);
-      timers.push(id);
-    };
-    draw();ui();
+  const order=shuffle(TRAIN.map((_,k)=>k)),labels=[];let n=0,pts=0;
+  const mission="O farol tem um robô que separa o lixo dos barcos, mas ainda não sabe nada. Primeiro, <b>ensina-o</b>: diz-lhe para que ecoponto vai cada objeto. Depois, o robô vai separar objetos novos sozinho, com base no que lhe ensinaste.";
+  function trainStep(){
+    clearRun();const k=order[n],it=TRAIN[k];
+    view.innerHTML=shell(i,mission,`<div class="plate"><span class="eyebrow">Treino · exemplo ${n+1} de 8</span><div class="card">${esc(it[0])}</div>
+     <div class="bins">${BINS.map((b,j)=>`<button class="btn bin" data-b="${j}" style="${binBtn(j)}"><b>${b[0]}</b><small>${b[1]}</small></button>`).join("")}</div><div id="fb"></div></div>`);
+    setPts(pts);
+    $$(".bin").forEach(b=>b.onclick=()=>{
+      const j=+b.dataset.b,ok=j===it[1];labels[k]=j;$$(".bin").forEach(x=>{x.disabled=true;if(+x.dataset.b!==j&&+x.dataset.b!==it[1])x.style.opacity=.35});
+      if(ok){pts+=60;sfx.ok()}else sfx.bad();setPts(pts);
+      $("#fb").innerHTML=fbBox(ok,ok?"Bem ensinado!":"Atenção!",ok?`${esc(it[2])} O robô guardou esta etiqueta.`:`O certo era <b>${BINS[it[1]][0]}</b>. ${esc(it[2])} Mas o robô já guardou a tua etiqueta (<b>${BINS[j][0]}</b>) e vai aprender com ela.`,n<7?"Próximo exemplo":"Testar o robô");
+      $("#next").focus();$("#next").onclick=()=>{n++;if(n<8)trainStep();else test()};
+    });
   }
-  start();
+  function test(){
+    clearRun();const tests=take(TEST,6);let shown=0,good=0;
+    view.innerHTML=shell(i,"Agora o robô separa objetos que <b>nunca viu</b>. Para cada um, procura o exemplo mais parecido que lhe ensinaste e usa a mesma etiqueta.",`<div class="plate"><span class="eyebrow">Teste com objetos novos</span><div class="rtest" id="rt"></div><div id="fb"></div></div>`);
+    setPts(pts);
+    const add=()=>{const t=tests[shown],tw=TRAIN[t[2]],pred=labels[t[2]],ok=pred===t[1];if(ok){good++;pts+=520/6}setPts(pts);ok?sfx.ok():sfx.bad();
+      $("#rt").insertAdjacentHTML("beforeend",`<div class="rrow ${ok?"ok":"no"}"><div><b>${esc(t[0])}</b><div class="small muted">Parecido com: ${esc(tw[0].toLowerCase())}</div></div><span class="bdg" style="${binBtn(pred)}">${BINS[pred][0]}</span><span class="mk">${ok?"✓":"✗ Devia ir para "+BINS[t[1]][0]}</span></div>`);
+      shown++;if(shown<6)later(add,900);else{
+        const tr=TRAIN.filter((x,k)=>labels[k]===x[1]).length;
+        $("#fb").innerHTML=fbBox(good>=5,`O robô acertou ${good} de 6.`,good===6?"Ensinaste-o muito bem: os dados de treino estavam todos certos.":"Os erros do robô vêm das etiquetas erradas do treino. Uma IA só é tão boa como os dados com que aprende.","Ver resultado");
+        $("#next").focus();$("#next").onclick=()=>done(pts,`Treino: ${tr} de 8 etiquetas certas · Teste: ${good} de 6`)}};
+    later(add,700);
+  }
+  trainStep();
 }
 
 /* ---------- Nível 3 ---------- */
-const CAMS=[{n:"Dia",cost:1,max:30},{n:"Noite",cost:2,max:16},{n:"Nevoeiro",cost:3,max:12}];
-const CENTER=[[.82,.72,.28],[.15,.28,.72],[.48,.62,.38]];
-function camPoint(g,boat){const c=CENTER[g];return{x:c[0]+gauss()*.04,y:(boat?c[1]:c[2])+gauss()*.1,k:boat?1:0}}
-function knn3(train,p){
-  const d=train.map(q=>[((q.x-p.x)*3)**2+(q.y-p.y)**2,q.k]).sort((a,b)=>a[0]-b[0]).slice(0,3);
-  if(!d.length)return Math.random()<.5?1:0;
-  return d.reduce((a,b)=>a+b[1],0)*2>d.length?1:0;
-}
-function camEvaluate(counts){
-  const train=[];counts.forEach((n,g)=>{for(let k=0;k<n;k++)train.push(camPoint(g,k%2))});
-  return counts.map((_,g)=>{let ok=0;for(let k=0;k<80;k++){const p=camPoint(g,k%2);if(knn3(train,p)===p.k)ok++}return ok/80});
-}
-function camArt(g){
-  const sky=["#7fd0ff","#141b52","#b9c2d2"][g],sea=["#2a7fd6","#0a1140","#8b97ac"][g];
-  const boat=g===1?'<circle cx="104" cy="62" r="4" fill="#ffc23d"/><circle cx="92" cy="65" r="2" fill="#ff5a78"/>':`<path d="M84 60h40l-7 10H91z" fill="${g===2?"#6d7789":"#1b2a7a"}"/><path d="M103 34v25H88z" fill="${g===2?"#a2abbc":"#fff"}"/>`;
-  const extra=g===0?'<circle cx="180" cy="20" r="11" fill="#ffc23d"/>':g===1?'<circle cx="30" cy="20" r="1.4" fill="#fff"/><circle cx="60" cy="12" r="1.2" fill="#fff"/><circle cx="170" cy="22" r="1.4" fill="#fff"/><circle cx="190" cy="10" r="1.1" fill="#fff"/>':'<rect width="220" height="90" fill="#dfe4ee" opacity=".42"/>';
-  return `<svg viewBox="0 0 220 90" aria-hidden="true"><rect width="220" height="56" fill="${sky}"/><rect y="56" width="220" height="34" fill="${sea}"/>${boat}${extra}</svg>`;
-}
+const BIAS=[
+ {q:"Um assistente de voz aprendeu com estas gravações:",b:[["Vozes de adultos",90],["Vozes de crianças",10]],w:"Quase não ouviu crianças no treino, por isso vai perceber pior o que elas dizem. A solução é gravar mais vozes de crianças."},
+ {q:"Um detetor de barcos aprendeu com estas fotografias:",b:[["Fotografias de dia",92],["Fotografias de noite",8]],w:"Viu poucas imagens noturnas, por isso vai falhar mais à noite. É preciso juntar fotografias tiradas de noite."},
+ {q:"Um tradutor automático aprendeu com estes textos:",b:[["Inglês",80],["Português",17],["Mirandês",3]],w:"Há muito pouco texto em mirandês, por isso as traduções nessa língua vão ser as piores."},
+ {q:"Uma app que analisa sinais na pele aprendeu com estas fotografias:",b:[["Pele clara",85],["Pele escura",15]],w:"Com poucos exemplos de pele escura, a app vai errar mais nessas pessoas. Investigadores já encontraram este problema em sistemas reais."},
+ {q:"Um carro autónomo treinou a conduzir nestas condições:",b:[["Sol",88],["Chuva",10],["Neve",2]],w:"Quase não conduziu com neve, por isso é aí que é mais perigoso. É preciso treinar e testar em todas as condições."},
+ {q:"Um corretor ortográfico aprendeu com estes textos:",b:[["Português do Brasil",90],["Português de Portugal",10]],w:"Vai sugerir muitas vezes a grafia do Brasil a quem escreve em Portugal, porque foi isso que mais viu."},
+ {q:"Um sistema que escolhe candidatos a um emprego aprendeu com os currículos de quem foi contratado no passado:",b:[["Homens",80],["Mulheres",20]],w:"Se no passado se contrataram sobretudo homens, o sistema pode aprender a desfavorecer as mulheres. Isto já aconteceu numa grande empresa, que deixou de usar o sistema."}
+];
 function L3(i,done){
-  let counts=[30,2,0],tests=0,best=0;
-  const BUD=40,cost=()=>counts.reduce((a,n,g)=>a+n*CAMS[g].cost,0);
-  view.innerHTML=shell(i,"O farol tem de encontrar barcos de dia, de noite e com nevoeiro. Imagens de noite e com nevoeiro são mais caras de recolher. O sucesso é medido pela <b>pior câmara</b>: um barco perdido no nevoeiro continua perdido. Dados simulados.",`
-   <div class="plate"><div class="row between"><h3 id="cost"></h3><span class="small muted">Até 4 testes. Cada teste extra custa 100 pontos.</span></div>
-   <div class="cams">${CAMS.map((c,g)=>`<div class="cam">${camArt(g)}<div class="row between"><b style="font-weight:600">${c.n}</b><span class="small muted">${c.cost} crédito${c.cost>1?"s":""} por imagem</span></div><label for="s${g}" class="small">Imagens: <span id="v${g}" style="font-family:var(--f-data)"></span></label><input type="range" id="s${g}" min="0" max="${c.max}" step="2" value="${counts[g]}"><div class="bar" aria-hidden="true"><i id="b${g}" style="width:0"></i></div><span class="small" id="r${g}">Sem teste</span></div>`).join("")}</div>
-   <div class="row"><button class="btn" id="test">Treinar e testar</button><button class="btn ghost" id="end" disabled>Concluir missão</button></div><div id="out"></div></div>`);
-  function ui(){
-    counts.forEach((n,g)=>$("#v"+g).textContent=n);
-    const over=cost()>BUD;
-    $("#cost").textContent=`Orçamento: ${cost()} de ${BUD} créditos`;$("#cost").style.color=over?"var(--coral)":"";
-    $("#test").disabled=over||tests>=4||counts.reduce((a,b)=>a+b)===0;
-  }
-  counts.forEach((_,g)=>$("#s"+g).oninput=e=>{counts[g]=+e.target.value;ui()});
-  $("#test").onclick=()=>{
-    const acc=camEvaluate(counts);tests++;
-    acc.forEach((a,g)=>{const p=Math.round(a*100);const b=$("#b"+g);b.style.width=p+"%";b.className=a<.7?"crit":a<.85?"warn":"";$("#r"+g).textContent=`Encontrou ${p}% corretamente`});
-    const worst=Math.min(...acc),avg=(acc[0]+acc[1]+acc[2])/3,w=acc.indexOf(worst);
-    const pts=Math.max(0,clamp((worst-.5)/.32)*1000-100*(tests-1));best=Math.max(best,pts);setPts(best);
-    sfx[worst>=.8?"ok":"bad"]();
-    const msg=worst>=.8?`Bom equilíbrio. Todas as câmaras funcionam acima de 80%.`:`A média é ${Math.round(avg*100)}%, mas com ${CAMS[w].n.toLowerCase()} só acerta ${Math.round(worst*100)}%. O modelo quase não conhece esse caso.`;
-    $("#out").innerHTML=fbBox(worst>=.8,`Teste ${tests} de 4.`,msg,"");
-    $("#end").disabled=false;ui();if(tests>=4)$("#end").focus();
-  };
-  $("#end").onclick=()=>done(best,`${tests} teste${tests>1?"s":""} realizado${tests>1?"s":""}`);
-  ui();
+  const deck=take(BIAS,6).map(c=>{const mi=c.b.reduce((m,x,k)=>x[1]<c.b[m][1]?k:m,0);return{qh:`<div class="card" style="min-height:0">${esc(c.q)}</div><div class="dbars">${c.b.map(x=>`<div class="dbar"><span>${esc(x[0])}</span><div class="bar"><i style="width:${x[1]}%"></i></div><b>${x[1]}%</b></div>`).join("")}</div><p class="small muted" style="margin:0">Em que caso é que este modelo vai falhar mais?</p>`,opts:[...c.b.map(x=>x[0]),"Vai funcionar igual em todos os casos"],a:mi,w:c.w}});
+  cardGame(i,done,{deck,sec:25,keep:true,mission:"Um modelo aprende melhor o que vê muitas vezes. Olha para os dados com que cada IA treinou e descobre <b>onde vai falhar mais</b>."});
 }
 
 /* ---------- Nível 4 ---------- */
-const INPUTS=["Noite","Nevoeiro","Barco"];
-const PUZZLES=[
- {d:"O sinal acende se for <b>de noite ou houver nevoeiro</b>. A presença de barcos não interessa.",f:(n,f,b)=>n||f},
- {d:"O sinal acende <b>só se houver um barco</b> e, além disso, for de noite ou houver nevoeiro.",f:(n,f,b)=>b&&(n||f)},
- {d:"O sinal acende quando <b>pelo menos duas</b> das três condições forem verdadeiras.",f:(n,f,b)=>n+f+b>=2}
-];
-const ROWS=[0,1,2,3,4,5,6,7].map(v=>[v>>2&1,v>>1&1,v&1]);
-const neuronSum=(w,r)=>w[0]*r[0]+w[1]*r[1]+w[2]*r[2];
+const PIX={
+ "Coração":["01100110","11111111","11111111","11111111","01111110","00111100","00011000","00000000"],
+ "Casa":["00011000","00111100","01111110","11111111","01000010","01011010","01011010","01111110"],
+ "Barco":["00010000","00011000","00011100","00011110","00010000","11111111","01111110","00111100"],
+ "Cara sorridente":["00111100","01000010","10100101","10000001","10100101","10011001","01000010","00111100"],
+ "Seta":["00011000","00111100","01111110","11011011","00011000","00011000","00011000","00011000"],
+ "Árvore":["00011000","00111100","01111110","00111100","01111110","11111111","00011000","00011000"],
+ "Peixe":["00000000","00111000","01111101","11011111","11111111","01111101","00111000","00000000"],
+ "Farol":["00011000","00111100","00011000","00111100","00100100","00111100","00100100","01111110"]
+};
+const pxSvg=n=>`<svg viewBox="0 0 8 8" class="pxs" aria-hidden="true" shape-rendering="crispEdges">${PIX[n].map((r,y)=>[...r].map((v,x)=>v==="1"?`<rect x="${x}" y="${y}" width="1" height="1"/>`:"").join("")).join("")}</svg>`;
 function L4(i,done){
-  let pz=0,pts=0,w,th,sel,tries,checked;
-  function reset(){w=[0,0,0];th=1;sel=7;tries=0;checked=false}
-  function svg(){
-    const r=ROWS[sel],sum=neuronSum(w,r),on=sum>=th,ys=[40,120,200];
-    const line=(k)=>{const c=w[k]>0?"var(--flare)":w[k]<0?"var(--coral)":"#ffffff30";return `<line x1="92" y1="${ys[k]}" x2="240" y2="120" stroke="${c}" stroke-width="${1.5+Math.abs(w[k])*2.4}" opacity="${r[k]?1:.45}"/><rect x="150" y="${(ys[k]+120)/2-22}" width="36" height="24" rx="4" fill="var(--hull-deep)"/><text x="168" y="${(ys[k]+120)/2-5}" text-anchor="middle" fill="var(--foam)" font-family="var(--f-data)" font-size="15">${w[k]>0?"+":""}${w[k]}</text>`};
-    const inp=(k)=>`<circle cx="62" cy="${ys[k]}" r="30" fill="${r[k]?"var(--flare)":"var(--hull-deep)"}" stroke="var(--foam)" stroke-width="2"/><text x="62" y="${ys[k]+5}" text-anchor="middle" font-size="12" font-family="var(--f-body)" font-weight="600" fill="${r[k]?"var(--hull-deep)":"var(--foam)"}">${INPUTS[k]}</text>`;
-    return `<svg viewBox="0 0 520 240" role="img" aria-label="Neurónio com soma ${sum} e limiar ${th}">${[0,1,2].map(line).join("")}<line x1="326" y1="120" x2="418" y2="120" stroke="${on?"var(--kelp)":"#ffffff30"}" stroke-width="5"/><circle cx="280" cy="120" r="48" fill="var(--hull-2)" stroke="var(--foam)" stroke-width="3"/><text x="280" y="113" text-anchor="middle" fill="var(--mist)" font-size="12" font-family="var(--f-body)">soma</text><text x="280" y="139" text-anchor="middle" fill="var(--foam)" font-size="28" font-family="var(--f-data)">${sum}</text>${[0,1,2].map(inp).join("")}<circle cx="456" cy="120" r="36" fill="${on?"var(--flare)":"var(--hull-deep)"}" stroke="${on?"#fff":"#ffffff40"}" stroke-width="3" ${on?'style="filter:drop-shadow(0 0 14px var(--flare))"':""}/><text x="456" y="125" text-anchor="middle" font-weight="800" font-size="14" font-family="var(--f-body)" fill="${on?"var(--hull-deep)":"var(--mist)"}">${on?"ACESO":"APAGADO"}</text></svg>`;
-  }
-  function table(){
-    const f=PUZZLES[pz].f;
-    return `<table><thead><tr><th>Noite</th><th>Nevoeiro</th><th>Barco</th><th>Acende?</th><th>Modelo</th></tr></thead><tbody>${ROWS.map((r,k)=>{const want=!!f(r[0],r[1],r[2]),got=neuronSum(w,r)>=th;return `<tr class="pick ${k===sel?"sel":""}" data-r="${k}" tabindex="0"><td>${r[0]?"sim":"não"}</td><td>${r[1]?"sim":"não"}</td><td>${r[2]?"sim":"não"}</td><td>${want?"sim":"não"}</td><td style="color:${checked?(want===got?"var(--kelp)":"var(--coral)"):"var(--mist)"}">${checked?(want===got?"✓":"✗"):"?"}</td></tr>`}).join("")}</tbody></table>`;
-  }
-  function refresh(){
-    $("#nsvg").innerHTML=svg();$("#tbl").innerHTML=table();
-    [0,1,2].forEach(k=>$("#o"+k).textContent=(w[k]>0?"+":"")+w[k]);$("#ot").textContent=th;
-    $$("#tbl tr.pick").forEach(tr=>{const go=()=>{sel=+tr.dataset.r;refresh();const t=$(`#tbl tr[data-r="${sel}"]`);if(t)t.focus()};tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
-  }
-  function step(k,d){if(k==="t")th=clamp(th+d,-3,6);else w[k]=clamp(w[k]+d,-3,3);checked=false;sfx.tap();$("#out").innerHTML="";refresh()}
-  function start(){
-    clearRun();reset();
-    const stepper=(id,lab)=>`<div class="stepper"><span class="opt-title">${lab}</span><div class="row" style="gap:6px"><button class="btn ghost mini" data-s="${id}" data-d="-1" aria-label="Diminuir ${lab}">−</button><output id="o${id}"></output><button class="btn ghost mini" data-s="${id}" data-d="1" aria-label="Aumentar ${lab}">+</button></div></div>`;
-    view.innerHTML=shell(i,"Cada entrada do neurónio tem um <b>peso</b>. Se a soma das entradas ativas atingir o <b>limiar</b>, o sinal acende. Clica numa linha da tabela para experimentares essa situação.",`
-    <div class="plate"><div class="row between"><span class="eyebrow">Desafio ${pz+1} de 3</span><span class="small muted">Cada verificação falhada custa 70 pontos.</span></div><h3 style="font-weight:400;font-size:20px">${PUZZLES[pz].d}</h3>
-    <div class="split"><div class="neuron" style="display:flex;flex-direction:column;gap:12px"><div id="nsvg"></div><div class="tablewrap" id="tbl"></div></div>
-    <div style="display:flex;flex-direction:column;gap:12px">${stepper(0,"Peso da noite")}${stepper(1,"Peso do nevoeiro")}${stepper(2,"Peso do barco")}<hr style="border:0;border-top:1px solid var(--line);width:100%;margin:0">${stepper("t","Limiar")}<button class="btn" id="chk">Verificar neurónio</button><div id="out"></div></div></div></div>`);
-    $$("[data-s]").forEach(b=>b.onclick=()=>step(b.dataset.s==="t"?"t":+b.dataset.s,+b.dataset.d));
-    $("#chk").onclick=()=>{
-      tries++;checked=true;
-      const f=PUZZLES[pz].f,bad=ROWS.filter(r=>!!f(r[0],r[1],r[2])!==(neuronSum(w,r)>=th)).length;
-      refresh();
-      if(bad){sfx.bad();$("#out").innerHTML=fbBox(false,`Faltam ${bad} situaç${bad>1?"ões":"ão"}.`,"Vê as linhas vermelhas e ajusta os pesos ou o limiar.","")}
-      else{
-        sfx.ok();const got=Math.max(90,(pz===0?334:333)-70*(tries-1));pts+=got;setPts(pts);
-        $("#out").innerHTML=fbBox(true,`Resolvido! +${got}`,"Todas as situações estão corretas.",pz<2?"Desafio seguinte":"Ver resultado");
-        $("#chk").disabled=true;$("#next").focus();
-        $("#next").onclick=()=>{if(pz<2){pz++;start()}else done(pts,"3 neurónios configurados")};
-      }
-    };
-    refresh();setPts(pts);
-  }
-  start();
+  const names=Object.keys(PIX);
+  const deck=take(names,6).map(n=>{const opts=shuffle([n,...take(names.filter(x=>x!==n),2)]);return{opts,a:opts.indexOf(n),bits:PIX[n].join(""),
+   qh:`<div class="numgrid" id="ng">${[...PIX[n].join("")].map(v=>`<span class="${v==="1"?"one":""}">${v}</span>`).join("")}</div><p class="small muted" style="margin:0;text-align:center">Cada número é um pixel: 1 está aceso, 0 está apagado.</p>`,
+   w:`Os pixels com 1 formam o desenho. É assim que o computador guarda as imagens: como números.`}});
+  cardGame(i,done,{deck,sec:30,mission:"Para a IA, uma imagem é só uma grelha de números. A câmara do farol enviou estas imagens em código. Descobre <b>que desenho</b> está escondido em cada grelha.",
+   optH:(t)=>`<span class="pxo">${pxSvg(t)}<span>${esc(t)}</span></span>`,after:()=>{const g=$("#ng");if(g)g.classList.add("lit")}});
 }
 
 /* ---------- Nível 5 ---------- */
@@ -943,9 +895,9 @@ const QUIZ=[
  ["O que significa sobreajuste (overfitting)?",["O modelo decora o treino e falha em dados novos","O modelo ocupa demasiado disco","O modelo aprende depressa de mais","O computador aquece"]],
  ["Um modelo treinado quase só com imagens de dia tende a...",["falhar à noite","ser perfeito em tudo","recusar imagens","aprender sozinho o que é a noite"]],
  ["O que é enviesamento num sistema de IA?",["Erros sistemáticos que prejudicam certos casos ou grupos","Um vírus informático","Um tipo de ecrã","Uma falha de internet"]],
- ["Num neurónio artificial, o peso indica...",["a importância de cada entrada","o tamanho do ficheiro","a massa do computador","o número de utilizadores"]],
- ["Quando dispara um neurónio artificial simples?",["Quando a soma pesada atinge o limiar","Sempre que há eletricidade","Quando o utilizador clica","Apenas à noite"]],
- ["Que problema não se resolve com um único neurónio simples?",["OU exclusivo (XOR)","E lógico (AND)","OU lógico (OR)","Negação (NOT)"]],
+ ["Para um computador, uma imagem é...",["uma grelha de números","um texto escrito","um som","um desenho sem dados"]],
+ ["Numa imagem a cores, cada pixel tem normalmente...",["três valores: vermelho, verde e azul","um só valor","dez valores","nenhum valor"]],
+ ["Um assistente de voz treinado quase só com vozes de adultos vai ter mais dificuldade com...",["vozes de crianças","vozes de adultos","vozes altas","todas as vozes por igual"]],
  ["A aprendizagem por reforço baseia-se em...",["recompensas e castigos","copiar a internet","exemplos sempre etiquetados","regras escritas à mão"]],
  ["Na aprendizagem por reforço, se premiares o comportamento errado...",["o agente aprende o comportamento errado","o agente corrige o prémio sozinho","o treino para","nada muda"]],
  ["O que é uma alucinação de um chatbot?",["Uma resposta falsa apresentada com confiança","Uma imagem colorida","Um erro de eletricidade","Uma resposta demasiado curta"]],
@@ -992,7 +944,7 @@ function renderHud(){
   const t=team();
   hud.hidden=screen==="start"||!t&&!["ranking","teacher","teams"].includes(screen);
   if(hud.hidden)return;
-  hud.innerHTML=`<div class="hud-team">${t?emblem(t,true)+`<b>${esc(t.name)}</b><span class="hud-pts">${total(t)} pts</span>`:'<b>Operação Farol</b>'}</div>
+  hud.innerHTML=`<div class="hud-team">${t?emblem(t,true)+`<b>${esc(t.name)}</b><span class="hud-pts">${total(t)} pts</span>`:'<b>Operação Farol 2</b>'}</div>
   <nav class="hud-nav" aria-label="Navegação">
    ${examOn()?'<span class="fexb">Avaliação</span>':""}${t?'<button class="btn ghost mini" id="h-map">Mapa</button><button class="btn ghost mini" id="h-share">Enviar ao professor</button><button class="btn ghost mini" id="h-exam">'+(examOn()?"Avaliação: ligada":"Avaliação")+'</button>':""}
    <button class="btn ghost mini" id="h-rank">Classificação</button>
@@ -1008,7 +960,7 @@ function go(name){screen=name;view.classList.toggle("dim",name!=="start");clearR
 
 function goStart(){
   go("start");
-  view.innerHTML=`<div class="title"><div class="logo"><small>OPERAÇÃO</small><strong>FAROL</strong></div>
+  view.innerHTML=`<div class="title"><div class="logo"><small>OPERAÇÃO</small><strong>FAROL 2</strong></div>
   <p class="pitch">Uma tempestade apagou a memória do farol do Cabo da Roca. A vossa equipa tem de lhe ensinar tudo de novo, nível a nível, antes que os navios se percam.</p>
   <div class="row"><button class="btn" id="play" style="font-size:20px;padding:15px 30px">Zarpar</button><button class="btn ghost" id="rk">Classificação</button><button class="btn ghost" id="pf">Professor</button></div>
   <p class="small muted">8 níveis · 8000 pontos em jogo · para equipas do 9.º ano</p></div>`;
@@ -1085,9 +1037,9 @@ function drawRoute(t,next){
   const pts=LEVELS.map((_,i)=>wide?[W*(.06+i*.125),H*(.42+Math.sin(i*1.5+.4)*.28)]:[70+(Math.sin(i*1.25)+1)*Math.min(46,(W-260)/2+24),50+i*104]);
   let d="",dDone="";
   pts.forEach((p,i)=>{
-    if(!i){d=`M${p[0]} ${p[1]}`;dDone=d;return}
+    if(!i){d=`M${p[0]} ${p[1]}`;return}
     const a=pts[i-1],seg=wide?`C${(a[0]+p[0])/2} ${a[1]} ${(a[0]+p[0])/2} ${p[1]} ${p[0]} ${p[1]}`:`C${a[0]} ${(a[1]+p[1])/2} ${p[0]} ${(a[1]+p[1])/2} ${p[0]} ${p[1]}`;
-    d+=seg;if(t.scores[i-1]!=null&&t.scores[i]!=null)dDone+=seg;else if(t.scores[i-1]!=null&&i===next)dDone+=seg;
+    d+=seg;if(t.scores[i-1]!=null&&t.scores[i]!=null)dDone+=`M${a[0]} ${a[1]}`+seg;
   });
   let out=`<svg class="path" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="#eef6ff66" stroke-width="4" stroke-dasharray="2 13" stroke-linecap="round"/><path d="${dDone}" fill="none" stroke="#ffc23d" stroke-width="5" stroke-dasharray="2 13" stroke-linecap="round"/></svg>`;
   LEVELS.forEach((L,i)=>{
@@ -1141,7 +1093,7 @@ function finish(i,raw,detail){
   on("nx",()=>goBrief(i+1));on("map",goMap);on("rep",()=>goBrief(i));on("rank",goRank);on("sh",goShare);
 }
 function goExam(){const t=team();if(!t){goTeams();return}go("exam");const e=exOf(t);
-  view.innerHTML=`<div class="wrap" style="max-width:680px"><div><span class="eyebrow">Operação Farol</span><h2>Avaliação</h2></div><div class="plate">${e?`<div class="fexam">${examTxt()}</div><p>A equipa ${esc(t.name)} está em modo avaliação até ao fim do dia. Se saírem, podem voltar a treinar, mas as tentativas de avaliação já feitas continuam a contar.</p><div class="row" id="xb"><button class="btn ghost" id="xo">Sair do modo avaliação</button><button class="btn" id="xh">Voltar ao mapa</button></div>`:`<p>Quando o professor disser, escrevam aqui a chave de avaliação que está no quadro. A partir daí, cada nível só pode ser jogado o número de vezes que o professor escolheu.</p><form class="row" id="kf" autocomplete="off"><label for="key" class="opt-title">Chave de avaliação</label><input type="text" id="key" maxlength="10" placeholder="AV-....." style="max-width:220px;text-transform:uppercase;font-family:var(--f-data)" spellcheck="false"><button class="btn">Começar a avaliação</button></form><p id="er" class="small" style="color:var(--coral);font-weight:600"></p>`}</div></div>`;
+  view.innerHTML=`<div class="wrap" style="max-width:680px"><div><span class="eyebrow">Operação Farol 2</span><h2>Avaliação</h2></div><div class="plate">${e?`<div class="fexam">${examTxt()}</div><p>A equipa ${esc(t.name)} está em modo avaliação até ao fim do dia. Se saírem, podem voltar a treinar, mas as tentativas de avaliação já feitas continuam a contar.</p><div class="row" id="xb"><button class="btn ghost" id="xo">Sair do modo avaliação</button><button class="btn" id="xh">Voltar ao mapa</button></div>`:`<p>Quando o professor disser, escrevam aqui a chave de avaliação que está no quadro. A partir daí, cada nível só pode ser jogado o número de vezes que o professor escolheu.</p><form class="row" id="kf" autocomplete="off"><label for="key" class="opt-title">Chave de avaliação</label><input type="text" id="key" maxlength="10" placeholder="AV-....." style="max-width:220px;text-transform:uppercase;font-family:var(--f-data)" spellcheck="false"><button class="btn">Começar a avaliação</button></form><p id="er" class="small" style="color:var(--coral);font-weight:600"></p>`}</div></div>`;
   if(e){$("#xh").onclick=goMap;$("#xo").onclick=()=>{$("#xb").innerHTML='<span class="small"><b>Sair do modo avaliação?</b></span> <button class="btn mini" id="y">Sim, sair</button> <button class="btn ghost mini" id="n">Não</button>';$("#y").onclick=()=>{delete t.ex;save();goMap()};$("#n").onclick=goExam};return}
   $("#key").focus();$("#kf").onsubmit=ev=>{ev.preventDefault();const k=readKey($("#key").value);if(!k){$("#er").textContent="Esta chave não é válida. Confirmem as letras no quadro.";sfx.bad();return}if(k.day!==dayN()){$("#er").textContent="Esta chave não é de hoje. Peçam a chave nova ao professor.";sfx.bad();return}t.ex=k;save();sfx.win();goMap()}}
 function goShare(){
@@ -1151,7 +1103,7 @@ function goShare(){
   <div class="code" id="code" style="max-height:150px;overflow:auto">${code}</div>
   <div class="row"><button class="btn" id="cp">Copiar o código</button><button class="btn ghost" id="dl">Descarregar ficheiro</button></div><p class="small" id="ms" role="status"></p></div></div>`;
   $("#cp").onclick=()=>copy(code,$("#cp"),$("#code"));$("#edm").onclick=()=>goNewTeam(t.id);
-  $("#dl").onclick=async()=>{const ok=await saveFile(`OperacaoFarol_${t.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"_")}.txt`,`Operação Farol\nEquipa: ${t.name}\nTurma: ${t.turma||""}\nElementos: ${members(t).map(m=>memLabel(t,m)).join(", ")}\nPontos: ${total(t)}\nData: ${fmtD(Date.now())} ${fmtH(Date.now())}\n\nCódigo para o professor:\n${code}\n`);$("#ms").textContent=ok?"Ficheiro pronto. Enviem-no ao professor.":"O ficheiro não foi guardado. Usem Copiar o código."};
+  $("#dl").onclick=async()=>{const ok=await saveFile(`OperacaoFarol2_${t.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"_")}.txt`,`Operação Farol 2\nEquipa: ${t.name}\nTurma: ${t.turma||""}\nElementos: ${members(t).map(m=>memLabel(t,m)).join(", ")}\nPontos: ${total(t)}\nData: ${fmtD(Date.now())} ${fmtH(Date.now())}\n\nCódigo para o professor:\n${code}\n`);$("#ms").textContent=ok?"Ficheiro pronto. Enviem-no ao professor.":"O ficheiro não foi guardado. Usem Copiar o código."};
 }
 
 function allTeams(){
@@ -1219,14 +1171,14 @@ function profMain(){
    <div class="guide">${LEVELS.map((L,i)=>`<article><span class="eyebrow">Nível ${i+1} · cerca de ${L.min} min</span><b style="font-weight:800">${esc(L.t)}: ${esc(L.c)}</b><span class="small"><span class="muted">Pergunta para debate:</span> ${esc(L.q)}</span></article>`).join("")}</div>
    <p class="small muted">Os dados dos níveis 2, 3 e 5 são simulados, mas os modelos funcionam mesmo: vizinho mais próximo nos níveis 2 e 3, e Q-learning no nível 5. Os resultados são calculados em cada jogada.</p></div></div>`;
   const msg=t=>$("#msg").textContent=t;
-  const take2=txt=>{const cs=txt.match(/FAROL2?\.[A-Za-z0-9_~]+\.[A-Z0-9]{5}/g)||[];let n=0,u=0,bad=0;cs.forEach(c=>{const t=readCode(c);if(!t){bad++;return}mergeTeam(P.teams,t)==="nova"?n++:u++});bad+=Math.max(0,(txt.match(/FAROL2?\.\S*/g)||[]).length-cs.length);save();return{n,u,bad,tot:cs.length}};
+  const take2=txt=>{const cs=txt.match(/FAROLB\.[A-Za-z0-9_~]+\.[A-Z0-9]{5}/g)||[];let n=0,u=0,bad=0;cs.forEach(c=>{const t=readCode(c);if(!t){bad++;return}mergeTeam(P.teams,t)==="nova"?n++:u++});bad+=Math.max(0,(txt.match(/FAROL2?\.\S*/g)||[]).length-cs.length);save();return{n,u,bad,tot:cs.length}};
   const report=r=>{if(!r.tot&&!r.bad){msg("Não foi encontrado nenhum código.");return}profMain();msg([r.n?`${r.n} equipa${r.n>1?"s":""} nova${r.n>1?"s":""}.`:"",r.u?`${r.u} equipa${r.u>1?"s":""} atualizada${r.u>1?"s":""}.`:"",r.bad?`${r.bad} código${r.bad>1?"s":""} com erro: peçam à equipa para o copiar outra vez.`:""].filter(Boolean).join(" "))};
   $("#add").onclick=()=>report(take2($("#codes").value));
   $("#ff").onchange=async e=>{let txt="";for(const f of e.target.files)txt+="\n"+await f.text();report(take2(txt))};
-  $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(d.app!=="operacao-farol-prof"||!Array.isArray(d.teams))throw 0;let n=0;d.teams.forEach(t=>{if(t&&t.id&&Array.isArray(t.scores)){mergeTeam(P.teams,t);n++}});save();profMain();msg(`Cópia aberta: ${n} equipa${n===1?"":"s"}.`)}catch(x){msg("Este ficheiro não é uma cópia de segurança da Operação Farol.")}};
+  $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(d.app!=="operacao-farol2-prof"||!Array.isArray(d.teams))throw 0;let n=0;d.teams.forEach(t=>{if(t&&t.id&&Array.isArray(t.scores)){mergeTeam(P.teams,t);n++}});save();profMain();msg(`Cópia aberta: ${n} equipa${n===1?"":"s"}.`)}catch(x){msg("Este ficheiro não é uma cópia de segurança da Operação Farol.")}};
   const stamp=()=>new Date().toISOString().slice(0,10);
-  $("#bk").onclick=async()=>{const ok=await saveFile(`OperacaoFarol_copia_${stamp()}.json`,JSON.stringify({app:"operacao-farol-prof",v:1,saved:Date.now(),teams:P.teams}),"application/json");msg(ok?"Cópia de segurança guardada.":"A cópia não foi guardada.")};
-  $("#xl").onclick=async()=>{const l=shownTeams(),ok=await saveFile(`OperacaoFarol_resultados${PV.turma?"_"+PV.turma.replace(/[^A-Za-z0-9]+/g,""):""}_${stamp()}.xlsx`,buildXlsx(l));msg(ok?`Ficheiro Excel criado com ${l.length} equipa${l.length===1?"":"s"}.`:"O ficheiro não foi guardado.")};
+  $("#bk").onclick=async()=>{const ok=await saveFile(`OperacaoFarol2_copia_${stamp()}.json`,JSON.stringify({app:"operacao-farol2-prof",v:1,saved:Date.now(),teams:P.teams}),"application/json");msg(ok?"Cópia de segurança guardada.":"A cópia não foi guardada.")};
+  $("#xl").onclick=async()=>{const l=shownTeams(),ok=await saveFile(`OperacaoFarol2_resultados${PV.turma?"_"+PV.turma.replace(/[^A-Za-z0-9]+/g,""):""}_${stamp()}.xlsx`,buildXlsx(l));msg(ok?`Ficheiro Excel criado com ${l.length} equipa${l.length===1?"":"s"}.`:"O ficheiro não foi guardado.")};
   $$(".tab").forEach(b=>b.onclick=()=>{PV.tab=b.dataset.k;PV.sel=null;profMain()});
   $("#tu").onchange=e=>{PV.turma=e.target.value;PV.sel=null;profMain()};
   $("#mt").onchange=e=>{PV.met=e.target.value;profMain()};
@@ -1279,4 +1231,3 @@ function buildXlsx(list){const sheets=[];
 Scene.setLit(doneCount(team()));
 goStart();
 </script>
-</body></html>
