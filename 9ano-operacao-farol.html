@@ -1,4 +1,4 @@
-<title>Operação Farol 2</title>
+<title>Operação Farol</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -944,7 +944,7 @@ function renderHud(){
   const t=team();
   hud.hidden=screen==="start"||!t&&!["ranking","teacher","teams"].includes(screen);
   if(hud.hidden)return;
-  hud.innerHTML=`<div class="hud-team">${t?emblem(t,true)+`<b>${esc(t.name)}</b><span class="hud-pts">${total(t)} pts</span>`:'<b>Operação Farol 2</b>'}</div>
+  hud.innerHTML=`<div class="hud-team">${t?emblem(t,true)+`<b>${esc(t.name)}</b><span class="hud-pts">${total(t)} pts</span>`:'<b>Operação Farol</b>'}</div>
   <nav class="hud-nav" aria-label="Navegação">
    ${examOn()?'<span class="fexb">Avaliação</span>':""}${t?'<button class="btn ghost mini" id="h-map">Mapa</button><button class="btn ghost mini" id="h-share">Enviar ao professor</button><button class="btn ghost mini" id="h-exam">'+(examOn()?"Avaliação: ligada":"Avaliação")+'</button>':""}
    <button class="btn ghost mini" id="h-rank">Classificação</button>
@@ -960,7 +960,7 @@ function go(name){screen=name;view.classList.toggle("dim",name!=="start");clearR
 
 function goStart(){
   go("start");
-  view.innerHTML=`<div class="title"><div class="logo"><small>OPERAÇÃO</small><strong>FAROL 2</strong></div>
+  view.innerHTML=`<div class="title"><div class="logo"><small>OPERAÇÃO</small><strong>FAROL</strong></div>
   <p class="pitch">Uma tempestade apagou a memória do farol do Cabo da Roca. A vossa equipa tem de lhe ensinar tudo de novo, nível a nível, antes que os navios se percam.</p>
   <div class="row"><button class="btn" id="play" style="font-size:20px;padding:15px 30px">Zarpar</button><button class="btn ghost" id="rk">Classificação</button><button class="btn ghost" id="pf">Professor</button></div>
   <p class="small muted">8 níveis · 8000 pontos em jogo · para equipas do 9.º ano</p></div>`;
@@ -1093,7 +1093,7 @@ function finish(i,raw,detail){
   on("nx",()=>goBrief(i+1));on("map",goMap);on("rep",()=>goBrief(i));on("rank",goRank);on("sh",goShare);
 }
 function goExam(){const t=team();if(!t){goTeams();return}go("exam");const e=exOf(t);
-  view.innerHTML=`<div class="wrap" style="max-width:680px"><div><span class="eyebrow">Operação Farol 2</span><h2>Avaliação</h2></div><div class="plate">${e?`<div class="fexam">${examTxt()}</div><p>A equipa ${esc(t.name)} está em modo avaliação até ao fim do dia. Se saírem, podem voltar a treinar, mas as tentativas de avaliação já feitas continuam a contar.</p><div class="row" id="xb"><button class="btn ghost" id="xo">Sair do modo avaliação</button><button class="btn" id="xh">Voltar ao mapa</button></div>`:`<p>Quando o professor disser, escrevam aqui a chave de avaliação que está no quadro. A partir daí, cada nível só pode ser jogado o número de vezes que o professor escolheu.</p><form class="row" id="kf" autocomplete="off"><label for="key" class="opt-title">Chave de avaliação</label><input type="text" id="key" maxlength="10" placeholder="AV-....." style="max-width:220px;text-transform:uppercase;font-family:var(--f-data)" spellcheck="false"><button class="btn">Começar a avaliação</button></form><p id="er" class="small" style="color:var(--coral);font-weight:600"></p>`}</div></div>`;
+  view.innerHTML=`<div class="wrap" style="max-width:680px"><div><span class="eyebrow">Operação Farol</span><h2>Avaliação</h2></div><div class="plate">${e?`<div class="fexam">${examTxt()}</div><p>A equipa ${esc(t.name)} está em modo avaliação até ao fim do dia. Se saírem, podem voltar a treinar, mas as tentativas de avaliação já feitas continuam a contar.</p><div class="row" id="xb"><button class="btn ghost" id="xo">Sair do modo avaliação</button><button class="btn" id="xh">Voltar ao mapa</button></div>`:`<p>Quando o professor disser, escrevam aqui a chave de avaliação que está no quadro. A partir daí, cada nível só pode ser jogado o número de vezes que o professor escolheu.</p><form class="row" id="kf" autocomplete="off"><label for="key" class="opt-title">Chave de avaliação</label><input type="text" id="key" maxlength="10" placeholder="AV-....." style="max-width:220px;text-transform:uppercase;font-family:var(--f-data)" spellcheck="false"><button class="btn">Começar a avaliação</button></form><p id="er" class="small" style="color:var(--coral);font-weight:600"></p>`}</div></div>`;
   if(e){$("#xh").onclick=goMap;$("#xo").onclick=()=>{$("#xb").innerHTML='<span class="small"><b>Sair do modo avaliação?</b></span> <button class="btn mini" id="y">Sim, sair</button> <button class="btn ghost mini" id="n">Não</button>';$("#y").onclick=()=>{delete t.ex;save();goMap()};$("#n").onclick=goExam};return}
   $("#key").focus();$("#kf").onsubmit=ev=>{ev.preventDefault();const k=readKey($("#key").value);if(!k){$("#er").textContent="Esta chave não é válida. Confirmem as letras no quadro.";sfx.bad();return}if(k.day!==dayN()){$("#er").textContent="Esta chave não é de hoje. Peçam a chave nova ao professor.";sfx.bad();return}t.ex=k;save();sfx.win();goMap()}}
 function goShare(){
@@ -1103,7 +1103,7 @@ function goShare(){
   <div class="code" id="code" style="max-height:150px;overflow:auto">${code}</div>
   <div class="row"><button class="btn" id="cp">Copiar o código</button><button class="btn ghost" id="dl">Descarregar ficheiro</button></div><p class="small" id="ms" role="status"></p></div></div>`;
   $("#cp").onclick=()=>copy(code,$("#cp"),$("#code"));$("#edm").onclick=()=>goNewTeam(t.id);
-  $("#dl").onclick=async()=>{const ok=await saveFile(`OperacaoFarol2_${t.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"_")}.txt`,`Operação Farol 2\nEquipa: ${t.name}\nTurma: ${t.turma||""}\nElementos: ${members(t).map(m=>memLabel(t,m)).join(", ")}\nPontos: ${total(t)}\nData: ${fmtD(Date.now())} ${fmtH(Date.now())}\n\nCódigo para o professor:\n${code}\n`);$("#ms").textContent=ok?"Ficheiro pronto. Enviem-no ao professor.":"O ficheiro não foi guardado. Usem Copiar o código."};
+  $("#dl").onclick=async()=>{const ok=await saveFile(`OperacaoFarol2_${t.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"_")}.txt`,`Operação Farol\nEquipa: ${t.name}\nTurma: ${t.turma||""}\nElementos: ${members(t).map(m=>memLabel(t,m)).join(", ")}\nPontos: ${total(t)}\nData: ${fmtD(Date.now())} ${fmtH(Date.now())}\n\nCódigo para o professor:\n${code}\n`);$("#ms").textContent=ok?"Ficheiro pronto. Enviem-no ao professor.":"O ficheiro não foi guardado. Usem Copiar o código."};
 }
 
 function allTeams(){
